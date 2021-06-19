@@ -12,7 +12,7 @@ import os, sys, glob
 from pprint import pprint
 import argparse
 
-from alex.alex import compare, const, util
+from alex.alex import compare, const, util, dsl_parser
 from alex.annotators import code_gen
 
 
@@ -21,9 +21,6 @@ def diff(configs, to_png=False, path="./diff.png", verbose=False, dpi=None):
         path = path
     else:
         path = None
-
-    if not dpi:
-        dpi = 800
 
     config1, config2 = configs
     cost, operations = compare.diff(config1, config2, render_to=path, dpi=dpi)
@@ -34,8 +31,6 @@ def diff(configs, to_png=False, path="./diff.png", verbose=False, dpi=None):
 
 
 def ls(option):
-    if not option:
-        option = "components"
     # paths = sorted(glob.glob(const.COMPONENT_BASE_PATH+"/[!.]*.yml"))
     # components = list(map(lambda x: x.split("/")[-1].split(".")[0], paths))
 
@@ -70,15 +65,9 @@ def inspect(component):
 
 
 def codegen(engine, config, out_dir, filename):
-    if not engine:
-        engine = "pytorch"
     if not config:
         print("Must give a network configuration --config")
         sys.exit()
-    if not out_dir:
-        out_dir = "./"
-    if not filename:
-        filename = "generated.py"
     try:
         code_generator = code_gen.CodeGen(filename,
                                           config,
@@ -88,6 +77,18 @@ def codegen(engine, config, out_dir, filename):
         print("Output file %s is generated in dir %s" % (filename, out_dir))
     except Exception as err:
         print(err)
+
+
+def render(config, type, path, level):
+    if not config:
+        print("Must give a network configuration --config")
+        sys.exit()
+
+    if type == "tree":
+        dsl_parser.make_ast_from_yml(config, path)
+
+    elif type == "graph":
+        dsl_parser.make_graph_from_yml(config, path, level)
 
 
 def merge(config, ckpt):
@@ -101,13 +102,14 @@ def main(fn, kwargs=dict()):
 if __name__=="__main__":
 
     if len(sys.argv)<2:
-        print("Choose one of the following: diff, ls, inspect, codegen")
+        print("Choose one of the following: diff, ls, inspect, codegen, render; or -h for help")
         sys.exit()
     fn = sys.argv[1]
     fns = {"diff": diff,
            "ls": ls,
            "inspect": inspect,
-           "codegen": codegen}
+           "codegen": codegen,
+           "render": render}
 
     parser = argparse.ArgumentParser(description="Alex network analyzer")
     subparsers = parser.add_subparsers(help="")
@@ -130,13 +132,14 @@ if __name__=="__main__":
                              help="Show the diffs")
 
     diff_parser.add_argument("--dpi", metavar="dpi of the image",
-                             default=200,
+                             default=800,
                              type=int, nargs="?",
                              help="Resolution of the image")
 
 
     ls_parser = subparsers.add_parser("ls", help="List information, e.g. alex-nn ls [coponents, recipes, ingredients, initializers, regularizers, optimizers, losses]")
     ls_parser.add_argument("option", metavar="option", type=str, nargs="?",
+                           default="components",
                            help="What to ls?")
 
     inspect_parser = subparsers.add_parser("inspect", help="Inspect hyperparameters of an ingredient, e.g. alex-nn inspect conv")
@@ -146,11 +149,13 @@ if __name__=="__main__":
 
     codegen_parser = subparsers.add_parser("codegen", help="Generate python code, e.g. alex-nn codegen example_config.yml")
 
-    codegen_parser.add_argument("--engine", metavar="Currently support tf and pytorch",
+    codegen_parser.add_argument("--engine",
+                                default="pytorch",
+                                metavar="Currently support tf and pytorch",
                                 type=str,
                                 help="Which framework?")
 
-    codegen_parser.add_argument("--config", metavar="Network config path",
+    codegen_parser.add_argument("--config", metavar="Network configuration file path",
                                 type=str,
                                 help="Network configuration")
 
@@ -160,7 +165,30 @@ if __name__=="__main__":
 
     codegen_parser.add_argument("--filename", metavar="Output file name",
                                 type=str,
+                                default="generated.py",
                                 help="Python file name")
+
+    render_parser = subparsers.add_parser("render",
+                                          help="Render tree or graph from a config")
+
+    render_parser.add_argument("config",
+                               metavar="Network configuration file path",
+                               type=str,
+                               help="Network configuration")
+
+    render_parser.add_argument("--type", metavar="tree/graph",
+                               type=str,
+                               nargs="?",
+                               default="tree",
+                               help="What to render?")
+
+    render_parser.add_argument("--path", metavar="Path",
+                               type=str, nargs="?", default="./network.png",
+                               help="Path where the png file goes")
+
+    render_parser.add_argument("--level", metavar="Level of the graph",
+                               type=int, nargs="?", default=2,
+                               help="For graph you can hide the details of the recipe")
 
     args = parser.parse_args()
 

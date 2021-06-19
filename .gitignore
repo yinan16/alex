@@ -8,3 +8,5 @@ build/*
 .alex.cache/*
 
 **/python_code_cache/*
+
+reinstall.sh
