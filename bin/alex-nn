@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+
+# ----------------------------------------------------------------------
+# Created: fre jun 18 02:03:33 2021 (+0200)
+# Last-Updated:
+# Filename: chef
+# Author: Yinan Yu
+# Description:
+# ----------------------------------------------------------------------
+
+import os, sys, glob
+from pprint import pprint
+import argparse
+
+from alex.alex import compare, const, util
+from alex.annotators import code_gen
+
+
+def diff(configs, to_png=False, path="./diff.png", verbose=False):
+    if to_png:
+        path = path
+    else:
+        path = None
+
+    config1, config2 = configs
+    cost, operations = compare.diff(config1, config2, render_to=path)
+    if verbose:
+        for operation in operations:
+            if operation[0] != "MATCH":
+                print(operation)
+
+
+def ls(option):
+    if not option:
+        option = "components"
+    # paths = sorted(glob.glob(const.COMPONENT_BASE_PATH+"/[!.]*.yml"))
+    # components = list(map(lambda x: x.split("/")[-1].split(".")[0], paths))
+
+    if option == "components":
+        pprint(list(filter(lambda x: x!="root", const.ALL_COMPONENTS)))
+    elif option == "recipes":
+        pprint(list(filter(lambda x: x!="root", const.ALL_RECIPES)))
+    elif option == "ingredients":
+        pprint(list(const.INGREDIENT_TYPES.keys()))
+    elif option == "initializers":
+        pprint(list(const.ALL_INITIALIZERS.keys()))
+    elif option == "regularizers":
+        pprint(list(const.REGULARIZERS.keys()))
+    elif option == "optimizers":
+        pprint(list(const.OPTIMIZERS.keys()))
+    elif option == "losses":
+        pprint(list(const.LOSSES.keys()))
+
+
+def inspect(component):
+    config = os.path.join(const.COMPONENT_BASE_PATH,
+                          component+".yml")
+    if os.path.exists(config):
+        hyperparam = util.read_yaml(config)
+        pprint(hyperparam)
+    else:
+        if component in const.ALL_COMPONENTS:
+            print("Ingredient %s has no hyperparameter! Alex loves those!" % component)
+        else:
+            print("Oh no ingredient %s does not exist in Alex yet!"
+                  "Help us improve please?" % component)
+
+
+def codegen(engine, config, out_dir, filename):
+    if not engine:
+        engine = "pytorch"
+    if not config:
+        print("Must give a network configuration --config")
+        sys.exit()
+    if not out_dir:
+        out_dir = "./"
+    if not filename:
+        filename = "generated.py"
+    try:
+        code_generator = code_gen.CodeGen(filename,
+                                          config,
+                                          engine=engine,
+                                          dirname=out_dir)
+        code_generator.generate_python()
+        print("Output file %s is generated in dir %s" % (filename, out_dir))
+    except Exception as err:
+        print(err)
+
+
+def merge(config, ckpt):
+    pass
+
+
+def main(fn, kwargs=dict()):
+    fns[fn](**kwargs)
+
+
+if __name__=="__main__":
+
+    if len(sys.argv)<2:
+        print("Choose one of the following: diff, ls, inspect, codegen")
+        sys.exit()
+    fn = sys.argv[1]
+    fns = {"diff": diff,
+           "ls": ls,
+           "inspect": inspect,
+           "codegen": codegen}
+
+    parser = argparse.ArgumentParser(description="Alex network analyzer")
+    subparsers = parser.add_subparsers(help="")
+
+    diff_parser = subparsers.add_parser("diff",
+                                        help="Change log between two networks, e.g. alex-nn diff example_config_1.yml example_config_2.yml")
+    diff_parser.add_argument("configs", metavar="configs", type=str, nargs=2,
+                             help="The orignal and modified network configurations")
+
+    diff_parser.add_argument("--to_png", metavar="Save diff to a png file",
+                             type=str, nargs="?", default=False,
+                             help="Save diff to a png file in the specified path")
+
+    diff_parser.add_argument("--path", metavar="Path",
+                             type=str, nargs="?", default="./diff.png",
+                             help="Path where the png file goes")
+
+    diff_parser.add_argument("--verbose", metavar="Print the diffs",
+                             type=str, nargs="?", default=False,
+                             help="Show the diffs")
+
+    ls_parser = subparsers.add_parser("ls", help="List information, e.g. alex-nn ls [coponents, recipes, ingredients, initializers, regularizers, optimizers, losses]")
+    ls_parser.add_argument("option", metavar="option", type=str, nargs="?",
+                           help="What to ls?")
+
+    inspect_parser = subparsers.add_parser("inspect", help="Inspect hyperparameters of an ingredient, e.g. alex-nn inspect conv")
+    inspect_parser.add_argument("component", metavar="choose a component to inspect, e.g. conv, relu, etc",
+                                type=str,
+                                help="Which component to inspect?")
+
+    codegen_parser = subparsers.add_parser("codegen", help="Generate python code, e.g. alex-nn codegen example_config.yml")
+
+    codegen_parser.add_argument("--engine", metavar="Currently support tf and pytorch",
+                                type=str,
+                                help="Which framework?")
+
+    codegen_parser.add_argument("--config", metavar="Network config path",
+                                type=str,
+                                help="Network configuration")
+
+    codegen_parser.add_argument("--out_dir", metavar="Output dir", default="./",
+                                type=str,
+                                help="Python file will be written to this dir")
+
+    codegen_parser.add_argument("--filename", metavar="Output file name",
+                                type=str,
+                                help="Python file name")
+
+    args = parser.parse_args()
+
+    main(fn, vars(args))
