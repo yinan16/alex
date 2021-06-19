@@ -1,6 +1,6 @@
 <!-- ;; ---------------------------------------------------------------------- -->
 <!-- ;; Created: fre jul 17 19:11:39 2020 (+0200) -->
-<!-- ;; Last-Updated: lör jun 19 22:58:49 2021 (+0200)
+<!-- ;; Last-Updated: sön jun 20 01:13:59 2021 (+0200)
 <!-- ;; Filename: README.md -->
 <!-- ;; Author: Yinan Yu -->
 <!-- ;; Description:  -->
@@ -9,13 +9,13 @@
 
 
 ---
-**Note**
+**Stay tuned!**
 More examples and documentation to come
 
 ---
 # Alex - a neural network analyzer
 
-<img src="./images/logo.png" width="150" alt="Alex logo" title="Alex">
+<img src="https://github.com/yinan16/alex/blob/master/images/logo.png" width="150" alt="Alex logo" title="Alex">
 
 Alex is a Domain Specific Language (DSL) for declaring, representing, analyzing and generating neural networks.
 This DSL can be considered as a configuration file to define a neural network.

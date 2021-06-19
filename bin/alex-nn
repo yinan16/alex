@@ -48,6 +48,8 @@ def ls(option):
         pprint(list(const.OPTIMIZERS.keys()))
     elif option == "losses":
         pprint(list(const.LOSSES.keys()))
+    elif option == "functions":
+        print("type", "name", "input_component", "repeat", "hyperparams", "visible")
 
 
 def inspect(component):
@@ -137,7 +139,7 @@ if __name__=="__main__":
                              help="Resolution of the image")
 
 
-    ls_parser = subparsers.add_parser("ls", help="List information, e.g. alex-nn ls [coponents, recipes, ingredients, initializers, regularizers, optimizers, losses]")
+    ls_parser = subparsers.add_parser("ls", help="List information, e.g. alex-nn ls [functions, coponents, recipes, ingredients, initializers, regularizers, optimizers, losses]")
     ls_parser.add_argument("option", metavar="option", type=str, nargs="?",
                            default="components",
                            help="What to ls?")
