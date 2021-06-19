@@ -12,8 +12,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="alex", # Replace with your own username
-    version="0.0.1",
+    name="alex-nn", # Replace with your own username
+    version="0.0.2",
     author="Yinan Yu",
     author_email="yu.yinan16@gmail.com",
     description="Network analysis",

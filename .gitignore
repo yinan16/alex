@@ -1,5 +1,5 @@
 dist/*
-alex.egg-info/*
+alex_nn.egg-info/*
 build/*
 **/__pycache__/*
 **/python_code_cache/*
