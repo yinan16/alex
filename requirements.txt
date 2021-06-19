@@ -1,0 +1,9 @@
+pandas
+numpy
+pydot==1.4.1
+pyparsing
+scikit-learn==0.23.2
+PyYAML==5.3.1
+jsonschema
+rope
+matplotlib
