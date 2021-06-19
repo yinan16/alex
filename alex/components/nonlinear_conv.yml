@@ -1,0 +1,7 @@
+params_network:
+  - type: conv
+    hyperparams:
+      filters: 64
+  - type: relu
+  - type: pool
+  - type: batch_normalize

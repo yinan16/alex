@@ -1,0 +1,48 @@
+params_network:
+  - type: conv
+    hyperparams:
+      strides:
+        - 2
+        - 2
+      filters:
+        n_filters:
+          512
+  - type: batch_normalize
+  - type: relu
+
+
+  - type: conv
+    hyperparams:
+      strides:
+        - 1
+        - 1
+      filters:
+        shape:
+          n_filters:
+            512
+  - type: batch_normalize
+  - type: relu
+    name: conv1
+
+  - type: conv
+    hyperparams:
+      strides:
+        - 2
+        - 2
+      filters:
+        shape:
+          kernel_size_w:
+            3
+          kernel_size_h:
+            3
+          n_filters:
+            512
+    input_component: input_component
+  - type: batch_normalize
+    name: short_cut_256_512
+
+
+  - type: add
+    input_component:
+      - short_cut_256_512
+      - conv1

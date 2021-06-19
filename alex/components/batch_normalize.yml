@@ -1,0 +1,27 @@
+mean:
+  initializer:
+    zeros_initializer: {}
+  shape:
+    input_shape: channels
+
+variance:
+  initializer:
+    ones_initializer: {}
+  shape:
+    input_shape: channels
+offset:
+  initializer:
+    zeros_initializer: {}
+  shape:
+    input_shape: channels
+scale:
+  initializer:
+    ones_initializer: {}
+  shape:
+    input_shape: channels
+
+momentum:
+  0.1
+
+epsilon:
+  0.001

@@ -1,0 +1,8 @@
+ksize:
+  - 2
+  - 2
+strides:
+  - 2
+  - 2
+padding:
+  VALID

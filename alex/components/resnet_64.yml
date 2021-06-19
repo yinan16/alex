@@ -1,0 +1,32 @@
+params_network:
+  - type:
+      conv
+    hyperparams:
+      strides:
+        - 1
+        - 1
+      filters:
+        shape:
+          n_filters:
+            64
+  - type: batch_normalize
+  - type: relu
+
+  - type:
+      conv
+    hyperparams:
+      strides:
+        - 1
+        - 1
+      filters:
+        shape:
+          n_filters:
+            64
+  - type: batch_normalize
+    name: conv
+
+  - type: add
+    input_component:
+      - input_component
+      - conv
+  - type: relu

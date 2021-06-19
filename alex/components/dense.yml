@@ -1,0 +1,16 @@
+weights:
+  initializer:
+    xavier_uniform: {seed: 2}
+  shape:
+    input_shape: channels
+    n_units:
+      10
+
+bias:
+  dtype:
+    float32
+  initializer:
+    zeros_initializer: {}
+  shape:
+    dim:
+      1

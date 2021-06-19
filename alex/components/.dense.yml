@@ -1,0 +1,40 @@
+"$schema": "http://json-schema.org/draft-07/schema#"
+definitions:
+  dense:
+    type: object
+    additionalProperties: false
+    properties:
+      weights:
+        description: "trainable parameter filters in the dense layer"
+        type: object
+        properties:
+          dtype:
+            type: string
+          initializer:
+            type: object
+          shape:
+            description: "the shape of the trainable paramter"
+            type: object
+            additionalProperties: false
+            properties:
+              input_shape:
+                type: string
+                enum: ["channels"]
+              n_units:
+                type: integer
+      bias:
+        description: "trainable parameter filters in the dense layer"
+        type: object
+        additionalProperties: false
+        properties:
+          dtype:
+            type: string
+          initializer:
+            type: object
+          shape:
+            description: "the shape of the trainable paramter bias"
+            type: object
+            additionalProperties: false
+            properties:
+              dim:
+                type: integer

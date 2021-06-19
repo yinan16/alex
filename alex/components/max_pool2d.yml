@@ -1,0 +1,10 @@
+window_shape:
+  - 3
+  - 3
+strides:
+  - 2
+  - 2
+padding:
+  VALID
+dilation:
+  1

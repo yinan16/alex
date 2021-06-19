@@ -1,0 +1,20 @@
+filters:
+  shape:
+    kernel_size_w:
+      3
+    kernel_size_h:
+      3
+    input_shape:
+      channels
+    n_filters:
+      64
+  initializer:
+    xavier_uniform:
+      seed: 1
+
+padding:
+  SAME
+strides:
+  - 2
+  - 2
+dilation: 1
