@@ -1,0 +1,93 @@
+params_network:
+  - type: data
+    dtype: float32
+    hyperparams:
+      shape:
+        batch_size: null
+        height: 32
+        width: 32
+        channels: 3
+    name: input_data
+
+  - type: label
+    dtype: int64
+    hyperparams:
+      shape:
+        batch_size: null
+        dim: 10
+    name: labels
+
+  - type: conv
+    hyperparams:
+      strides:
+        - 1
+        - 1
+      filters:
+        shape:
+          n_filters:
+            16
+    input_component: input_data
+
+  - type: batch_normalize
+
+  - type: relu
+
+  - type: resnet_16
+    repeat: 1
+
+  - type: resnet_32_short_cut
+
+  - type: resnet_32
+    repeat: 1
+
+  - type: resnet_64_short_cut
+  - type: resnet_64
+    repeat: 1
+
+    name: features
+
+  - type: max_pool2d
+  - type: flatten
+
+  - type: dense
+  - type: dropout
+    name: d_1
+
+# losses:
+  - type:
+      cross_entropy
+    input_component:
+      - labels
+      - d_1
+    name: cross_0
+
+
+  - type:
+      regularizer_l2
+    input_component:
+      - connect_to:
+          range: :-1
+          types:
+            conv: filters
+          scope: all # default: all
+    name: regularizer1
+    visible: True
+
+  - type:
+      add
+    input_component:
+      - cross_0
+      - regularizer1
+    name: losses
+
+# solvers:
+  - type: adam
+    input_component: losses
+    name: solver
+
+
+  # - type: inference
+  #   input_component:
+  #     - labels
+  #     - d_1
+  #   name: inference_1

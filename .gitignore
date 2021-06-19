@@ -2,3 +2,4 @@ dist/*
 alex.egg-info/*
 build/*
 **/__pycache__/*
+**/python_code_cache/*

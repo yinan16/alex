@@ -1,6 +1,6 @@
 <!-- ;; ---------------------------------------------------------------------- -->
 <!-- ;; Created: fre jul 17 19:11:39 2020 (+0200) -->
-<!-- ;; Last-Updated: lör jun 19 22:16:29 2021 (+0200)
+<!-- ;; Last-Updated: lör jun 19 22:24:45 2021 (+0200)
 <!-- ;; Filename: README.md -->
 <!-- ;; Author: Yinan Yu -->
 <!-- ;; Description:  -->
@@ -10,7 +10,7 @@
 
 ---
 **Note**
-More documentations to come
+More examples and documentation to come
 
 ---
 # Alex - a neural network analyzer

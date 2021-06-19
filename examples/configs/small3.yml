@@ -1,0 +1,70 @@
+params_network:
+  - type: data
+    hyperparams:
+      shape:
+        batch_size: null
+        height: 32
+        width: 32
+        channels: 3
+    name: input_data
+
+  - type: label
+    dtype: int64
+    hyperparams:
+      shape:
+        batch_size: null
+        dim: 10
+    name: labels
+
+  - type: conv
+    hyperparams:
+      filters:
+        shape:
+          n_filters:
+            32
+    input_component: input_data
+  - type:
+      relu
+  - type:
+      dropout
+
+  - type: resnet_16
+  - type: flatten
+  - type: dense
+  - type: softmax
+    name: d_1
+  - type: sigmoid
+# losses:
+  - type:
+      cross_entropy
+    input_component:
+      - labels
+      - d_1
+    name: cross_0
+
+  - type:
+      regularizer_l2
+    input_component:
+      - connect_to:
+          range: :-1
+          types:
+            dense: weights
+            conv: filters
+          scope: all # default: all
+    name: regularizer
+    visible: True
+
+  - type:
+      add
+    input_component:
+      - cross_0
+      - regularizer
+    name: losses
+
+# solvers:
+  - type: adam
+    input_component: losses
+    name: solver
+    # hyperparams:
+    #   learning_rate:
+    #     0.1

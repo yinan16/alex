@@ -74,7 +74,7 @@ def annotate_ops(operations):
     return annotation
 
 
-def _diff_graph_list(n1, n2, render_to=None, dpi=300):
+def _diff_graph_list(n1, n2, render_to=None, dpi=100):
     tree1 = core.alex_graph_to_tree(n1, exclude_types=["hyperparam"], naive=False)
     tree2 = core.alex_graph_to_tree(n2, exclude_types=["hyperparam"], naive=False)
     tree_full1 = core.alex_graph_to_tree(n1, naive=False)
@@ -231,7 +231,7 @@ def _distance(i, j, Al, Bl, An, Bn, Anames, Bnames, cost_matrix, operations):
                         operations[x+ioff][y+joff]
 
 
-def _dist_graph_list(graph1, graph2, exclude_types=[], render_to=None, dpi=300):
+def _dist_graph_list(graph1, graph2, exclude_types=[], render_to=None, dpi=100):
     tree1 = core.alex_graph_to_tree(graph1, exclude_types=exclude_types)
     tree2 = core.alex_graph_to_tree(graph2, exclude_types=exclude_types)
     cost, operations = ted(tree1, tree2)
@@ -257,19 +257,24 @@ def _dist_graph_list(graph1, graph2, exclude_types=[], render_to=None, dpi=300):
 
 def diff(network_config_1,
          network_config_2,
-         render_to=None):
+         render_to=None,
+         dpi=100):
     graph_list1 = dsl_parser.parse(network_config_1)
     graph1 = dsl_parser.list_to_graph(graph_list1)
     graph_list2 = dsl_parser.parse(network_config_2)
     graph2 = dsl_parser.list_to_graph(graph_list2)
-    cost, operations = _diff_graph_list(graph1, graph2, render_to=render_to)
+    cost, operations = _diff_graph_list(graph1,
+                                        graph2,
+                                        render_to=render_to,
+                                        dpi=dpi)
     return cost, operations
 
 
 def dist(network_config_1,
          network_config_2,
          render_to=None,
-         exclude_types=[]):
+         exclude_types=[],
+         dpi=100):
     graph_list1 = dsl_parser.parse(network_config_1)
     graph1 = dsl_parser.list_to_graph(graph_list1)
     graph_list2 = dsl_parser.parse(network_config_2)
@@ -277,7 +282,8 @@ def dist(network_config_1,
     cost, operations = _dist_graph_list(graph1,
                                         graph2,
                                         exclude_types=exclude_types,
-                                        render_to=render_to)
+                                        render_to=render_to,
+                                        dpi=dpi)
     return cost, operations
 
 
@@ -290,7 +296,7 @@ def dist(network_config_1,
 def matched_ingredients(network_config_1,
                         network_config_2,
                         render_to=None,
-                        dpi=300):
+                        dpi=100):
     if isinstance(network_config_1, list):
         graph_list1 = deepcopy(network_config_1)
     else:
