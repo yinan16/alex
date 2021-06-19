@@ -1,6 +1,6 @@
 <!-- ;; ---------------------------------------------------------------------- -->
 <!-- ;; Created: fre jul 17 19:11:39 2020 (+0200) -->
-<!-- ;; Last-Updated: lör jun 19 22:46:01 2021 (+0200)
+<!-- ;; Last-Updated: lör jun 19 22:58:49 2021 (+0200)
 <!-- ;; Filename: README.md -->
 <!-- ;; Author: Yinan Yu -->
 <!-- ;; Description:  -->
@@ -20,7 +20,7 @@ More examples and documentation to come
 Alex is a Domain Specific Language (DSL) for declaring, representing, analyzing and generating neural networks.
 This DSL can be considered as a configuration file to define a neural network.
 
-### Dependencies:
+### How to install:
 + `pip install alex-nn`
 
 ## How to run

@@ -13,7 +13,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="alex-nn", # Replace with your own username
-    version="0.0.2",
+    version="0.0.3",
     author="Yinan Yu",
     author_email="yu.yinan16@gmail.com",
     description="Network analysis",
@@ -25,6 +25,17 @@ setuptools.setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
+    ],
+    install_requires=[
+        "pandas",
+        "numpy",
+        "pydot==1.4.1",
+        "pyparsing",
+        "scikit-learn==0.23.2",
+        "PyYAML>=5.4",
+        "jsonschema",
+        "rope",
+        "matplotlib",
     ],
     scripts=["bin/alex-nn"],
     include_package_data=True,

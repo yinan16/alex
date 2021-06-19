@@ -547,7 +547,7 @@ def _user_fn(fn, kwargs):
 
 ######################################### Different views:
 def draw_graph(graph_list, level=2, graph_path='example.png'):
-    graph = pydot.Dot(graph_type='digraph', rankdir='LR', dpi=800, size=30, fontsize=18)
+    graph = pydot.Dot(graph_type='digraph', rankdir='LR', dpi=800, size=5, fontsize=18)
 
     added = []
     for component in graph_list:

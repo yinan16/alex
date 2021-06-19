@@ -316,8 +316,8 @@ def alex_graph_to_tree(network_graph, exclude_types=[], naive=True):
     return tree
 
 
-def draw(tree, graph_path='example.png', annotation=dict(), dpi=300, size=100, label_field="label", excluded_types=[]):
-    graph = pydot.Dot(graph_type='digraph', rankdir='LR', dpi=dpi, size=size, fontsize=18)
+def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, label_field="label", excluded_types=[]):
+    graph = pydot.Dot(graph_type='digraph', rankdir='LR', dpi=dpi, size=size, fontsize=12)
     for component in tree:
         name = component
         if tree[component]["type"] in excluded_types:
