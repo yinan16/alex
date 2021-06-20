@@ -7,56 +7,56 @@ tf_dtypes = {'float32': tf.float32, 'int8': tf.int8}
 
 def get_trainable_params(ckpt):
     trainable_params = dict()
-    xavier_uniform_42144544_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['conv_5fo/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    conv_5fo_filters = tf.Variable(initial_value=xavier_uniform_42144544_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='conv_5fo/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    xavier_uniform_9a70ab4c_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['conv_5fo/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    conv_5fo_filters = tf.Variable(initial_value=xavier_uniform_9a70ab4c_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='conv_5fo/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['conv_5fo/filters'] = conv_5fo_filters
-    zeros_initializer_42144560_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['batch_normalize_11lk/mean']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    batch_normalize_11lk_mean = tf.Variable(initial_value=zeros_initializer_42144560_d13c_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='batch_normalize_11lk/mean', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    zeros_initializer_9a70ab68_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['batch_normalize_11lk/mean']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    batch_normalize_11lk_mean = tf.Variable(initial_value=zeros_initializer_9a70ab68_d1aa_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='batch_normalize_11lk/mean', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['batch_normalize_11lk/mean'] = batch_normalize_11lk_mean
-    zeros_initializer_4214456a_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['batch_normalize_11lk/offset']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    batch_normalize_11lk_offset = tf.Variable(initial_value=zeros_initializer_4214456a_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='batch_normalize_11lk/offset', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    zeros_initializer_9a70ab72_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['batch_normalize_11lk/offset']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    batch_normalize_11lk_offset = tf.Variable(initial_value=zeros_initializer_9a70ab72_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='batch_normalize_11lk/offset', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['batch_normalize_11lk/offset'] = batch_normalize_11lk_offset
-    ones_initializer_42144572_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['batch_normalize_11lk/scale']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    batch_normalize_11lk_scale = tf.Variable(initial_value=ones_initializer_42144572_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='batch_normalize_11lk/scale', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    ones_initializer_9a70ab7a_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['batch_normalize_11lk/scale']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    batch_normalize_11lk_scale = tf.Variable(initial_value=ones_initializer_9a70ab7a_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='batch_normalize_11lk/scale', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['batch_normalize_11lk/scale'] = batch_normalize_11lk_scale
-    ones_initializer_4214457a_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['batch_normalize_11lk/variance']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    batch_normalize_11lk_variance = tf.Variable(initial_value=ones_initializer_4214457a_d13c_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='batch_normalize_11lk/variance', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    ones_initializer_9a70ab82_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['batch_normalize_11lk/variance']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    batch_normalize_11lk_variance = tf.Variable(initial_value=ones_initializer_9a70ab82_d1aa_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='batch_normalize_11lk/variance', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['batch_normalize_11lk/variance'] = batch_normalize_11lk_variance
-    xavier_uniform_42144584_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv_13na/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_conv_13na_filters = tf.Variable(initial_value=xavier_uniform_42144584_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/conv_13na/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    xavier_uniform_9a70ab8c_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv_13na/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_conv_13na_filters = tf.Variable(initial_value=xavier_uniform_9a70ab8c_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/conv_13na/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/conv_13na/filters'] = resnet_16_26aa_conv_13na_filters
-    zeros_initializer_4214459e_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/batch_normalize_15pq/mean']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_batch_normalize_15pq_mean = tf.Variable(initial_value=zeros_initializer_4214459e_d13c_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='resnet_16_26aa/batch_normalize_15pq/mean', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    zeros_initializer_9a70aba6_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/batch_normalize_15pq/mean']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_batch_normalize_15pq_mean = tf.Variable(initial_value=zeros_initializer_9a70aba6_d1aa_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='resnet_16_26aa/batch_normalize_15pq/mean', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/batch_normalize_15pq/mean'] = resnet_16_26aa_batch_normalize_15pq_mean
-    zeros_initializer_421445a8_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/batch_normalize_15pq/offset']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_batch_normalize_15pq_offset = tf.Variable(initial_value=zeros_initializer_421445a8_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/batch_normalize_15pq/offset', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    zeros_initializer_9a70abb0_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/batch_normalize_15pq/offset']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_batch_normalize_15pq_offset = tf.Variable(initial_value=zeros_initializer_9a70abb0_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/batch_normalize_15pq/offset', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/batch_normalize_15pq/offset'] = resnet_16_26aa_batch_normalize_15pq_offset
-    ones_initializer_421445b0_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/batch_normalize_15pq/scale']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_batch_normalize_15pq_scale = tf.Variable(initial_value=ones_initializer_421445b0_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/batch_normalize_15pq/scale', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    ones_initializer_9a70abb8_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/batch_normalize_15pq/scale']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_batch_normalize_15pq_scale = tf.Variable(initial_value=ones_initializer_9a70abb8_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/batch_normalize_15pq/scale', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/batch_normalize_15pq/scale'] = resnet_16_26aa_batch_normalize_15pq_scale
-    ones_initializer_421445b8_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/batch_normalize_15pq/variance']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_batch_normalize_15pq_variance = tf.Variable(initial_value=ones_initializer_421445b8_d13c_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='resnet_16_26aa/batch_normalize_15pq/variance', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    ones_initializer_9a70abc0_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/batch_normalize_15pq/variance']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_batch_normalize_15pq_variance = tf.Variable(initial_value=ones_initializer_9a70abc0_d1aa_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='resnet_16_26aa/batch_normalize_15pq/variance', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/batch_normalize_15pq/variance'] = resnet_16_26aa_batch_normalize_15pq_variance
-    xavier_uniform_421445c2_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv_19tw/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_conv_19tw_filters = tf.Variable(initial_value=xavier_uniform_421445c2_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/conv_19tw/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    xavier_uniform_9a70abca_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv_19tw/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_conv_19tw_filters = tf.Variable(initial_value=xavier_uniform_9a70abca_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/conv_19tw/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/conv_19tw/filters'] = resnet_16_26aa_conv_19tw_filters
-    zeros_initializer_421445dc_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv/mean']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_conv_mean = tf.Variable(initial_value=zeros_initializer_421445dc_d13c_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='resnet_16_26aa/conv/mean', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    zeros_initializer_9a70abe4_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv/mean']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_conv_mean = tf.Variable(initial_value=zeros_initializer_9a70abe4_d1aa_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='resnet_16_26aa/conv/mean', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/conv/mean'] = resnet_16_26aa_conv_mean
-    zeros_initializer_421445e6_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv/offset']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_conv_offset = tf.Variable(initial_value=zeros_initializer_421445e6_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/conv/offset', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    zeros_initializer_9a70abee_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv/offset']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_conv_offset = tf.Variable(initial_value=zeros_initializer_9a70abee_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/conv/offset', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/conv/offset'] = resnet_16_26aa_conv_offset
-    ones_initializer_421445ee_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv/scale']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_conv_scale = tf.Variable(initial_value=ones_initializer_421445ee_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/conv/scale', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    ones_initializer_9a70abf6_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv/scale']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_conv_scale = tf.Variable(initial_value=ones_initializer_9a70abf6_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='resnet_16_26aa/conv/scale', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/conv/scale'] = resnet_16_26aa_conv_scale
-    ones_initializer_421445f6_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv/variance']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    resnet_16_26aa_conv_variance = tf.Variable(initial_value=ones_initializer_421445f6_d13c_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='resnet_16_26aa/conv/variance', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    ones_initializer_9a70abfe_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['resnet_16_26aa/conv/variance']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    resnet_16_26aa_conv_variance = tf.Variable(initial_value=ones_initializer_9a70abfe_d1aa_11eb_99c7_8facf688c982, trainable=False, caching_device=None, name='resnet_16_26aa/conv/variance', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['resnet_16_26aa/conv/variance'] = resnet_16_26aa_conv_variance
-    zeros_initializer_421445fe_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['dense_30eg/bias']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    dense_30eg_bias = tf.Variable(initial_value=zeros_initializer_421445fe_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='dense_30eg/bias', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    zeros_initializer_9a70ac06_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['dense_30eg/bias']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    dense_30eg_bias = tf.Variable(initial_value=zeros_initializer_9a70ac06_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='dense_30eg/bias', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['dense_30eg/bias'] = dense_30eg_bias
-    xavier_uniform_42144606_d13c_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['dense_30eg/weights']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    dense_30eg_weights = tf.Variable(initial_value=xavier_uniform_42144606_d13c_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='dense_30eg/weights', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    xavier_uniform_9a70ac0e_d1aa_11eb_99c7_8facf688c982 = tf.convert_to_tensor(value=np.asarray(ckpt['dense_30eg/weights']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    dense_30eg_weights = tf.Variable(initial_value=xavier_uniform_9a70ac0e_d1aa_11eb_99c7_8facf688c982, trainable=True, caching_device=None, name='dense_30eg/weights', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['dense_30eg/weights'] = dense_30eg_weights
     return trainable_params
 
@@ -88,8 +88,8 @@ def get_loss(trainable_params, inputs):
 
 
 def get_optimizer(trainable_params):
-    exponential_decay_42144618_d13c_11eb_99c7_8facf688c982 = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate=0.0001, decay_steps=100000, decay_rate=0.96, staircase=True)
-    solver = tf.optimizers.Adam(learning_rate=exponential_decay_42144618_d13c_11eb_99c7_8facf688c982, beta_1=0.9, beta_2=0.999, epsilon=1e-08, name='solver')
+    exponential_decay_9a70ac20_d1aa_11eb_99c7_8facf688c982 = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate=0.0001, decay_steps=100000, decay_rate=0.96, staircase=True)
+    solver = tf.optimizers.Adam(learning_rate=exponential_decay_9a70ac20_d1aa_11eb_99c7_8facf688c982, beta_1=0.9, beta_2=0.999, epsilon=1e-08, name='solver')
     return solver 
 
 

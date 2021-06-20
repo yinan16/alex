@@ -4,7 +4,7 @@ alex_nn.egg-info/*
 build/*
 
 **/__pycache__/*
-
+**/.ipynb_checkpoints/*
 .alex.cache/*
 
 **/python_code_cache/*

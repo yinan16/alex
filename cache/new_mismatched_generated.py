@@ -24,32 +24,32 @@ class Model(torch.nn.Module):
     @staticmethod
     def get_trainable_params(ckpt):
         trainable_params = dict()
-        xavier_uniform_46c9d540_d13c_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['conv_5fo/filters']), dtype=torch_types['float32'], device=device)
-        conv_5fo_filters = torch.nn.parameter.Parameter(data=xavier_uniform_46c9d540_d13c_11eb_99c7_8facf688c982, requires_grad=True)
+        xavier_uniform_a0a939d4_d1aa_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['conv_5fo/filters']), dtype=torch_types['float32'], device=device)
+        conv_5fo_filters = torch.nn.parameter.Parameter(data=xavier_uniform_a0a939d4_d1aa_11eb_99c7_8facf688c982, requires_grad=True)
         trainable_params['conv_5fo/filters'] = conv_5fo_filters
-        zeros_initializer_46c9d55c_d13c_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['batch_normalize_11lk/mean']), dtype=torch_types['float32'], device=device)
-        batch_normalize_11lk_mean = torch.nn.parameter.Parameter(data=zeros_initializer_46c9d55c_d13c_11eb_99c7_8facf688c982, requires_grad=False)
+        zeros_initializer_a0a939f0_d1aa_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['batch_normalize_11lk/mean']), dtype=torch_types['float32'], device=device)
+        batch_normalize_11lk_mean = torch.nn.parameter.Parameter(data=zeros_initializer_a0a939f0_d1aa_11eb_99c7_8facf688c982, requires_grad=False)
         trainable_params['batch_normalize_11lk/mean'] = batch_normalize_11lk_mean
-        zeros_initializer_46c9d566_d13c_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['batch_normalize_11lk/offset']), dtype=torch_types['float32'], device=device)
-        batch_normalize_11lk_offset = torch.nn.parameter.Parameter(data=zeros_initializer_46c9d566_d13c_11eb_99c7_8facf688c982, requires_grad=True)
+        zeros_initializer_a0a939fa_d1aa_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['batch_normalize_11lk/offset']), dtype=torch_types['float32'], device=device)
+        batch_normalize_11lk_offset = torch.nn.parameter.Parameter(data=zeros_initializer_a0a939fa_d1aa_11eb_99c7_8facf688c982, requires_grad=True)
         trainable_params['batch_normalize_11lk/offset'] = batch_normalize_11lk_offset
-        ones_initializer_46c9d56e_d13c_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['batch_normalize_11lk/scale']), dtype=torch_types['float32'], device=device)
-        batch_normalize_11lk_scale = torch.nn.parameter.Parameter(data=ones_initializer_46c9d56e_d13c_11eb_99c7_8facf688c982, requires_grad=True)
+        ones_initializer_a0a93a02_d1aa_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['batch_normalize_11lk/scale']), dtype=torch_types['float32'], device=device)
+        batch_normalize_11lk_scale = torch.nn.parameter.Parameter(data=ones_initializer_a0a93a02_d1aa_11eb_99c7_8facf688c982, requires_grad=True)
         trainable_params['batch_normalize_11lk/scale'] = batch_normalize_11lk_scale
-        ones_initializer_46c9d576_d13c_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['batch_normalize_11lk/variance']), dtype=torch_types['float32'], device=device)
-        batch_normalize_11lk_variance = torch.nn.parameter.Parameter(data=ones_initializer_46c9d576_d13c_11eb_99c7_8facf688c982, requires_grad=False)
+        ones_initializer_a0a93a0a_d1aa_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['batch_normalize_11lk/variance']), dtype=torch_types['float32'], device=device)
+        batch_normalize_11lk_variance = torch.nn.parameter.Parameter(data=ones_initializer_a0a93a0a_d1aa_11eb_99c7_8facf688c982, requires_grad=False)
         trainable_params['batch_normalize_11lk/variance'] = batch_normalize_11lk_variance
-        xavier_uniform_46c9d580_d13c_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['conv_13na/filters']), dtype=torch_types['float32'], device=device)
-        conv_13na_filters = torch.nn.parameter.Parameter(data=xavier_uniform_46c9d580_d13c_11eb_99c7_8facf688c982, requires_grad=True)
+        xavier_uniform_a0a93a14_d1aa_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['conv_13na/filters']), dtype=torch_types['float32'], device=device)
+        conv_13na_filters = torch.nn.parameter.Parameter(data=xavier_uniform_a0a93a14_d1aa_11eb_99c7_8facf688c982, requires_grad=True)
         trainable_params['conv_13na/filters'] = conv_13na_filters
-        xavier_uniform_46c9d59a_d13c_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['conv_15pq/filters']), dtype=torch_types['float32'], device=device)
-        conv_15pq_filters = torch.nn.parameter.Parameter(data=xavier_uniform_46c9d59a_d13c_11eb_99c7_8facf688c982, requires_grad=True)
+        xavier_uniform_a0a93a2e_d1aa_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['conv_15pq/filters']), dtype=torch_types['float32'], device=device)
+        conv_15pq_filters = torch.nn.parameter.Parameter(data=xavier_uniform_a0a93a2e_d1aa_11eb_99c7_8facf688c982, requires_grad=True)
         trainable_params['conv_15pq/filters'] = conv_15pq_filters
-        zeros_initializer_46c9d5b2_d13c_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['dense_19tw/bias']), dtype=torch_types['float32'], device=device)
-        dense_19tw_bias = torch.nn.parameter.Parameter(data=zeros_initializer_46c9d5b2_d13c_11eb_99c7_8facf688c982, requires_grad=True)
+        zeros_initializer_a0a93a46_d1aa_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['dense_19tw/bias']), dtype=torch_types['float32'], device=device)
+        dense_19tw_bias = torch.nn.parameter.Parameter(data=zeros_initializer_a0a93a46_d1aa_11eb_99c7_8facf688c982, requires_grad=True)
         trainable_params['dense_19tw/bias'] = dense_19tw_bias
-        xavier_uniform_46c9d5ba_d13c_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['dense_19tw/weights']), dtype=torch_types['float32'], device=device)
-        dense_19tw_weights = torch.nn.parameter.Parameter(data=xavier_uniform_46c9d5ba_d13c_11eb_99c7_8facf688c982, requires_grad=True)
+        xavier_uniform_a0a93a4e_d1aa_11eb_99c7_8facf688c982 = torch.as_tensor(data=np.asarray(ckpt['dense_19tw/weights']), dtype=torch_types['float32'], device=device)
+        dense_19tw_weights = torch.nn.parameter.Parameter(data=xavier_uniform_a0a93a4e_d1aa_11eb_99c7_8facf688c982, requires_grad=True)
         trainable_params['dense_19tw/weights'] = dense_19tw_weights
         return trainable_params
     
@@ -75,7 +75,7 @@ class Model(torch.nn.Module):
     
     @staticmethod
     def get_optimizer(trainable_params):
-        exponential_decay_46c9d5cc_d13c_11eb_99c7_8facf688c982 = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.96, last_epoch=-1, verbose=False)
+        exponential_decay_a0a93a60_d1aa_11eb_99c7_8facf688c982 = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.96, last_epoch=-1, verbose=False)
         solver = torch.optim.Adam(params=trainable_params, lr=0.0001, betas=(0.9, 0.999), eps=1e-08)
         return solver 
     
