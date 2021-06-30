@@ -192,7 +192,9 @@ def alex_graph_to_json(graph,
                        root_name="root",
                        json_obj=collections.OrderedDict(),
                        naive=True,
-                       position: list = [None, None]):
+                       position: dict = {"input_component": None,
+                                         "component": None,
+                                         "input_shape": None}):
     """
     This function converts alex graph into a json object.
     A node can be a recipe, an ingredient or a hyperparameter
@@ -212,8 +214,9 @@ def alex_graph_to_json(graph,
     graph = deepcopy(graph)
     json_obj = deepcopy(json_obj)
     if isinstance(graph, dict) and "subgraph" in graph and isinstance(graph["subgraph"], dict): # is recipe
-        _position = [graph["input_component"],
-                     root_name]
+        _position = {"input_component": graph["input_component"],
+                     "component": root_name,
+                     "input_shape": None}
         root_name = {"value": graph["type"],
                      "label": graph["type"],
                      "name": root_name,
@@ -222,12 +225,14 @@ def alex_graph_to_json(graph,
         root_name = str(root_name)
         json_obj[root_name] = collections.OrderedDict()
         for _name, _graph in graph["subgraph"].items():
+            _position = {"input_component": _graph["input_component"],
+                         "component": _name,
+                         "input_shape": None}
             graph, _json_obj = alex_graph_to_json(_graph,
                                                   _name,
                                                   collections.OrderedDict(),
                                                   naive=naive,
-                                                  position=[_graph["input_component"],
-                                                            _name])
+                                                  position=_position)
             json_obj[root_name].update(_json_obj)
     else: # if is ingredient or hyperparameters
         if isinstance(graph, dict) and "hyperparams" in graph:
@@ -241,8 +246,9 @@ def alex_graph_to_json(graph,
                     # encoded_name = root_name
                     label = graph["type"]
 
-                _position = [graph["input_component"],
-                             root_name]
+                _position = {"input_component": graph["input_component"],
+                             "component": root_name,
+                             "input_shape": None}
                 root_name = {"value": graph["type"],
                              "label": label,
                              "name": root_name,
@@ -261,12 +267,14 @@ def alex_graph_to_json(graph,
                     json_obj[root_name].update(_json_obj)
 
             else:
+                _position = {"input_component": graph["input_component"],
+                             "component": root_name,
+                             "input_shape": None}
                 root_name = {"value": graph["type"],
                              "label": graph["type"],
                              "name": root_name,
                              "meta": {"hyperparams": {},
-                                      "position": [graph["input_component"],
-                                                   root_name]}}
+                                      "position": _position}}
                 root_name = str(root_name)
 
                 json_obj[root_name] = None
@@ -275,7 +283,7 @@ def alex_graph_to_json(graph,
             _root_name = deepcopy(root_name)
             root_name = {"value": root_name,
                          "label": root_name,
-                         "name": "%s/%s" % (position[1], root_name),
+                         "name": "%s/%s" % (position["component"], root_name),
                          "meta": {"hyperparams": graph,
                                   "position": position}}
             root_name = str(root_name)
@@ -297,7 +305,7 @@ def alex_graph_to_json(graph,
                     _label = str(_graph)
                     _json_value = {"value": _label,
                                    "label": _label,
-                                   "name": "%s/%s" % (position[1], root_name),
+                                   "name": "%s/%s" % (position["component"], root_name),
                                    "meta": {"hyperparams": graph,
                                             "position": position}}
 
@@ -306,7 +314,7 @@ def alex_graph_to_json(graph,
                 _label = str(graph)
                 _json_value = {"value": _label,
                                "label": _label,
-                               "name": "%s/%s" % (position[1], root_name),
+                               "name": "%s/%s" % (position["component"], root_name),
                                "meta": {"hyperparams": graph,
                                         "position": position}}
 
@@ -398,7 +406,6 @@ def json_to_tree(json,
 
 def alex_graph_to_tree(network_graph, exclude_types=[], naive=True):
     _, json_obj = alex_graph_to_json(network_graph, naive=naive)
-    pprint(json_obj)
 
     tree = json_to_tree(json_obj,
                         exclude_types=exclude_types)

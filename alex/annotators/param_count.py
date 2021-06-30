@@ -57,18 +57,15 @@ class Conv2D(Ingredient):
         super().__init__(*args, **kwargs)
 
     def get_shape(self, input_shape, name, annotated):
-        padding = core.get_descendant_args_by_value("padding",
-                                                    name,
-                                                    annotated)[0]
-        strides = list(map(int, core.get_descendant_args_by_value("strides",
-                                                                  name,
-                                                                  annotated)))
-        dilation = int(core.get_descendant_args_by_value("dilation",
-                                                         name,
-                                                         annotated)[0])
-        filters_shape = core.get_child_by_value("filters", name, annotated)["shape"]
-        k_h = filters_shape[1]
-        k_w = filters_shape[2]
+        hyperparams = annotated[name]["meta"]["hyperparams"]
+        pprint(hyperparams)
+        strides = hyperparams["strides"]
+        dilation = hyperparams["dilation"]
+        padding = hyperparams["padding"]
+        filters_shape = hyperparams["filters"]["shape"]
+        k_h = int(filters_shape["kernel_size_h"])
+        k_w = int(filters_shape["kernel_size_w"])
+        n_filters = int(filters_shape["n_filters"])
         h = input_shape[0]
         w = input_shape[1]
         if padding == "SAME":
@@ -77,7 +74,7 @@ class Conv2D(Ingredient):
             padding = [0, 0]
         shape = [floor((h + 2*padding[0] - dilation*(k_h-1) - 1)/strides[0] + 1),
                  floor((w + 2*padding[1] - dilation*(k_w-1) - 1)/strides[1] + 1),
-                 int(filters_shape[-1])]
+                 n_filters]
         return shape
 
 
@@ -87,18 +84,12 @@ class MaxPool2D(Ingredient):
         super().__init__(*args, **kwargs)
 
     def get_shape(self, input_shape, name, annotated):
-        padding = core.get_descendant_args_by_value("padding",
-                                                    name,
-                                                    annotated)[0]
-        strides = list(map(int, core.get_descendant_args_by_value("strides",
-                                                                  name,
-                                                                  annotated)))
-        dilation = int(core.get_descendant_args_by_value("dilation",
-                                                         name,
-                                                         annotated)[0])
-        kernel_shape = core.get_descendant_args_by_value("window_shape",
-                                                         name,
-                                                         annotated)
+        hyperparams = annotated[name]["meta"]["hyperparams"]
+        padding = hyperparams["padding"]
+        strides = hyperparams["strides"]
+        dilation = hyperparams["dilation"]
+        kernel_shape = hyperparams["kernel_shape"]
+
         k_h = int(kernel_shape[0])
         k_w = int(kernel_shape[1])
         h = input_shape[0]
@@ -120,16 +111,13 @@ class Conv2DFilters(Hyperparam):
         self.trainable = True
 
     def get_shape(self, input_shape, name, annotated):
+        print(name)
+        pprint(annotated[name])
+        shape = annotated[name]["meta"]["hyperparams"]["shape"]
         return [input_shape[-1],
-                int(core.get_descendant_args_by_value("kernel_size_h",
-                                                      name,
-                                                      annotated)[0]),
-                int(core.get_descendant_args_by_value("kernel_size_w",
-                                                      name,
-                                                      annotated)[0]),
-                int(core.get_descendant_args_by_value("n_filters",
-                                                      name,
-                                                      annotated)[0])]
+                shape["kernel_size_h"],
+                shape["kernel_size_w"],
+                shape["n_filters"]]
 
 
 class DenseWeights(Hyperparam):
@@ -140,9 +128,7 @@ class DenseWeights(Hyperparam):
 
     def get_shape(self, input_shape, name, annotated):
         return [input_shape[-1],
-                int(core.get_descendant_args_by_value("n_units",
-                                                      name,
-                                                      annotated)[0])]
+                annotated[name]["meta"]["hyperparams"]["shape"]["n_units"]]
 
 
 class DenseBias(Hyperparam):

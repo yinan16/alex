@@ -335,6 +335,6 @@ def matched_ingredients(network_config_1,
             component_type = operation[1][1].split("_uuid_")[0]
             if component_type in const.PARAMS:
                 matched = {**matched,
-                           **{operation[0][0].split("_uuid_")[1]:
-                              operation[0][1].split("_uuid_")[1]}}
+                           **{operation[0][0]:
+                              operation[0][1]}}
     return matched
