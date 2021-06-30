@@ -176,11 +176,20 @@ def prepend_component_name(data, name):
 
 
 import ast
+import traceback
+
+
 def get_param(params, param):
-    params = ast.literal_eval(params)
-    if isinstance(params, str):
+    try:
+        params = ast.literal_eval(params)
+    except:
+        # print("Error when parsing", params)
+        # traceback.print_exc()
+        # params is treated as a string literal
+        pass
+    if not isinstance(params, dict):
         if param == "name":
-            return "%s_%s" % (params, str(uuid.uuid1()))
+            return "%s_%s" % (str(params), str(uuid.uuid1()))
         else:
             return params
     if param not in params:
