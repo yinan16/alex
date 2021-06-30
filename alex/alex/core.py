@@ -141,7 +141,7 @@ def get_descendant_args_by_value(value, root, tree):
             return children
 
 
-def instantiate_node(name, label, value, parent, children, descendants):
+def instantiate_node(name, label, value, meta, parent, children, descendants):
     node = dict()
     node["name"] = name
     node["label"] = label
@@ -151,6 +151,7 @@ def instantiate_node(name, label, value, parent, children, descendants):
     node["parent"] = parent
     node["lmd"] = descendants[0] if len(descendants)>=1 else name
     node["type"] = get_value_type(label)
+    node["meta"] = meta
     return node
 
 
@@ -174,22 +175,35 @@ def prepend_component_name(data, name):
     return new_data, name
 
 
+import ast
+def get_param(params, param):
+    params = ast.literal_eval(params)
+    if isinstance(params, str):
+        if param == "name":
+            return "%s_%s" % (params, str(uuid.uuid1()))
+        else:
+            return params
+    if param not in params:
+        raise Exception("param %s not recgonized" % str(param))
+    return params[param]
+
+
 def alex_graph_to_json(graph,
                        root_name="root",
                        json_obj=collections.OrderedDict(),
                        naive=True,
-                       position: list = [None]):
+                       position: list = [None, None]):
     """
     This function converts alex graph into a json object.
     A node can be a recipe, an ingredient or a hyperparameter
     All info of a node is encoded into a string
     Rules:
     "#" separated
-    keys: type, encoded_name, hyperparams, [in, name]
+    keys: value, name, hyperparams, [in, name]
 
-    - Recipe: "$type#$encoded_name##str([$input_names, $name])"
+    - Recipe: "$type#$name#{}#str([$input_names, $name])"
     - Ingredient: "$type#$name#$hyperparameters#str([$input_names, $name])"
-    - Hyperparam: "$type#$name##str([$input_names, $ancestor_ingredient_name])"
+    - Hyperparam: "$type#$name#{}#str([$input_names, $ancestor_ingredient_name])"
 
     """
     if isinstance(graph, dict) and ("visible" in graph) and not graph["visible"]:
@@ -200,10 +214,12 @@ def alex_graph_to_json(graph,
     if isinstance(graph, dict) and "subgraph" in graph and isinstance(graph["subgraph"], dict): # is recipe
         _position = [graph["input_component"],
                      root_name]
-        root_name = "%s#%s#%s#%s" % (graph["type"],
-                                     root_name,
-                                     "",
-                                     str(_position))
+        root_name = {"value": graph["type"],
+                     "label": graph["type"],
+                     "name": root_name,
+                     "meta": {"hyperparams": {},
+                              "position": _position}}
+        root_name = str(root_name)
         json_obj[root_name] = collections.OrderedDict()
         for _name, _graph in graph["subgraph"].items():
             graph, _json_obj = alex_graph_to_json(_graph,
@@ -216,18 +232,24 @@ def alex_graph_to_json(graph,
     else: # if is ingredient or hyperparameters
         if isinstance(graph, dict) and "hyperparams" in graph:
             if len(graph["hyperparams"]) != 0: # if is ingredient with hyperparameter
-                hyperparam_str = json.dumps(graph["hyperparams"], sort_keys=True)
+                hyperparam_str = str(graph["hyperparams"])
                 if not naive:
                     # hyperparam_str = str(uuid.uuid3(uuid.NAMESPACE_DNS, json.dumps(graph["hyperparams"], sort_keys=True)))
-                    encoded_name = "%s_uuid_%s" % (root_name, hyperparam_str)
+                    label = "%s_uuid_%s" % (graph["type"], hyperparam_str)
+                    # encoded_name = "%s_uuid_%s" % (root_name, hyperparam_str)
                 else:
-                    encoded_name = root_name
+                    # encoded_name = root_name
+                    label = graph["type"]
+
                 _position = [graph["input_component"],
                              root_name]
-                root_name = "%s#%s#%s#%s" % (graph["type"],
-                                             encoded_name,
-                                             hyperparam_str,
-                                             str(_position))
+                root_name = {"value": graph["type"],
+                             "label": label,
+                             "name": root_name,
+                             "meta": {"hyperparams": graph["hyperparams"],
+                                      "position": _position}}
+                root_name = str(root_name)
+
                 json_obj[root_name] = collections.OrderedDict()
 
                 for _name, _graph in graph["hyperparams"].items():
@@ -239,21 +261,29 @@ def alex_graph_to_json(graph,
                     json_obj[root_name].update(_json_obj)
 
             else:
-                root_name = "%s#%s#%s#%s" % (graph["type"],
-                                             root_name,
-                                             "",
-                                             str([graph["input_component"],
-                                                  root_name]))
+                root_name = {"value": graph["type"],
+                             "label": graph["type"],
+                             "name": root_name,
+                             "meta": {"hyperparams": {},
+                                      "position": [graph["input_component"],
+                                                   root_name]}}
+                root_name = str(root_name)
+
                 json_obj[root_name] = None
 
         else: # hyperparam tree
-            root_name = "%s#%s#%s#%s" % (root_name,
-                                         "%s/%s" % (position[1], root_name),
-                                         "",
-                                         str(position))
-            json_obj[root_name] = collections.OrderedDict()
+            _root_name = deepcopy(root_name)
+            root_name = {"value": root_name,
+                         "label": root_name,
+                         "name": "%s/%s" % (position[1], root_name),
+                         "meta": {"hyperparams": graph,
+                                  "position": position}}
+            root_name = str(root_name)
             if isinstance(graph, dict):
+
+                json_obj[root_name] = collections.OrderedDict()
                 for _name, _graph in graph.items():
+                    _name = "%s/%s" % (_root_name, _name)
                     graph, _json_obj = alex_graph_to_json(_graph,
                                                           _name,
                                                           collections.OrderedDict(),
@@ -264,9 +294,23 @@ def alex_graph_to_json(graph,
             elif isinstance(graph, list):
                 json_obj[root_name] = []
                 for _graph in graph:
-                    json_obj[root_name].append(str(_graph))
+                    _label = str(_graph)
+                    _json_value = {"value": _label,
+                                   "label": _label,
+                                   "name": "%s/%s" % (position[1], root_name),
+                                   "meta": {"hyperparams": graph,
+                                            "position": position}}
+
+                    json_obj[root_name].append(str(_json_value))
             else:
-                json_obj[root_name] = str(graph)
+                _label = str(graph)
+                _json_value = {"value": _label,
+                               "label": _label,
+                               "name": "%s/%s" % (position[1], root_name),
+                               "meta": {"hyperparams": graph,
+                                        "position": position}}
+
+                json_obj[root_name] = str(_json_value)
 
 
     return graph, json_obj
@@ -277,16 +321,13 @@ def json_to_tree(json,
                  name_root="root",
                  parent_name=None,
                  tree=collections.OrderedDict(),
-                 get_name=lambda x: "%s_%s" % (x, str(uuid.uuid1())),
-                 get_label=lambda x: x,
-                 get_value=lambda x: x,
                  exclude_types=[]):
     json = deepcopy(json)
     tree = deepcopy(tree)
 
     children = []
     descendants = []
-    if root is not None and get_value_type(get_value(root)) in exclude_types:
+    if root is not None and get_value_type(get_param(root, "value")) in exclude_types:
         return tree
 
     if type(json) == dict:
@@ -294,8 +335,8 @@ def json_to_tree(json,
     elif type(json) == collections.OrderedDict:
         items = json.items()
     for node, _json in items:
-        name = get_name(node)
-        if get_value_type(get_value(node)) in exclude_types:
+        name = get_param(node, "name")
+        if get_value_type(get_param(node, "value")) in exclude_types:
             continue
         _descendants = []
         if isinstance(_json, dict):
@@ -304,38 +345,40 @@ def json_to_tree(json,
                                 name,
                                 name_root,
                                 tree,
-                                get_name=get_name,
-                                get_label=get_label,
-                                get_value=get_value,
                                 exclude_types=exclude_types)
             _descendants = tree[name]["descendants"]
         else:
             if isinstance(_json, list):
                 for _item in _json:
-                    _name = get_name(str(_item))
-                    _label = str(_item)
+                    _name = get_param(str(_item), "name")
+                    _label = get_param(str(_item), "label")
+                    _meta = get_param(str(_item), "meta")
                     if get_value_type(_label) not in exclude_types:
                         tree[_name] = instantiate_node(_name,
                                                        _label,
                                                        _item,
+                                                       _meta,
                                                        name,
                                                        [], [])
                         _descendants.append(_name)
             else:
                 if _json is not None:
-                    _name = get_name(str(_json))
-                    _label = str(_json)
+                    _name = get_param(str(_json), "name")
+                    _label = get_param(str(_json), "label")
+                    _meta = get_param(str(_json), "meta")
                     if get_value_type(_label) not in exclude_types:
                         tree[_name] = instantiate_node(_name,
                                                        _label,
                                                        _json,
+                                                       _meta,
                                                        name,
                                                        [], [])
                         _descendants = [_name]
 
             tree[name] = instantiate_node(name,
-                                          get_label(node),
-                                          get_value(node),
+                                          get_param(node, "label"),
+                                          get_param(node, "value"),
+                                          get_param(node, "meta"),
                                           name_root,
                                           _descendants,
                                           _descendants)
@@ -344,8 +387,9 @@ def json_to_tree(json,
             children.append(name)
     if root is not None:
         tree[name_root] = instantiate_node(name_root,
-                                           get_label(root),
-                                           get_value(root),
+                                           get_param(root, "label"),
+                                           get_param(root, "value"),
+                                           get_param(root, "meta"),
                                            parent_name,
                                            children,
                                            descendants)
@@ -355,27 +399,8 @@ def json_to_tree(json,
 def alex_graph_to_tree(network_graph, exclude_types=[], naive=True):
     _, json_obj = alex_graph_to_json(network_graph, naive=naive)
     pprint(json_obj)
-    _get_name = lambda x: x.split("#")[1] if "#" in x else "%s_%s" % (x, str(uuid.uuid1()))
-    _get_value = lambda x: x.split("#")[0] if "#" in x else str(x)
-    if naive:
-        _get_label = _get_value
-    else:
-        def _get_label(x):
-            if "#" in x:
-                _type = x.split("#")[0]
-                _name = x.split("#")[1]
-                if "_uuid_" in _name:
-                    label =  "%s_uuid_%s" % (_type, _name.split("_uuid_")[0])
-                else:
-                    label = _type
-            else:
-                label = str(x)
-            return label
 
     tree = json_to_tree(json_obj,
-                        get_name = _get_name,
-                        get_label = _get_label,
-                        get_value = _get_value,
                         exclude_types=exclude_types)
     return tree
 
