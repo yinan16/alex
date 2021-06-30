@@ -6,9 +6,11 @@
 # Description:
 # ----------------------------------------------------------------------
 
-from alex.alex import checkpoint, const, dsl_parser, schema, compare, util
+from alex.alex import checkpoint, const, dsl_parser, schema, compare, util, core
+
 
 __all__ = ["checkpoint",
+           "core",
            "const",
            "dsl_parser",
            "schema",
