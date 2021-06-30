@@ -198,14 +198,7 @@ def alex_graph_to_json(graph,
     """
     This function converts alex graph into a json object.
     A node can be a recipe, an ingredient or a hyperparameter
-    All info of a node is encoded into a string
-    Rules:
-    "#" separated
-    keys: value, name, hyperparams, [in, name]
-
-    - Recipe: "$type#$name#{}#str([$input_names, $name])"
-    - Ingredient: "$type#$name#$hyperparameters#str([$input_names, $name])"
-    - Hyperparam: "$type#$name#{}#str([$input_names, $ancestor_ingredient_name])"
+    All info of a node is encoded into a json sstring
 
     """
     if isinstance(graph, dict) and ("visible" in graph) and not graph["visible"]:
@@ -241,9 +234,7 @@ def alex_graph_to_json(graph,
                 if not naive:
                     # hyperparam_str = str(uuid.uuid3(uuid.NAMESPACE_DNS, json.dumps(graph["hyperparams"], sort_keys=True)))
                     label = "%s_uuid_%s" % (graph["type"], hyperparam_str)
-                    # encoded_name = "%s_uuid_%s" % (root_name, hyperparam_str)
                 else:
-                    # encoded_name = root_name
                     label = graph["type"]
 
                 _position = {"input_component": graph["input_component"],
@@ -255,7 +246,6 @@ def alex_graph_to_json(graph,
                              "meta": {"hyperparams": graph["hyperparams"],
                                       "position": _position}}
                 root_name = str(root_name)
-
                 json_obj[root_name] = collections.OrderedDict()
 
                 for _name, _graph in graph["hyperparams"].items():
@@ -281,9 +271,9 @@ def alex_graph_to_json(graph,
 
         else: # hyperparam tree
             _root_name = deepcopy(root_name)
-            root_name = {"value": root_name,
-                         "label": root_name,
-                         "name": "%s/%s" % (position["component"], root_name),
+            root_name = {"value": _root_name.split("/")[-1],
+                         "label": _root_name,
+                         "name": "%s/%s" % (position["component"], _root_name),
                          "meta": {"hyperparams": graph,
                                   "position": position}}
             root_name = str(root_name)
@@ -308,7 +298,6 @@ def alex_graph_to_json(graph,
                                    "name": "%s/%s" % (position["component"], root_name),
                                    "meta": {"hyperparams": graph,
                                             "position": position}}
-
                     json_obj[root_name].append(str(_json_value))
             else:
                 _label = str(graph)
@@ -361,10 +350,11 @@ def json_to_tree(json,
                     _name = get_param(str(_item), "name")
                     _label = get_param(str(_item), "label")
                     _meta = get_param(str(_item), "meta")
+                    _value = get_param(str(_item), "value")
                     if get_value_type(_label) not in exclude_types:
                         tree[_name] = instantiate_node(_name,
                                                        _label,
-                                                       _item,
+                                                       _value,
                                                        _meta,
                                                        name,
                                                        [], [])
@@ -374,10 +364,11 @@ def json_to_tree(json,
                     _name = get_param(str(_json), "name")
                     _label = get_param(str(_json), "label")
                     _meta = get_param(str(_json), "meta")
+                    _value = get_param(str(_json), "value")
                     if get_value_type(_label) not in exclude_types:
                         tree[_name] = instantiate_node(_name,
                                                        _label,
-                                                       _json,
+                                                       _value,
                                                        _meta,
                                                        name,
                                                        [], [])

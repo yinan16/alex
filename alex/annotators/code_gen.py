@@ -345,7 +345,6 @@ class Function(param_count.Hyperparam):
         node = deepcopy(node)
         args = dict()
         return_symbol = _name_strs_to_names(node["name"])
-
         children = core.get_children(node["name"], annotated)
         for child in children:
             _node_type = child["code"]["type"]
@@ -376,7 +375,6 @@ class Value(param_count.Hyperparam):
         super().__init__(*args, **kwargs)
 
     def generate_code(self, node, annotated, engine):
-
         if "padding" in node["parent"] and engine=="pytorch":
             if node["value"] == "SAME":
                 _value = [1, 1]
@@ -405,10 +403,7 @@ class Shape(param_count.Hyperparam):
                               core.get_parent(node["name"],
                                               annotated,
                                               "value"))
-        return_symbol = _name_strs_to_names("%s_%s_shape" % (node["ancestor"]["name"],
-                                                             core.get_parent(node["name"],
-                                                                             annotated,
-                                                                             "value")))
+        return_symbol = _name_strs_to_names(node["name"])
 
         children = core.get_children(node["name"], annotated)
         for child in children:
@@ -595,6 +590,7 @@ def nodes(node):
         value = "ingredient"
     elif node["value"] in const.SCHEDULER_BLOCK:
         value = FUNCTION
+
     # print(value, node["name"], "********************************")
     _nodes = {"ingredient": Ingredient,
               "recipe": Recipe,

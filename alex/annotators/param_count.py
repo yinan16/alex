@@ -58,7 +58,6 @@ class Conv2D(Ingredient):
 
     def get_shape(self, input_shape, name, annotated):
         hyperparams = annotated[name]["meta"]["hyperparams"]
-        pprint(hyperparams)
         strides = hyperparams["strides"]
         dilation = hyperparams["dilation"]
         padding = hyperparams["padding"]
@@ -111,8 +110,6 @@ class Conv2DFilters(Hyperparam):
         self.trainable = True
 
     def get_shape(self, input_shape, name, annotated):
-        print(name)
-        pprint(annotated[name])
         shape = annotated[name]["meta"]["hyperparams"]["shape"]
         return [input_shape[-1],
                 shape["kernel_size_h"],
