@@ -87,7 +87,7 @@ class MaxPool2D(Ingredient):
         padding = hyperparams["padding"]
         strides = hyperparams["strides"]
         dilation = hyperparams["dilation"]
-        kernel_shape = hyperparams["kernel_shape"]
+        kernel_shape = hyperparams["window_shape"]
 
         k_h = int(kernel_shape[0])
         k_w = int(kernel_shape[1])

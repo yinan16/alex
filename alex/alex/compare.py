@@ -98,9 +98,9 @@ def _diff_graph_list(n1, n2, render_to=None, dpi=800):
         else:
             name1 = operation[0][0]
             name2 = operation[0][1]
-            label1 = operation[1][1].split("_uuid_")[0]
-            label2 = operation[1][2].split("_uuid_")[0]
-            if name1.split("_uuid_")[0] != name2.split("_uuid_")[0]:
+            label1 = operation[1][1]
+            label2 = operation[1][2]
+            if name1 != name2:
                 if label1 == label2:
                     subtree1 = core.get_subtree(tree_full1, name1)
                     subtree2 = core.get_subtree(tree_full2, name2)
@@ -332,7 +332,7 @@ def matched_ingredients(network_config_1,
     matched = {}
     for operation in operations:
         if operation[1][0] == "MATCH":
-            component_type = operation[1][1].split("_uuid_")[0]
+            component_type = operation[1][1]
             if component_type in const.PARAMS:
                 matched = {**matched,
                            **{operation[0][0]:
