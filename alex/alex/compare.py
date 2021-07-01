@@ -74,6 +74,10 @@ def annotate_ops(operations):
     return annotation
 
 
+def label_to_value(label):
+    return label.split("#")[0]
+
+
 def _diff_graph_list(n1, n2, render_to=None, dpi=800):
     tree1 = core.alex_graph_to_tree(n1, exclude_types=["hyperparam"], naive=False)
     tree2 = core.alex_graph_to_tree(n2, exclude_types=["hyperparam"], naive=False)
@@ -82,46 +86,56 @@ def _diff_graph_list(n1, n2, render_to=None, dpi=800):
     cost, _operations = ted(tree1, tree2)
     operations = []
     for operation in _operations:
+        if operation[1][1] == "root":
+            break
         op = operation[1][0]
         if op == "INSERT":
             operations.append(operation)
-            affected_hyperparam_subtree = tree_full2[operation[0]]["descendants"]
-            for child in affected_hyperparam_subtree:
-                cost += 1 # FIXME
-                operations.append((child, ["INSERT", "", tree_full2[child]["label"]]))
+            label2 = operation[1][2]
+            if core.get_value_type(label_to_value(label2)) == "ingredient":
+                affected_hyperparam_subtree = tree_full2[operation[0]]["descendants"]
+                for child in affected_hyperparam_subtree:
+                    cost += 1 # FIXME
+                    operations.append((child, ["INSERT", "", tree_full2[child]["label"]]))
         elif op == "DELETE":
             operations.append(operation)
-            affected_hyperparam_subtree = tree_full1[operation[0]]["descendants"]
-            for child in affected_hyperparam_subtree:
-                cost += 1 # FIXME
-                operations.append((child, ["DELETE", tree_full1[child]["label"], ""]))
+            label1 = operation[1][1]
+            if core.get_value_type(label_to_value(label1)) == "ingredient":
+                affected_hyperparam_subtree = tree_full1[operation[0]]["descendants"]
+                for child in affected_hyperparam_subtree:
+                    cost += 1 # FIXME
+                    operations.append((child, ["DELETE", tree_full1[child]["label"], ""]))
         else:
             name1 = operation[0][0]
             name2 = operation[0][1]
             label1 = operation[1][1]
             label2 = operation[1][2]
-            if name1 != name2:
-                if label1 == label2:
+
+            if label1 != label2:
+                if label_to_value(label1) == label_to_value(label2):
                     subtree1 = core.get_subtree(tree_full1, name1)
                     subtree2 = core.get_subtree(tree_full2, name2)
-                    _cost, __operations = ted(subtree1, subtree2)
+                    _cost, __operations = ted(subtree1,
+                                              subtree2)
                     cost += _cost
                     operations += __operations[:-1]
                 else:
                     operations.append((name1, ("DELETE", label1, "")))
                     operations.append((name2, ("INSERT", "", label2)))
-                    # operations.append(operation)
-                    if core.get_value_type(label1) == "ingredient":
+                    if core.get_value_type(label_to_value(label1)) == "ingredient":
 
                         affected_hyperparam_subtree = tree_full1[name1]["descendants"]
                         for child in affected_hyperparam_subtree:
                             cost += 1 # FIXME
-                            operations.append((child, ["DELETE", tree_full1[child]["label"], ""]))
-                    if core.get_value_type(label2) == "ingredient":
+                            _operation = (child, ["DELETE", tree_full1[child]["label"], ""])
+                            operations.append(_operation)
+                    if core.get_value_type(label_to_value(label2)) == "ingredient":
                         affected_hyperparam_subtree = tree_full2[name2]["descendants"]
                         for child in affected_hyperparam_subtree:
                             cost += 1 # FIXME
-                            operations.append((child, ["INSERT", "", tree_full2[child]["label"]]))
+                            _operation = (child, ["INSERT", "", tree_full2[child]["label"]])
+                            operations.append(_operation)
+    # pprint(operations)
 
     if render_to is not None:
         print("Done computing diff. Rendering image")

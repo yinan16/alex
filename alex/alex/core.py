@@ -155,26 +155,6 @@ def instantiate_node(name, label, value, meta, parent, children, descendants):
     return node
 
 
-def prepend_component_name(data, name):
-    """
-    Preppend the component name to hyperparams
-    """
-    data = deepcopy(data)
-    new_data = deepcopy(data)
-    for k, v in data.items():
-        new_data["%s_%s" % (name, str(k))] = v
-        new_data.pop(k, None)
-        if isinstance(v, dict):
-            new_data["%s_%s" % (name, str(k))], name = prepend_component_name(v, name)
-        elif isinstance(v, list):
-            new_data["%s_%s" % (name, str(k))] = []
-            for i, _v in enumerate(v):
-                new_data["%s_%s" % (name, str(k))].append("%s_%i_%s" % (name, i, str(_v)))
-        else:
-            new_data["%s_%s" % (name, str(k))] = "%s_%s" % (name, str(v))
-    return new_data, name
-
-
 import ast
 import traceback
 
@@ -201,6 +181,7 @@ def alex_graph_to_json(graph,
                        root_name="root",
                        json_obj=collections.OrderedDict(),
                        naive=True,
+                       label_path=None,
                        position: dict = {"input_component": None,
                                          "component": None,
                                          "input_shape": None}):
@@ -214,112 +195,143 @@ def alex_graph_to_json(graph,
         return graph, json_obj
 
     graph = deepcopy(graph)
-    json_obj = deepcopy(json_obj)
-    if isinstance(graph, dict) and "subgraph" in graph and isinstance(graph["subgraph"], dict): # is recipe
+    json_obj = collections.OrderedDict(sorted(json_obj.items()))
+    if isinstance(graph, dict) \
+       and "subgraph" in graph \
+       and isinstance(graph["subgraph"], dict): # is a recipe
         _position = {"input_component": graph["input_component"],
                      "component": root_name,
                      "input_shape": None}
+        label = deepcopy(graph["type"])
         root_name = {"value": graph["type"],
-                     "label": graph["type"],
+                     "label": label,
                      "name": root_name,
                      "meta": {"hyperparams": {},
-                              "position": _position}}
+                              "position": _position,
+                              "label_path": label_path}}
         root_name = str(root_name)
         json_obj[root_name] = collections.OrderedDict()
         for _name, _graph in graph["subgraph"].items():
             _position = {"input_component": _graph["input_component"],
                          "component": _name,
                          "input_shape": None}
-            graph, _json_obj = alex_graph_to_json(_graph,
-                                                  _name,
-                                                  collections.OrderedDict(),
-                                                  naive=naive,
-                                                  position=_position)
+            _json_obj = alex_graph_to_json(_graph,
+                                           _name,
+                                           collections.OrderedDict(),
+                                           naive=naive,
+                                           label_path=None,
+                                           position=_position)
             json_obj[root_name].update(_json_obj)
-    else: # if is ingredient or hyperparameters
+    else: # if is an ingredient or hyperparameters
         if isinstance(graph, dict) and "hyperparams" in graph:
-            if len(graph["hyperparams"]) != 0: # if is ingredient with hyperparameter
-                hyperparam_str = str(graph["hyperparams"])
+            if len(graph["hyperparams"]) != 0: # if is an ingredient with hyperparameter
                 if not naive:
-                    # hyperparam_str = str(uuid.uuid3(uuid.NAMESPACE_DNS, json.dumps(graph["hyperparams"], sort_keys=True)))
-                    label = "%s_uuid_%s" % (graph["type"], hyperparam_str)
+                    hyperparam_str = str(uuid.uuid3(uuid.NAMESPACE_DNS,
+                                                    json.dumps(graph["hyperparams"],
+                                                               sort_keys=True)))
+                    label = "%s#%s#" % (graph["type"], hyperparam_str)
                 else:
                     label = graph["type"]
 
                 _position = {"input_component": graph["input_component"],
                              "component": root_name,
                              "input_shape": None}
+                _root_name = root_name
                 root_name = {"value": graph["type"],
                              "label": label,
                              "name": root_name,
                              "meta": {"hyperparams": graph["hyperparams"],
-                                      "position": _position}}
+                                      "position": _position,
+                                      "label_path": label_path}}
                 root_name = str(root_name)
                 json_obj[root_name] = collections.OrderedDict()
-
-                for _name, _graph in graph["hyperparams"].items():
-                    graph, _json_obj = alex_graph_to_json(_graph,
-                                                          _name,
-                                                          collections.OrderedDict(),
-                                                          naive=naive,
-                                                          position=_position)
+                for _name in sorted(graph["hyperparams"]):
+                    _graph = graph["hyperparams"][_name]
+                    _name = "%s/%s" % (_root_name, _name)
+                    if "#" in label:
+                        label_path = label.split("#")[0] + label.split("#")[2]
+                    else:
+                        label_path = label
+                    _json_obj = alex_graph_to_json(_graph,
+                                                   _name,
+                                                   collections.OrderedDict(),
+                                                   naive=naive,
+                                                   label_path=label_path,
+                                                   position=_position)
                     json_obj[root_name].update(_json_obj)
 
             else:
                 _position = {"input_component": graph["input_component"],
                              "component": root_name,
                              "input_shape": None}
+
                 root_name = {"value": graph["type"],
                              "label": graph["type"],
                              "name": root_name,
                              "meta": {"hyperparams": {},
-                                      "position": _position}}
+                                      "position": _position,
+                                      "label_path": label_path}}
                 root_name = str(root_name)
 
                 json_obj[root_name] = None
 
         else: # hyperparam tree
             _root_name = deepcopy(root_name)
-            root_name = {"value": _root_name.split("/")[-1],
-                         "label": _root_name,
-                         "name": "%s/%s" % (position["component"], _root_name),
+            _value = _root_name.split("/")[-1]
+            label_path = "%s/%s" % (label_path, _value)
+
+            root_name = {"value": _value,
+                         "label": label_path,
+                         "name":  _root_name,
                          "meta": {"hyperparams": graph,
-                                  "position": position}}
+                                  "position": position,
+                                  "label_path": label_path}}
             root_name = str(root_name)
             if isinstance(graph, dict):
 
                 json_obj[root_name] = collections.OrderedDict()
-                for _name, _graph in graph.items():
-                    _name = "%s/%s" % (_root_name, _name)
-                    graph, _json_obj = alex_graph_to_json(_graph,
-                                                          _name,
-                                                          collections.OrderedDict(),
-                                                          naive=naive,
-                                                          position=position)
+                _graph = sorted(graph)
+                for _name in _graph:
+                    __name = "%s/%s" % (_root_name, _name)
+                    _json_obj = alex_graph_to_json(graph[_name],
+                                                   __name,
+                                                   collections.OrderedDict(),
+                                                   naive=naive,
+                                                   label_path=label_path,
+                                                   position=position)
                     json_obj[root_name].update(_json_obj)
 
             elif isinstance(graph, list):
                 json_obj[root_name] = []
-                for _graph in graph:
-                    _label = str(_graph)
+                for i, _graph in enumerate(graph):
+                    _label = _graph
+                    _name = "%s/%s_%i" % (_root_name,
+                                          _label, i)
+                    label_path = "%s/%s" % (label_path, _label)
+
                     _json_value = {"value": _label,
-                                   "label": _label,
-                                   "name": "%s/%s" % (position["component"], root_name),
+                                   "label": label_path,
+                                   "name": _name,
                                    "meta": {"hyperparams": graph,
-                                            "position": position}}
+                                            "position": position,
+                                            "label_path": label_path}}
                     json_obj[root_name].append(str(_json_value))
             else:
-                _label = str(graph)
+                _label = graph
+                _name = "%s/%s" % (_root_name,
+                                   _label)
+                label_path = "%s/%s" % (label_path, _label)
                 _json_value = {"value": _label,
-                               "label": _label,
-                               "name": "%s/%s" % (position["component"], root_name),
+                               "label": label_path,
+                               "name": _name,
                                "meta": {"hyperparams": graph,
-                                        "position": position}}
+                                        "position": position,
+                                        "label_path": label_path}}
 
                 json_obj[root_name] = str(_json_value)
 
 
-    return graph, json_obj
+    return json_obj
 
 
 def json_to_tree(json,
@@ -337,10 +349,9 @@ def json_to_tree(json,
         return tree
 
     if type(json) == dict:
-        items = sorted(json.items())
-    elif type(json) == collections.OrderedDict:
-        items = json.items()
-    for node, _json in items:
+        json = collections.OrderedDict(sorted(json.items()))
+    for node in json:
+        _json = json[node]
         name = get_param(node, "name")
         if get_value_type(get_param(node, "value")) in exclude_types:
             continue
@@ -405,14 +416,15 @@ def json_to_tree(json,
 
 
 def alex_graph_to_tree(network_graph, exclude_types=[], naive=True):
-    _, json_obj = alex_graph_to_json(network_graph, naive=naive)
+    json_obj = alex_graph_to_json(network_graph, naive=naive)
 
     tree = json_to_tree(json_obj,
                         exclude_types=exclude_types)
     return tree
 
 
-def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, label_field="label", excluded_types=[]):
+def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, label_field="value", excluded_types=[]):
+    # pprint(tree)
     graph = pydot.Dot(graph_type='digraph', rankdir='LR', dpi=dpi, size=size, fontsize=12)
     for component in tree:
         name = component
@@ -423,16 +435,18 @@ def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, lab
                 color = annotation[name]
             else:
                 color = "white"
-            node = pydot.Node(name, shape="box", style = 'filled', fillcolor=color)
-
             if label_field not in tree[component]:
-                label = str(tree[component]["label"]).split("_uuid_")[0]
+                label = str(tree[component]["label"])
             else:
-                label = str(tree[component][label_field]).split("_uuid_")[0]
-            node.set_label(label)
+                label = str(tree[component][label_field])
+            node = pydot.Node(name,
+                              label=label,
+                              shape="box",
+                              style='filled',
+                              fillcolor=color)
             graph.add_node(node)
         children_list = tree[component]["children"].copy()
-        children_list.reverse()
+        # children_list.reverse()
         for child in children_list:
             if tree[child]["type"] in excluded_types:
                 continue
@@ -442,12 +456,16 @@ def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, lab
                     color = annotation[child]
                 else:
                     color = "white"
-                node = pydot.Node(child, shape="box", style = 'filled', fillcolor=color)
+
                 if label_field not in tree[child]:
-                    label = str(tree[child]["label"]).split("_uuid_")[0]
+                    label = str(tree[child]["label"])
                 else:
-                    label = str(tree[child][label_field]).split("_uuid_")[0]
-                node.set_label(label)
+                    label = str(tree[child][label_field])
+                node = pydot.Node(child,
+                                  label = label,
+                                  shape="box",
+                                  style = 'filled',
+                                  fillcolor=color)
 
                 graph.add_node(node)
             edge = pydot.Edge(component, child)
