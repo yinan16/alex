@@ -31,4 +31,5 @@ def main(network_config,
 
 
 if __name__=="__main__":
-    main("./examples/configs/cifar_test_params.yml")
+    main("./examples/configs/small1.yml")
+    # main("./examples/configs/cifar_test_params.yml")

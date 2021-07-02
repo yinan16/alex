@@ -56,35 +56,16 @@ params_network:
 # losses:
   - type:
       cross_entropy
-    input_component:
-      - labels
-      - d_1
-    name: cross_0
     name: losses
 
-
-  # - type:
-  #     regularizer_l2
-  #   input_component:
-  #     - connect_to:
-  #         range: :-1
-  #         types:
-  #           conv: filters
-  #         scope: all # default: all
-  #   name: regularizer1
-  #   visible: True
-
-  # - type:
-  #     add
-  #   input_component:
-  #     - cross_0
-  #     - regularizer1
-  #   name: losses
 
 # solvers:
   - type: adam
     input_component: losses
     name: solver
+    hyperparams:
+      learning_rate:
+        0.1
 
 
   # - type: inference
