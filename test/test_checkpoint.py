@@ -19,12 +19,13 @@ class TestCheckpoint(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_checkpoint(self):
-        ckpt = checkpoint.Checkpoint("examples/configs/small1.yml",
-                                     ["checkpoints",
-                                      "config_1622420349826577.json"],
-                                     ["checkpoints", None])
-        pprint(ckpt.matched)
+    # def test_checkpoint(self):
+    #     ckpt = checkpoint.Checkpoint("examples/configs/small1.yml",
+    #                                  ["checkpoints",
+    #                                   "config_1622420349826577.json"],
+    #                                  ["checkpoints", None])
+    #     pprint(ckpt.matched)
+
 
 if __name__ == '__main__':
     unittest.main()

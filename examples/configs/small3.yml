@@ -40,31 +40,12 @@ params_network:
     input_component:
       - labels
       - d_1
-    name: cross_0
-
-  - type:
-      regularizer_l2
-    input_component:
-      - connect_to:
-          range: :-1
-          types:
-            dense: weights
-            conv: filters
-          scope: all # default: all
-    name: regularizer
-    visible: True
-
-  - type:
-      add
-    input_component:
-      - cross_0
-      - regularizer
     name: losses
 
 # solvers:
   - type: adam
     input_component: losses
     name: solver
-    # hyperparams:
-    #   learning_rate:
-    #     0.1
+    hyperparams:
+      learning_rate:
+        0.1

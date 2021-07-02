@@ -58,19 +58,15 @@ params_network:
     input_component:
       - labels
       - d_1
-    name: cross_0
-
-  - type:
-      add
-    input_component:
-      - cross_0
-      - regularizer1
     name: losses
 
 # solvers:
   - type: adam
     input_component: losses
     name: solver
+    hyperparams:
+      learning_rate:
+        0.1
 
 
   # - type: inference
