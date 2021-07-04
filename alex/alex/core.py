@@ -24,7 +24,9 @@ def get_inputss(component):
 
 # FIXME: use typing
 def get_value_type(label):
-    if label in const.INGREDIENT_TYPES or label in const.INPUT_TYPES:
+    if label in const.INGREDIENT_TYPES \
+       or label in const.INPUT_TYPES \
+       or label in const.REGULARIZERS:
         node_type = "ingredient"
     elif label in const.ALL_RECIPES:
         node_type = "recipe"
@@ -85,24 +87,12 @@ def get_ancestor_param_node(node, tree, field=None):
         return parent_node[field]
 
 
-def get_ancestor_ingredient_node(node, components, tree, field=None):
-    tree = deepcopy(tree)
-    components = deepcopy(components)
-    node = deepcopy(node)
-    if node["name"] in components \
-       or node["name"] == "root" \
-       or node["type"] == "recipe":
-        parent_node = node
-    else:
-        parent = node["parent"]
-        while parent not in components:
-            _name = parent
-            parent = tree[_name]["parent"]
-        parent_node = tree[parent]
+def get_ancestor_ingredient_node(node, tree, field=None):
+    name = node["meta"]["position"]["component"]
     if field is None:
-        return parent_node
+        return tree[name]
     else:
-        return parent_node[field]
+        return tree[name][field]
 
 
 def get_parent(root, tree, field=None):

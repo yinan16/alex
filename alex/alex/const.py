@@ -119,7 +119,6 @@ for ingredient in PARAMS:
         ALL_PARAMS[param] = PARAMS[ingredient][param]
         if PARAMS[ingredient][param]["derivative"]:
             ALL_TRAINABLE_PARAMS[param] = PARAMS[ingredient][param]
-
 ALL_PARAMS_LIST = list(ALL_PARAMS.keys())
 ALL_TRAINABLE_PARAMS_LIST = list(ALL_TRAINABLE_PARAMS.keys())
 

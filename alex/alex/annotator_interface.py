@@ -36,10 +36,7 @@ class Annotator(ABC):
         elif name in self.components:
             inputs = self.components[name]["meta"]["inputs"]
         else:
-            parent = core.get_ancestor_ingredient_node(node,
-                                                       self.components,
-                                                       self.tree,
-                                                       "name")
+            parent = core.get_ancestor_ingredient_node(node, tree, "name")
             inputs = self.components[parent]["meta"]["inputs"]
         return inputs
 

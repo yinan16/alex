@@ -57,8 +57,22 @@ params_network:
     inputs:
       - labels
       - d_1
+    name: cross_0
+  - type:
+      regularizer_l2
+    inputs:
+      - connect_to:
+          range: :-1
+          types:
+            dense: weights
+            conv: filters
+          scope: all # default: all
+    name: regularizer
+  - type: add
+    inputs:
+      - cross_0
+      - regularizer
     name: losses
-
 # solvers:
   - type: adam
     inputs: losses

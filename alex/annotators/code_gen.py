@@ -267,8 +267,6 @@ class Regularizer(param_count.Ingredient):
         super().__init__(*args, **kwargs)
 
     def generate_code(self, node, annotated, engine):
-        if node["type"] != "ingredient":
-            return None
         children = core.get_children(node["name"], annotated)
         args = dict()
         args[const.ALEX_ARG_INPUTS] = {"key": const.ALEX_ARG_INPUTS,
@@ -590,8 +588,6 @@ def nodes(node):
         value = "ingredient"
     elif node["value"] in const.SCHEDULER_BLOCK:
         value = FUNCTION
-
-    # print(value, node["name"], "********************************")
     _nodes = {"ingredient": Ingredient,
               "recipe": Recipe,
               "initializer_fn": Initializer,
@@ -696,7 +692,6 @@ class CodeGen(param_count.ParamCount):
             block = node["block"]
         else:
             _component_ = core.get_ancestor_ingredient_node(node,
-                                                            self.components,
                                                             self.annotated,
                                                             "value")
             _param_ = core.get_ancestor_param_node(node,

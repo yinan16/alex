@@ -68,7 +68,9 @@ class Model(torch.nn.Module):
     
     @staticmethod
     def get_loss(trainable_params, inputs):
-        losses = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=inputs[0], input=inputs[1])
+        cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=inputs[0], input=inputs[1])
+        regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['conv_5fo/filters', 'conv_13na/filters', 'conv_15pq/filters', 'dense_19tw/weights'])))
+        losses = torch.add(input=[cross_0, regularizer][0], other=[cross_0, regularizer][1])
         return losses 
     
     @staticmethod

@@ -291,9 +291,7 @@ class ParamCount(Annotator):
         node["input_nodes"] = inputs
         node["input_names"] = input_names
         node["input_shape"] = input_shape
-        node["ancestor"] = core.get_ancestor_ingredient_node(node,
-                                                             self.components,
-                                                             self.tree)
+        node["ancestor"] = core.get_ancestor_ingredient_node(node, self.tree)
         if node["ancestor"]["name"] in self.components:
             node["dtype"] = self.components[node["ancestor"]["name"]]["meta"]["dtype"]
         else:

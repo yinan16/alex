@@ -473,7 +473,8 @@ def connect_to(components, current_component_type, current_component_hyperparams
         if type_match and scope_match:
             connected_component.append("%s/%s" % (component["meta"]["name"],
                                                   types[_component_type]))
-            component["value"]["hyperparams"][types[_component_type]][current_component_type] = current_component_hyperparams
+            # Make regularization part of the hyperparam subtree
+            # component["value"]["hyperparams"][types[_component_type]][current_component_type] = current_component_hyperparams
         delete_key(component["value"]["hyperparams"], "connect_to")
     delete_key(current_component_hyperparams, "connect_to")
     return connected_component
