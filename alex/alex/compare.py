@@ -346,7 +346,7 @@ def matched_ingredients(network_config_1,
     matched = {}
     for operation in operations:
         if operation[1][0] == "MATCH":
-            component_type = operation[1][1]
+            component_type = label_to_value(operation[1][1])
             if component_type in const.PARAMS:
                 matched = {**matched,
                            **{operation[0][0]:

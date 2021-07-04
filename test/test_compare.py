@@ -96,6 +96,7 @@ class TestCompare(unittest.TestCase):
         matched = compare.matched_ingredients("examples/configs/small1.yml",
                                               "examples/configs/small2.yml",
                                               render_to="./cache/subtree.png")
+        print("Matched ingredients")
         pprint(matched)
 
 

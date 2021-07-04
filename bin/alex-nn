@@ -32,7 +32,7 @@ def diff(configs, to_png=True, path="./diff.png", verbose=True, dpi=None):
             if operation[1][0] != "MATCH":
                 print(operation)
     if verbose:
-       print("Set --verbose False to avoid output")
+        print("Set --verbose False to avoid output")
 
 
 def ls(option):
