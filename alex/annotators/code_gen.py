@@ -28,6 +28,7 @@ import rope
 from rope.base.project import Project
 from rope.refactor.inline import create_inline
 import warnings
+import traceback
 
 from alex.alex import core, const, node_interface, checkpoint, util
 from alex.alex.checkpoint import Checkpoint
@@ -220,9 +221,11 @@ class Ingredient(param_count.Ingredient):
         return_symbol = _name_strs_to_names(node["name"])
 
         for child in children:
+            if child["value"] in args:
+                continue
             _arg = child["code"]["args"]
             for _key in _arg:
-                if _arg[_key]["type"] != VALUE:
+                if _arg[_key]["type"] == IDENTIFIER:
                     args = {**args, **{_key: _arg[_key]}}
             if child["code"]["type"] != VALUE:
                 if child["value"] in const.ALL_PARAMS:
@@ -243,15 +246,13 @@ class Ingredient(param_count.Ingredient):
                               "ref": child["name"],
                               "type": child["code"]["type"],
                               "str": child["code"]["str"]}
-                    if node["value"] in const.OPTIMIZERS and child["value"]=="decay":
-                        decay = deepcopy(_child)
-                        decay
-                    args = {**args,
-                            **{child["value"]: _child}}
-        if node["value"] in const.OPTIMIZERS and engine=="tf":
-            decay["key"] = "learning_rate"
-            args["learning_rate"] = decay
-
+                    if child["value"]=="decay":
+                        if engine == "tf":
+                            _child["key"] = "learning_rate"
+                            args["learning_rate"] = _child
+                    else:
+                        args = {**args,
+                                **{child["value"]: _child}}
         node = cache_fn(node,
                         node["value"],
                         args,
@@ -291,7 +292,7 @@ class Regularizer(param_count.Ingredient):
         for child in children:
             _arg = child["code"]["args"]
             for _key in _arg:
-                if _arg[_key]["type"] != VALUE:
+                if _arg[_key]["type"] == IDENTIFIER:
                     args = {**args, **{_key: _arg[_key]}}
             if child["code"]["type"] != VALUE:
                 if child["value"] in const.ALL_PARAMS:
@@ -691,18 +692,24 @@ class CodeGen(param_count.ParamCount):
         if "block" in node and node["block"] is not None:
             block = node["block"]
         else:
-            _component_ = core.get_ancestor_ingredient_node(node,
-                                                            self.annotated,
-                                                            "value")
-            _param_ = core.get_ancestor_param_node(node,
-                                                   self.annotated,
-                                                   "value")
-            if _param_ is not None:
-                fn = _param_
-            elif _component_ is not None:
-                fn = _component_
             block = list(filter(lambda x: fn in self.blocks[x],
-                                self.blocks))[0]
+                                self.blocks))
+            if len(block) != 0:
+                block = block[0]
+            else:
+
+                _component_ = core.get_ancestor_ingredient_node(node,
+                                                                self.annotated,
+                                                                "value")
+                _param_ = core.get_ancestor_param_node(node,
+                                                       self.annotated,
+                                                       "value")
+                if _param_ is not None:
+                    fn = _param_
+                elif _component_ is not None:
+                    fn = _component_
+                block = list(filter(lambda x: fn in self.blocks[x],
+                                    self.blocks))[0]
         return block
 
     @staticmethod
@@ -735,6 +742,8 @@ class CodeGen(param_count.ParamCount):
         for fn in self.blocks[block]:
             component = self.blocks[block][fn]
             try:
+                if "alex" not in component:
+                    continue
                 src_fn = self.get_src_fn(component)
                 src_args_str = self.get_src_args_str(component)
                 trg_fn = self.get_trg_fn(component, self.engine)
@@ -748,9 +757,8 @@ class CodeGen(param_count.ParamCount):
                 self.inline_index_translation.append(src_fn)
 
             except Exception as error:
-                # print(error)
-                # print("%s not implemented" % fn)
-                pass
+                traceback.print_exc()
+                print("%s not implemented" % fn)
 
     def cache_param_translation(self):
         # Generate transltion for shape function
@@ -822,9 +830,7 @@ class CodeGen(param_count.ParamCount):
                         self.alex_code[block].append(node["code"]["extra"])
 
         except Exception as err:
-            # print(err)
-            # pprint(node)
-            raise
+            traceback.print_exc()
         return node
 
     def generate_python(self):
@@ -868,9 +874,9 @@ class CodeGen(param_count.ParamCount):
                                self.filepaths[block])
         if prefix is not None:
             write_list_to_file(prefix, self.filepaths[block])
+
         write_list_to_file(self.alex_inline[block], self.filepaths[block])
         write_list_to_file(self.alex_code[block], self.filepaths[block])
-
         filename = self.filepaths[block].split("/")[-1]
         dirname = "/".join(self.filepaths[block].split("/")[:-1])
         with warnings.catch_warnings():

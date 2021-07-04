@@ -422,7 +422,8 @@ LEARNING_RATE_DECAY = {"exponential_decay": {"tf": ["tf.keras.optimizers.schedul
                                                       {"initial_learning_rate": True,
                                                        "decay_steps": True,
                                                        "decay_rate": True,
-                                                       "staircase": True
+                                                       "staircase": True,
+                                                       "optimizer": False
                                                       }]}} # FIXME
 SCHEDULER_BLOCK = {**LEARNING_RATE_DECAY}
 
