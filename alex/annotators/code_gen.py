@@ -837,10 +837,11 @@ class CodeGen(param_count.ParamCount):
         self.annotate_tree()
         boiler_str = self.cache_boiler_plate()
 
+        param_args = ["ckpt=None"] # if self.load else []
         param_str = self.get_dl_code(block="param",
                                      fn_name="get_trainable_params",
                                      return_str="trainable_params",
-                                     manual_args=["ckpt"],
+                                     manual_args=param_args,
                                      prefix="trainable_params = dict()\n")
         loss_str = self.get_dl_code(block="loss",
                                     fn_name="get_loss",

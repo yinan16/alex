@@ -40,15 +40,15 @@ imshow(torchvision.utils.make_grid(images))
 print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
 
-from alex.alex.checkpoint import Checkpoint
+# from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small1.yml",
-               ["cache",  "config_1622420349826577.json"],
-               ["checkpoints", None])
+# C = Checkpoint("examples/configs/small1.yml",
+#                ["cache",  "config_1622420349826577.json"],
+#                ["checkpoints", None])
 
-ckpt = C.load()
+# ckpt = C.load()
 
-model = Model(ckpt)
+model = Model()
 
 model.to(device)
 
@@ -82,7 +82,7 @@ for epoch in range(90):  # loop over the dataset multiple times
         if i % 2000 == 1999:    # print every 2000 mini-batches
             print('[%d, %5d] loss: %.3f' %
                   (epoch + 1, i + 1, running_loss / 2000))
-            C.save(model.trainable_params)
+            # C.save(model.trainable_params)
             #outputs = model(inputs, trainable_params, False)
             #_loss = get_loss( outputs, labels, trainable_params)
             running_loss = 0.0

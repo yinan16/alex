@@ -1,7 +1,7 @@
-import keras
+from tensorflow import keras
 from tensorflow.keras import datasets
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 num_classes = 10
 (x_train, label_train), (x_test, label_test) = datasets.cifar10.load_data()
@@ -10,9 +10,6 @@ num_classes = 10
 # Scale images to the [0, 1] range
 x_train = x_train.astype("float32") / 255
 x_test = x_test.astype("float32") / 255
-# Make sure images have shape (28, 28, 1)
-x_train = np.expand_dims(x_train, -1)
-x_test = np.expand_dims(x_test, -1)
 
 # convert class vectors to binary class matrices
 y_train = keras.utils.to_categorical(label_train, num_classes)
@@ -35,15 +32,15 @@ for i in range(25):
 plt.show()
 
 
-from alex.alex.checkpoint import Checkpoint
+# from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small1.yml",
-               ["cache",  "config_1622420349826577.json"],
-               ["checkpoints", None])
+# C = Checkpoint("examples/configs/small1.yml",
+#                ["cache",  "config_1622420349826577.json"],
+#                ["checkpoints", None])
 
-ckpt = C.load()
+# ckpt = C.load()
 
-trainable_variables = get_trainable_params(ckpt)
+trainable_variables = get_trainable_params()
 
 
 var_list = list(trainable_variables.values())
@@ -55,7 +52,7 @@ optimizer = get_optimizer(trainable_variables)
 def train(x, gt, trainable_variables, var_list, optimizer):
     with tf.GradientTape() as tape:
         prediction = model(x, trainable_variables, training=True)
-        gradients = tape.gradient(trainable_variables, get_loss([gt, prediction]), var_list)
+        gradients = tape.gradient(get_loss(trainable_variables, [gt, prediction]), var_list)
         optimizer.apply_gradients(zip(gradients, var_list))
 
 
@@ -84,7 +81,7 @@ for epoch in range(num_epochs):
     matches_test  = tf.equal(tf.math.argmax(preds,1), tf.math.argmax(y_test,1))
 
     epoch_accuracy = tf.reduce_mean(tf.cast(matches_test,tf.float32))
-    current_loss = get_loss(preds, y_test, trainable_variables)
+    current_loss = get_loss(trainable_variables, [preds, y_test])
     epoch_loss_avg = tf.reduce_mean(current_loss)
     train_loss_results.append(epoch_loss_avg)
     train_accuracy_results.append(epoch_accuracy)
