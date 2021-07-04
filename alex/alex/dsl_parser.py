@@ -563,7 +563,7 @@ def draw_graph(graph_list, level=2, graph_path='example.png'):
         node.set_label(label)
         graph.add_node(node)
 
-        if not component[const.META][const.TYPE] in const.INPUTS:
+        if not component[const.META][const.TYPE] in const.INPUT_TYPES:
             inputs = component[const.META][const.INPUTS]
             for _input in inputs:
                 __input = "/".join(_input.split("/")[:level])

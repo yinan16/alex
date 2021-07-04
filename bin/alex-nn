@@ -81,14 +81,14 @@ def codegen(engine, config, out_dir, filename):
                                           engine=engine,
                                           dirname=out_dir)
         code_generator.generate_python()
-        print("Output file %s is generated in dir %s" % (filename, out_dir))
+        print("Generated code is written to file %s in dir %s" % (filename, out_dir))
     except Exception as err:
         print(err)
 
 
 def render(config, type, path, level):
     if not config:
-        print("Must give a network configuration --config")
+        print("Must give a network configuration --config example.yml")
         sys.exit()
 
     if type == "ast":
@@ -96,6 +96,8 @@ def render(config, type, path, level):
 
     elif type == "graph":
         dsl_parser.make_graph_from_yml(config, path, level)
+
+    print("Image written to file %s" % path)
 
 
 def merge(config, ckpt):
