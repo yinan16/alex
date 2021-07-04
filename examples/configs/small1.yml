@@ -79,4 +79,4 @@ params_network:
     name: solver
     hyperparams:
       learning_rate:
-        0.1
+        0.0001

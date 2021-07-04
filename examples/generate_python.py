@@ -24,11 +24,11 @@ def main(network_config,
                                           dirname=code_dir)
         code_generator.generate_python()
         filepath = os.path.join(code_dir, _filename)
-        # boilerplate_file = os.path.join(const.ENGINE_PATH,
-        #                                 "example_boilerplate_%s.py" % engine)
-        # util.concatenate_files([filepath,
-        #                         boilerplate_file],
-        #                        filepath)
+        boilerplate_file = os.path.join(const.ENGINE_PATH,
+                                        "example_boilerplate_%s.py" % engine)
+        util.concatenate_files([filepath,
+                                boilerplate_file],
+                               filepath)
         print("Generated code for %s written to %s" % (engine, filepath))
 
 

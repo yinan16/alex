@@ -11,12 +11,12 @@ transform = transforms.Compose(
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=100,
                                           shuffle=True, num_workers=2)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
-testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+testloader = torch.utils.data.DataLoader(testset, batch_size=10000,
                                          shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat',
@@ -38,6 +38,24 @@ print(device)
 imshow(torchvision.utils.make_grid(images))
 # print labels
 print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
+
+test_images, test_labels = iter(testloader).next()
+
+def test(images, labels):
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        images = images.to(device)
+        labels = labels.to(device)
+
+        outputs = model(images, False)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+        # print('Accuracy of the network on the 10000 test images: %d %%' % (
+        #     100 * correct / total))
+    return correct / total
 
 
 # from alex.alex.checkpoint import Checkpoint
@@ -79,37 +97,11 @@ for epoch in range(90):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
-        if i % 2000 == 1999:    # print every 2000 mini-batches
-            print('[%d, %5d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 2000))
+        if i % 500 == 499:    # print every 2000 mini-batches
+            accuracy = test(test_images, test_labels)
+            print('[%d, %5d] accuracy: %.3f, loss: %.3f' %
+                  (epoch + 1, i + 1, accuracy, running_loss / 500))
             # C.save(model.trainable_params)
-            #outputs = model(inputs, trainable_params, False)
-            #_loss = get_loss( outputs, labels, trainable_params)
             running_loss = 0.0
     learning_rate.step()
 print('Finished Training')
-
-
-dataiter = iter(testloader)
-images, labels = dataiter.next()
-
-# print images
-imshow(torchvision.utils.make_grid(images))
-print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
-
-correct = 0
-total = 0
-with torch.no_grad():
-    for data in testloader:
-        images, labels = data
-
-        images = images.to(device)
-        labels = labels.to(device)
-
-        outputs = model(images, False)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-print('Accuracy of the network on the 10000 test images: %d %%' % (
-    100 * correct / total))

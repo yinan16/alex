@@ -42,8 +42,11 @@ plt.show()
 
 trainable_variables = get_trainable_params()
 
-
-var_list = list(trainable_variables.values())
+from alex.alex import const
+var_list = []
+for tv in trainable_variables:
+    if tv.split("/")[-1] in const.ALL_TRAINABLE_PARAMS:
+        var_list.append(trainable_variables[tv])
 
 
 optimizer = get_optimizer(trainable_variables)
@@ -58,16 +61,16 @@ def train(x, gt, trainable_variables, var_list, optimizer):
 
 
 
-num_epochs = 10
+num_epochs = 90
 batch_size = 100
 
 train_loss_results = []
 train_accuracy_results = []
 
 train_ds = tf.data.Dataset.from_tensor_slices(
-    (x_train, y_train)).shuffle(10000).batch(batch_size)
+    (x_train, y_train)).shuffle(50000).batch(batch_size)
 
-test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(1000)
+test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(10000)
 for x_test, y_test in test_ds:
     break
 
