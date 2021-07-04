@@ -26,7 +26,7 @@ params_network:
     name: conv
 
   - type: add
-    input_component:
-      - input_component
+    inputs:
+      - inputs
       - conv
   - type: relu

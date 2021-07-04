@@ -18,13 +18,13 @@ import json
 from alex.alex import const, dsl_parser
 
 
-def get_input_components(component):
-    return component[const.META][const.INPUT_COMPONENT]
+def get_inputss(component):
+    return component[const.META][const.INPUTS]
 
 
 # FIXME: use typing
 def get_value_type(label):
-    if label in const.INGREDIENT_TYPES or label in const.INPUTS:
+    if label in const.INGREDIENT_TYPES or label in const.INPUT_TYPES:
         node_type = "ingredient"
     elif label in const.ALL_RECIPES:
         node_type = "recipe"
@@ -182,7 +182,7 @@ def alex_graph_to_json(graph,
                        json_obj=collections.OrderedDict(),
                        naive=True,
                        label_path=None,
-                       position: dict = {"input_component": None,
+                       position: dict = {"inputs": None,
                                          "component": None,
                                          "input_shape": None}):
     """
@@ -199,7 +199,7 @@ def alex_graph_to_json(graph,
     if isinstance(graph, dict) \
        and "subgraph" in graph \
        and isinstance(graph["subgraph"], dict): # is a recipe
-        _position = {"input_component": graph["input_component"],
+        _position = {"inputs": graph["inputs"],
                      "component": root_name,
                      "input_shape": None}
         label = deepcopy(graph["type"])
@@ -212,7 +212,7 @@ def alex_graph_to_json(graph,
         root_name = str(root_name)
         json_obj[root_name] = collections.OrderedDict()
         for _name, _graph in graph["subgraph"].items():
-            _position = {"input_component": _graph["input_component"],
+            _position = {"inputs": _graph["inputs"],
                          "component": _name,
                          "input_shape": None}
             _json_obj = alex_graph_to_json(_graph,
@@ -233,7 +233,7 @@ def alex_graph_to_json(graph,
                 else:
                     label = graph["type"]
 
-                _position = {"input_component": graph["input_component"],
+                _position = {"inputs": graph["inputs"],
                              "component": root_name,
                              "input_shape": None}
                 _root_name = root_name
@@ -261,7 +261,7 @@ def alex_graph_to_json(graph,
                     json_obj[root_name].update(_json_obj)
 
             else:
-                _position = {"input_component": graph["input_component"],
+                _position = {"inputs": graph["inputs"],
                              "component": root_name,
                              "input_shape": None}
 

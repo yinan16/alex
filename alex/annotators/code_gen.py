@@ -188,17 +188,17 @@ class Ingredient(param_count.Ingredient):
         children = core.get_children(node["name"], annotated)
         args = dict()
         if node["input_nodes"] is not None:
-            input_component = _name_strs_to_names(node["input_nodes"])
-            if len(input_component) == 1:
-                input_component = input_component[0]
+            inputs = _name_strs_to_names(node["input_nodes"])
+            if len(inputs) == 1:
+                inputs = inputs[0]
         else:
-            input_component = None
+            inputs = None
 
         args[const.ALEX_ARG_INPUTS] = {"key": const.ALEX_ARG_INPUTS,
-                                       "value": input_component,
-                                       "ref": input_component,
+                                       "value": inputs,
+                                       "ref": inputs,
                                        "type": IDENTIFIER,
-                                       "str": value_to_kwarg_str("", input_component,
+                                       "str": value_to_kwarg_str("", inputs,
                                                                  literal=False)}
         args[const.ALEX_ARG_NAME] = {"key": const.ALEX_ARG_NAME,
                                      "value": _name_strs_to_names(node["name"]),
@@ -647,7 +647,7 @@ class CodeGen(param_count.ParamCount):
                        "optimizer": const.OPTIMIZER_BLOCK,
                        "loss": const.LOSS_BLOCK,
                        "scheduler": const.SCHEDULER_BLOCK,
-                       "data": const.INPUTS}
+                       "data": const.INPUT_TYPES}
         if engine == "tf":
             self.blocks["optimizer"] = {**self.blocks["optimizer"],
                                         **self.blocks["scheduler"]}

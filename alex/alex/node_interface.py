@@ -51,7 +51,7 @@ class Recipe(Node):
 
     def get_edge_count(self, node=None):
         if self.recipe is not None:
-            return sum(list(map(lambda x: len(x["meta"]["input_component"]),
+            return sum(list(map(lambda x: len(x["meta"][const.INPUTS]),
                                 self.recipe)))
         else:
             return len(node["children"]) - 1

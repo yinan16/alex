@@ -42,25 +42,25 @@ share: component_name -> source_name -> [var_names]
 The parsing process involves several passes in order to generate the final ast
 At each pass, an intermediate data structure is generated
 """
-Fns1pass = (const.REPEAT, const.NAME, const.VAR_NAME, const.INPUT_COMPONENT)
+Fns1pass = (const.REPEAT, const.NAME, const.VAR_NAME, const.INPUTS)
 Fns2pass = (const.PARAMS_TRAINING, "share")
 Fns = Fns2pass + Fns1pass
 Training = (const.TYPE)
 Values = (const.HYPERPARAMS, const.VAR, const.STATS, const.TENSOR) # output
-Meta = (const.NAME, const.INPUT_COMPONENT, const.TYPE, const.DTYPE, const.SHAPE)
+Meta = (const.NAME, const.INPUTS, const.TYPE, const.DTYPE, const.SHAPE)
 
 
 ######## parse
 def alex_reader(user_defined):
 
-    def _read_input_component(component):
+    def _read_inputs(component):
         component = clone(component)
-        if const.INPUT_COMPONENT not in component:
-            # If no input_component is specified, input_component is set to the previous component (sequential)
-            component = {**{const.INPUT_COMPONENT: None}, **component}
-        elif not isinstance(component[const.INPUT_COMPONENT], list):
-            # Convert all input_component into list
-            component[const.INPUT_COMPONENT] = [component[const.INPUT_COMPONENT]]
+        if const.INPUTS not in component:
+            # If no inputs is specified, inputs is set to the previous component (sequential)
+            component = {**{const.INPUTS: None}, **component}
+        elif not isinstance(component[const.INPUTS], list):
+            # Convert all inputs into list
+            component[const.INPUTS] = [component[const.INPUTS]]
         return component
 
     def _read_hyperparams(component):
@@ -83,7 +83,7 @@ def alex_reader(user_defined):
 
     # Set up default value
     reader = {const.NAME: lambda x: {**{const.NAME: None}, **x} if const.NAME not in x else clone(x),
-              const.INPUT_COMPONENT: _read_input_component,
+              const.INPUTS: _read_inputs,
               const.HYPERPARAMS: _read_hyperparams,
               "visible": lambda x: {**{"visible": True}, **x} if "visible" not in x else clone(x),
               "dtype": lambda x: {**{"dtype": default["dtype"]}, **x} if "dtype" not in x else clone(x)}
@@ -298,35 +298,35 @@ def eval_name(name, components):
     return components
 
 
-def eval_input_component(input_component, components):
+def eval_inputs(inputs, components):
     global prev_component
 
     components = clone(components)
     user_defined = True
-    if input_component is None:
+    if inputs is None:
         user_defined = False
-        input_component = prev_component
-    _prev_component = input_component
+        inputs = prev_component
+    _prev_component = inputs
 
     for i, component in enumerate(components):
         component = clone(component)
         if component[const.META][const.TYPE] == const.DATA or component[const.META][const.TYPE] == "label":
             continue
         if i == 0 and user_defined:
-            component[const.META][const.INPUT_COMPONENT] = input_component
+            component[const.META][const.INPUTS] = inputs
         else:
             # If input components are not defined, then make it sequential
-            if component[const.META][const.INPUT_COMPONENT] is None:
-                component[const.META][const.INPUT_COMPONENT] = [_prev_component]
+            if component[const.META][const.INPUTS] is None:
+                component[const.META][const.INPUTS] = [_prev_component]
             else:
                 if i != 0:
                     prev_dir = _prev_component.replace(_prev_component.split("/")[-1], "")
-                    for _b, _base in enumerate(component[const.META][const.INPUT_COMPONENT]):
+                    for _b, _base in enumerate(component[const.META][const.INPUTS]):
                         if isinstance(_base, dict):
                             pass
                         base_name = _base.split("/")[-1]
                         _in = prev_dir + base_name
-                        component[const.META][const.INPUT_COMPONENT][_b] = _in
+                        component[const.META][const.INPUTS][_b] = _in
 
         if const.RPT_IDX in component[const.META]:
             rpt_info = component[const.META][const.RPT_IDX]
@@ -334,9 +334,9 @@ def eval_input_component(input_component, components):
             component_idx_in_block = rpt_info["component_idx_in_block"]
             if _component_count != 1 and component_idx_in_block == 0:
                 if isinstance(_prev_component, list):
-                    component[const.META][const.INPUT_COMPONENT] = _prev_component
+                    component[const.META][const.INPUTS] = _prev_component
                 else:
-                    component[const.META][const.INPUT_COMPONENT] = [_prev_component]
+                    component[const.META][const.INPUTS] = [_prev_component]
             component[const.META].pop(const.RPT_IDX, None)
         _prev_component = component[const.META][const.NAME]
         components[i] = component
@@ -369,7 +369,7 @@ def eval_share(share, components):
 def std_env():
     env = {const.REPEAT: eval_repeat,
            const.NAME: eval_name,
-           const.INPUT_COMPONENT: eval_input_component,
+           const.INPUTS: eval_inputs,
            "share": lambda t, x: deepcopy(x), # TODO: not implemented
            const.VAR_NAME: eval_var_name}
     return env
@@ -494,7 +494,7 @@ def flatten(lst):
 
 def global_update(components):
     """
-    Here we resolve any functions defined for input_component
+    Here we resolve any functions defined for inputs
     """
     prev_dir = None
     prev_level = 0
@@ -504,26 +504,26 @@ def global_update(components):
         current_dir = component[const.META][const.NAME].replace(_dir[-1], "")
         if current_dir != prev_dir and prev_dir is not None:
             if prev_level <= current_level:
-                input_component = component[const.META][const.INPUT_COMPONENT][0]
-        if component[const.META][const.INPUT_COMPONENT] is not None:
+                inputs = component[const.META][const.INPUTS][0]
+        if component[const.META][const.INPUTS] is not None:
             need_flatten = False
-            for i, _input in enumerate(component[const.META][const.INPUT_COMPONENT]):
+            for i, _input in enumerate(component[const.META][const.INPUTS]):
                 if _input is None:
-                    component[const.META][const.INPUT_COMPONENT][i] = const.INPUT_COMPONENT
-                elif const.INPUT_COMPONENT in _input:
+                    component[const.META][const.INPUTS][i] = const.INPUTS
+                elif const.INPUTS in _input:
                     try:
-                        component[const.META][const.INPUT_COMPONENT][i] = input_component
-                    except: # if input_component is not defined
-                        component[const.META][const.INPUT_COMPONENT][i] = const.INPUT_COMPONENT
+                        component[const.META][const.INPUTS][i] = inputs
+                    except: # if inputs is not defined
+                        component[const.META][const.INPUTS][i] = const.INPUTS
 
                 elif isinstance(_input, dict):
                     if "connect_to" in _input:
-                        component[const.META][const.INPUT_COMPONENT][i] = connect_to(components[:icomponent+1],
+                        component[const.META][const.INPUTS][i] = connect_to(components[:icomponent+1],
                                                                                      component[const.META][const.TYPE],
                                                                                      **_input["connect_to"])
                     need_flatten = True
             if need_flatten:
-                component[const.META][const.INPUT_COMPONENT] = flatten(component[const.META][const.INPUT_COMPONENT])
+                component[const.META][const.INPUTS] = flatten(component[const.META][const.INPUTS])
         component[const.VALUE][const.HYPERPARAMS] = _resolve_hyperparams(component[const.VALUE][const.HYPERPARAMS])
         for _key in component[const.VALUE][const.HYPERPARAMS]:
             hyperparam = component[const.VALUE][const.HYPERPARAMS][_key]
@@ -563,7 +563,7 @@ def draw_graph(graph_list, level=2, graph_path='example.png'):
         graph.add_node(node)
 
         if not component[const.META][const.TYPE] in const.INPUTS:
-            inputs = component[const.META][const.INPUT_COMPONENT]
+            inputs = component[const.META][const.INPUTS]
             for _input in inputs:
                 __input = "/".join(_input.split("/")[:level])
                 edge = pydot.Edge(_input, name)
@@ -583,7 +583,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
     network = dict()
     _subgraph = OrderedDict()
     network[const.LEVEL] = parent_level-1
-    network[const.INPUT_COMPONENT] = None
+    network[const.INPUTS] = None
     network["visible"] = True
     network[const.TYPE] = const.ROOT
     i = 0
@@ -597,7 +597,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
             _scope = _name
         else:
             _scope = scope + component[const.META][const.NAME].replace(scope, "").split("/")[0]
-        inputs = component[const.META][const.INPUT_COMPONENT]
+        inputs = component[const.META][const.INPUTS]
         if parent_scope!=scope:
             if level>parent_level:
                 _components = []
@@ -609,7 +609,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
                     else:
                         break
                 _network = list_to_graph(_components, level, scope)
-                _network[const.INPUT_COMPONENT] = inputs
+                _network[const.INPUTS] = inputs
                 _network[const.HYPERPARAMS] = dict() # hyperparams for recipes
                 _network[const.TYPE] = component[const.META][const.SCOPE]
                 _network["visible"] = component[const.META]["visible"]
@@ -622,7 +622,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
             _network[const.TYPE] = component[const.META][const.TYPE]
             _network["visible"] = component[const.META]["visible"]
             _network["dtype"] = component[const.META]["dtype"]
-            _network[const.INPUT_COMPONENT] = inputs
+            _network[const.INPUTS] = inputs
             _network[const.LEVEL] = level
             _network[const.HYPERPARAMS] = hyperparams
 
@@ -838,23 +838,23 @@ def parse(yml_file, return_dict=False):
         # Each node in the dict has the following keys:
         # hyperparams: list or dict, default: {}
         # type: string
-        # input_component: list, default: None
+        # inputs: list, default: None
         # name: string, default: None
         # (optional) dtype: data type
         # (optional) shape: list
         _graph:dict = config_to_inter_graph(user_defined, reader)
         # Step 2: transform _graph into an intermediate ast, where each key is a function
         # name
-        # input_component
+        # inputs
         # repeat
-        # e.g. ("input_component", input_component_list, ("name", name_str, ("repeat", n, [])))
+        # e.g. ("inputs", inputs_list, ("name", name_str, ("repeat", n, [])))
         ast:list = inter_graph_to_ast(_graph)
 
         # Step 3: first pass
         # A list of dicts
         # The reason of having a list of dicts as the main underlying data structure is due to its simplicity. This data structure can be transformed into the final ast
         # Each dict has the following structure:
-        # "meta": {"input_component": None or list,
+        # "meta": {"inputs": None or list,
         #          "name": string (scope/.../name),
         #          "scope": the scope of the node,
         #          "type": type of the deep learning component}
@@ -864,7 +864,7 @@ def parse(yml_file, return_dict=False):
         #           "value": a serializable object that contains the same info as tensor,
         #           "var": }
         graph:list = eval_ast_to_graph(ast)
-        # Step 4: second pass: same data structure; populate input_component
+        # Step 4: second pass: same data structure; populate inputs
         graph:list = global_update(graph)
         validation_components(graph)
         # Step 5: load graph and states from checkpoint; check if the structure matches the one defined in the DSL

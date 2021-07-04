@@ -48,14 +48,13 @@ params_network:
             32
       padding:
         VALID
-    input_component: input_component
-    input_component: input_component
+    inputs: inputs
   - type: batch_normalize
     name: short_cut_16_32
 
 
   - type: add
-    input_component:
+    inputs:
       - short_cut_16_32
       - conv1
   # - type: batch_normalize

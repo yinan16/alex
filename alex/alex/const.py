@@ -405,7 +405,7 @@ OPTIMIZERS = {"adam": {"tf": ["tf.optimizers.Adam",
 LOSS_BLOCK = {**LOSSES, **REGULARIZERS}
 INGREDIENT_TYPES = {**DL_LAYERS, **LOSSES, **OPTIMIZERS, **INFERENCE}
 
-INPUTS = ("data", "label")
+INPUT_TYPES = ("data", "label")
 
 
 LEARNING_RATE_DECAY = {"exponential_decay": {"tf": ["tf.keras.optimizers.schedules.ExponentialDecay",
@@ -505,7 +505,7 @@ COMPONENT = 'component'
 LOSS = 'loss'
 SOLVER = 'optimizers'
 TYPE = 'type'
-INPUT_COMPONENT = 'input_component'
+INPUTS = 'inputs'
 PARAMS_NETWORK = 'params_network'
 PARAMS_TRAINING = "params_training"
 PARAMS_LOSSES = 'params_losses'

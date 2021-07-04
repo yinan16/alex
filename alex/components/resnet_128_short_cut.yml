@@ -44,13 +44,13 @@ params_network:
             128
       padding:
         VALID
-    input_component: input_component
+    inputs: inputs
   - type: batch_normalize
     name: short_cut_64_128
 
 
   - type: add
-    input_component:
+    inputs:
       - short_cut_64_128
       - conv1
   # - type: batch_normalize

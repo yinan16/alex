@@ -54,7 +54,7 @@ def ls(option):
     elif option == "losses":
         pprint(list(const.LOSSES.keys()))
     elif option == "functions":
-        print("type", "name", "input_component", "repeat", "hyperparams", "visible")
+        print("type", "name", "inputs", "repeat", "hyperparams", "visible")
 
 
 def inspect(component):

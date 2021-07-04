@@ -37,12 +37,12 @@ params_network:
             3
           n_filters:
             512
-    input_component: input_component
+    inputs: inputs
   - type: batch_normalize
     name: short_cut_256_512
 
 
   - type: add
-    input_component:
+    inputs:
       - short_cut_256_512
       - conv1

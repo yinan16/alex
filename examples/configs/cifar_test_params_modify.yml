@@ -26,7 +26,7 @@ params_network:
         shape:
           n_filters:
             32
-    input_component: input_data
+    inputs: input_data
 
   - type: batch_normalize
 
@@ -55,14 +55,14 @@ params_network:
 # losses:
   - type:
       cross_entropy
-    input_component:
+    inputs:
       - labels
       - d_1
     name: losses
 
 # solvers:
   - type: adam
-    input_component: losses
+    inputs: losses
     name: solver
     hyperparams:
       learning_rate:
@@ -70,7 +70,7 @@ params_network:
 
 
   # - type: inference
-  #   input_component:
+  #   inputs:
   #     - labels
   #     - d_1
   #   name: inference_1

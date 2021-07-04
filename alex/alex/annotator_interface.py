@@ -32,15 +32,15 @@ class Annotator(ABC):
             recipe_name = node["name"]
             first_ingredient_in_recipe = list(filter(lambda x: recipe_name in x,
                                                      self.components))[0]
-            inputs = self.components[first_ingredient_in_recipe]["meta"]["input_component"]
+            inputs = self.components[first_ingredient_in_recipe]["meta"]["inputs"]
         elif name in self.components:
-            inputs = self.components[name]["meta"]["input_component"]
+            inputs = self.components[name]["meta"]["inputs"]
         else:
             parent = core.get_ancestor_ingredient_node(node,
                                                        self.components,
                                                        self.tree,
                                                        "name")
-            inputs = self.components[parent]["meta"]["input_component"]
+            inputs = self.components[parent]["meta"]["inputs"]
         return inputs
 
     def get_input_nodes(self, name, tree):
