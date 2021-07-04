@@ -78,6 +78,11 @@ class Model(torch.nn.Module):
         solver = torch.optim.Adam(params=trainable_params, lr=0.1, betas=(0.9, 0.999), eps=1e-08)
         return solver 
     
+    @staticmethod
+    def get_scheduler(optimizer):
+        solver_decay_exponential_decay = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.96, last_epoch=-1, verbose=False)
+        return solver_decay_exponential_decay 
+    
 
 import torch
 import torchvision
