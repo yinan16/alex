@@ -811,11 +811,11 @@ def annotate(components):
             elif component["meta"]["type"] not in const.OPTIMIZER_BLOCK \
                  and (component["meta"]["type"] in const.LOSS_BLOCK \
                       or len(list(filter(lambda x: components[x]["meta"]["block"] == "loss",
-                                         component["meta"]["inputs"])))):
+                                         component["meta"]["inputs"])))!=0):
                 component["meta"]["block"] = "loss"
             elif component["meta"]["type"] in const.OPTIMIZER_BLOCK \
                  or len(list(filter(lambda x: components[x]["meta"]["block"] == "optimizer",
-                                    component["meta"]["inputs"]))):
+                                    component["meta"]["inputs"])))!=0:
                 component["meta"]["block"] = "optimizer"
             else:
                 component["meta"]["block"] = "component"

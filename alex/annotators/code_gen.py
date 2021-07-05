@@ -689,8 +689,8 @@ class CodeGen(param_count.ParamCount):
     # FIXME: fix get_block logic
     def get_block(self, node):
         fn = node["value"]
-        if "block" in node and node["block"] is not None:
-            block = node["block"]
+        if "block" in node["meta"] and node["meta"]["block"] is not None:
+            block = node["meta"]["block"]
         else:
             block = list(filter(lambda x: fn in self.blocks[x],
                                 self.blocks))
