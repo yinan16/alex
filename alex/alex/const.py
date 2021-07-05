@@ -450,15 +450,16 @@ ALL_COMPONENTS = {**COMPONENTS,
                   **REGULARIZERS,
                   **OPTIMIZERS,}
                   # **UTILITY}
+COMPONENT_RECIPES = {"adense",
+                     "resnet_16",
+                     "resnet_32", "resnet_32_short_cut",
+                     "resnet_64", "resnet_64_short_cut",
+                     "resnet_128", "resnet_128_short_cut",
+                     "resnet_256", "resnet_256_short_cut",
+                     "resnet_512", "resnet_512_short_cut"}
 
 ALL_RECIPES = {"root",
-               "adense",
-               "resnet_16",
-               "resnet_32", "resnet_32_short_cut",
-               "resnet_64", "resnet_64_short_cut",
-               "resnet_128", "resnet_128_short_cut",
-               "resnet_256", "resnet_256_short_cut",
-               "resnet_512", "resnet_512_short_cut"}
+               *COMPONENT_RECIPES}
 
 TYPES = {0: "DETERMINISTIC_COMPONENTS_WITHOUT_HYPERPARAMETER",
          1: "DETERMINISTIC_COMPONENTS_WITH_HYPERPARAMETER",

@@ -416,7 +416,6 @@ def alex_graph_to_tree(network_graph, exclude_types=[], naive=True):
 
 
 def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, label_field="value", excluded_types=[]):
-    # pprint(tree)
     graph = pydot.Dot(graph_type='digraph', rankdir='LR', dpi=dpi, size=size, fontsize=12)
     for component in tree:
         name = component
@@ -438,7 +437,6 @@ def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, lab
                               fillcolor=color)
             graph.add_node(node)
         children_list = tree[component]["children"].copy()
-        # children_list.reverse()
         for child in children_list:
             if tree[child]["type"] in excluded_types:
                 continue
@@ -458,8 +456,14 @@ def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, lab
                                   shape="box",
                                   style = 'filled',
                                   fillcolor=color)
-
+                # if isinstance(tree[child]["meta"], dict):
+                #     if tree[child]["name"] != "root" and "block" in tree[child]["meta"]:
+                #         block = tree[child]["meta"]["block"]
+                #         blocks[block].add_node(node)
+                #     else:
+                          # graph.add_node(node)
                 graph.add_node(node)
+
             edge = pydot.Edge(component, child)
             graph.add_edge(edge)
 

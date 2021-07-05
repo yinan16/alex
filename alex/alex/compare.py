@@ -78,7 +78,7 @@ def label_to_value(label):
     return label.split("#")[0]
 
 
-def _diff_graph_list(n1, n2, render_to=None, dpi=800):
+def _diff_graph_list(n1, n2):
     tree1 = core.alex_graph_to_tree(n1, exclude_types=["hyperparam"], naive=False)
     tree2 = core.alex_graph_to_tree(n2, exclude_types=["hyperparam"], naive=False)
     tree_full1 = core.alex_graph_to_tree(n1, naive=False)
@@ -135,25 +135,7 @@ def _diff_graph_list(n1, n2, render_to=None, dpi=800):
                             cost += 1 # FIXME
                             _operation = (child, ["INSERT", "", tree_full2[child]["label"]])
                             operations.append(_operation)
-    # pprint(operations)
 
-    if render_to is not None:
-        print("Done computing diff. Rendering image")
-        annotation = annotate_ops(operations)
-        img1 = core.draw(tree_full1, None, annotation[1], dpi=dpi)
-        img2 = core.draw(tree_full2, None, annotation[2], dpi=dpi)
-        fig, axs = plt.subplots(1, 2, dpi=dpi)
-        axs[0].imshow(img1)
-        axs[0].axis("off")
-        axs[1].imshow(img2)
-        axs[1].axis("off")
-        fig.tight_layout()
-        if render_to != "":
-            fig.savefig(render_to, dpi="figure")
-            print("Diff images written to: %s" % render_to)
-        else:
-            print("Diff images rendered to screen")
-            plt.show()
     return cost, operations
 
 
@@ -274,13 +256,43 @@ def diff(network_config_1,
          render_to=None,
          dpi=800):
     graph_list1 = dsl_parser.parse(network_config_1)
-    graph1 = dsl_parser.list_to_graph(graph_list1)
     graph_list2 = dsl_parser.parse(network_config_2)
+    graph1 = dsl_parser.list_to_graph(graph_list1)
     graph2 = dsl_parser.list_to_graph(graph_list2)
-    cost, operations = _diff_graph_list(graph1,
-                                        graph2,
-                                        render_to=render_to,
-                                        dpi=dpi)
+    tree_full1 = core.alex_graph_to_tree(graph1, naive=False)
+    tree_full2 = core.alex_graph_to_tree(graph2, naive=False)
+
+    operations = []
+    cost = 0
+    for block in ["data", "component", "loss", "optimizer"]:
+
+        graph_list1_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list1))
+        graph_list2_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list2))
+        graph1_block = dsl_parser.list_to_graph(graph_list1_block)
+        graph2_block = dsl_parser.list_to_graph(graph_list2_block)
+        _cost, _operations = _diff_graph_list(graph1_block,
+                                              graph2_block)
+        cost += _cost
+        operations += _operations
+
+    if render_to is not None:
+        print("Done computing diff. Rendering image")
+        annotation = annotate_ops(operations)
+        img1 = core.draw(tree_full1, None, annotation[1], dpi=dpi)
+        img2 = core.draw(tree_full2, None, annotation[2], dpi=dpi)
+        fig, axs = plt.subplots(1, 2, dpi=dpi)
+        axs[0].imshow(img1)
+        axs[0].axis("off")
+        axs[1].imshow(img2)
+        axs[1].axis("off")
+        fig.tight_layout()
+        if render_to != "":
+            fig.savefig(render_to, dpi="figure")
+            print("Diff images written to: %s" % render_to)
+        else:
+            print("Diff images rendered to screen")
+            plt.show()
+
     return cost, operations
 
 

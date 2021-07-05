@@ -579,9 +579,10 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
     network = dict()
     _subgraph = OrderedDict()
     network[const.LEVEL] = parent_level-1
+    network[const.META] = dict()
+    # TODO: remove the following info (cached in meta)
     network[const.INPUTS] = None
     network["visible"] = True
-    network[const.META] = dict()
     network[const.TYPE] = const.ROOT
     i = 0
     while i < len(components):
@@ -611,6 +612,9 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
                 _network[const.TYPE] = component[const.META][const.SCOPE]
                 _network["visible"] = component[const.META]["visible"]
                 _network[const.META] = component[const.META]
+                # if _network[const.META]["type"] in const.COMPONENT_RECIPES:
+                #     _network[const.META]["block"] = "component"
+
                 _subgraph[scope[:-1]] = _network
             else:
                 break
@@ -804,9 +808,10 @@ def annotate(components):
             inputs = component["meta"]["inputs"]
             if component["meta"]["type"] in const.INPUT_TYPES:
                 component["meta"]["block"] = "data"
-            elif component["meta"]["type"] in const.LOSS_BLOCK \
-                 or len(list(filter(lambda x: components[x]["meta"]["block"] == "loss",
-                                    component["meta"]["inputs"]))):
+            elif component["meta"]["type"] not in const.OPTIMIZER_BLOCK \
+                 and (component["meta"]["type"] in const.LOSS_BLOCK \
+                      or len(list(filter(lambda x: components[x]["meta"]["block"] == "loss",
+                                         component["meta"]["inputs"])))):
                 component["meta"]["block"] = "loss"
             elif component["meta"]["type"] in const.OPTIMIZER_BLOCK \
                  or len(list(filter(lambda x: components[x]["meta"]["block"] == "optimizer",
@@ -888,7 +893,6 @@ def parse(yml_file, return_dict=False):
         graph:list = global_update(graph)
         if config_to_type(yml_file) not in const.ALL_RECIPES:
             graph = annotate(graph)
-        # pprint(components)
         validate_components(graph)
         # Step 5: load graph and states from checkpoint; check if the structure matches the one defined in the DSL
     except Exception:
