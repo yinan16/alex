@@ -32,8 +32,8 @@ params_network:
   - type: flatten
   - type: dense
   - type: softmax
-    name: d_1
   - type: sigmoid
+    name: d_1
 # losses:
   - type:
       cross_entropy

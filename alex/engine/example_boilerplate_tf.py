@@ -89,6 +89,4 @@ for epoch in range(num_epochs):
     train_loss_results.append(epoch_loss_avg)
     train_accuracy_results.append(epoch_accuracy)
 
-    print("--- On epoch %i ---" % epoch)
-    tf.print("Accuracy: ", epoch_accuracy, "| Loss: ",epoch_loss_avg)
-    print("\n")
+    tf.print("[", epoch, "500]", "accuracy: ", epoch_accuracy, ", loss: ",epoch_loss_avg)
