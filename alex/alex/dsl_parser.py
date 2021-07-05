@@ -1,5 +1,5 @@
-# ----------------------------------------------------------------------
 # Created: sön nov  12 10:11:23 2017 (+0100)
+# ----------------------------------------------------------------------
 # Last-Updated:
 # Filename: parser.py
 # Author: Yinan
@@ -14,6 +14,7 @@ import string
 import collections.abc as collections
 from collections import OrderedDict, Iterable
 from pprint import pprint
+import traceback
 
 from typing import Union
 
@@ -42,7 +43,7 @@ share: component_name -> source_name -> [var_names]
 The parsing process involves several passes in order to generate the final ast
 At each pass, an intermediate data structure is generated
 """
-Fns1pass = (const.REPEAT, const.NAME, const.VAR_NAME, const.INPUTS)
+Fns1pass = (const.REPEAT, const.NAME, const.INPUTS)
 Fns2pass = (const.PARAMS_TRAINING, "share")
 Fns = Fns2pass + Fns1pass
 Training = (const.TYPE)
@@ -349,12 +350,6 @@ def eval_inputs(inputs, components):
 ############################ Begin second pass ###############################
 ####### Second pass only deal with local dependencies
 
-##### TODO: deal with variables separately, including the losses
-def eval_var_name(share, components):
-    # TODO: put in first pass
-    return components
-
-
 ### TODO: share
 def eval_share(share, components):
 
@@ -371,7 +366,7 @@ def std_env():
            const.NAME: eval_name,
            const.INPUTS: eval_inputs,
            "share": lambda t, x: deepcopy(x), # TODO: not implemented
-           const.VAR_NAME: eval_var_name}
+    }
     return env
 
 
@@ -586,6 +581,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
     network[const.LEVEL] = parent_level-1
     network[const.INPUTS] = None
     network["visible"] = True
+    network[const.META] = dict()
     network[const.TYPE] = const.ROOT
     i = 0
     while i < len(components):
@@ -614,6 +610,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
                 _network[const.HYPERPARAMS] = dict() # hyperparams for recipes
                 _network[const.TYPE] = component[const.META][const.SCOPE]
                 _network["visible"] = component[const.META]["visible"]
+                _network[const.META] = component[const.META]
                 _subgraph[scope[:-1]] = _network
             else:
                 break
@@ -622,6 +619,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
             _network[const.SUBGRAPH] = component[const.META][const.NAME]
             _network[const.TYPE] = component[const.META][const.TYPE]
             _network["visible"] = component[const.META]["visible"]
+            _network[const.META] = component[const.META]
             _network["dtype"] = component[const.META]["dtype"]
             _network[const.INPUTS] = inputs
             _network[const.LEVEL] = level
@@ -754,16 +752,11 @@ def draw_hyperparam_tree(graph,
 
 
 def list_to_dict(components):
-    network = OrderedDict()
-    prev_top_dir = None
-    for component in components:
-        network[component["meta"]["name"]] = component
-        # _dir = component[const.META][const.NAME].split("/")
-        # top_dir = _dir[0]
-        # if prev_top_dir is None or top_dir!=prev_top_dir:
-        #     network[top_dir] = component
-        # prev_top_dir = top_dir
-    return network
+    components = OrderedDict(map(lambda x:
+                                 (components[x]["meta"]["name"],
+                                  components[x]), range(len(components))))
+
+    return components
 
 
 ### d3
@@ -804,8 +797,31 @@ def graph_to_d3_ast(graph):
     return children
 
 
-def validation_components(components):
+def annotate(components):
+    components = list_to_dict(components)
+    for i, component in enumerate(components.values()):
+        try:
+            inputs = component["meta"]["inputs"]
+            if component["meta"]["type"] in const.INPUT_TYPES:
+                component["meta"]["block"] = "data"
+            elif component["meta"]["type"] in const.LOSS_BLOCK \
+                 or len(list(filter(lambda x: components[x]["meta"]["block"] == "loss",
+                                    component["meta"]["inputs"]))):
+                component["meta"]["block"] = "loss"
+            elif component["meta"]["type"] in const.OPTIMIZER_BLOCK \
+                 or len(list(filter(lambda x: components[x]["meta"]["block"] == "optimizer",
+                                    component["meta"]["inputs"]))):
+                component["meta"]["block"] = "optimizer"
+            else:
+                component["meta"]["block"] = "component"
+        except Exception:
+            print("------------- Component %s (%i) annotation failed ----------" % (component["meta"]["name"], i))
+            traceback.print_exc()
+            raise
+    return list(components.values())
 
+
+def validate_components(components):
     schemas = dict()
     for component in components:
         component_type = component["meta"]["type"]
@@ -820,6 +836,9 @@ def validation_components(components):
                 # print("%s schema not implemented" % component_type)
         if schemas[component_type] is not None:
             validate(instance=component["value"]["hyperparams"], schema=schemas[component_type])
+
+def config_to_type(yml_file):
+    return yml_file.split("/")[-1].split(".")[0]
 
 
 ################################################################################
@@ -867,12 +886,15 @@ def parse(yml_file, return_dict=False):
         graph:list = eval_ast_to_graph(ast)
         # Step 4: second pass: same data structure; populate inputs
         graph:list = global_update(graph)
-        validation_components(graph)
+        if config_to_type(yml_file) not in const.ALL_RECIPES:
+            graph = annotate(graph)
+        # pprint(components)
+        validate_components(graph)
         # Step 5: load graph and states from checkpoint; check if the structure matches the one defined in the DSL
-    except Exception as err:
+    except Exception:
         message = "-------------- Error during parsing configuration %s ----------" % yml_file
-        print(message)
-        raise Exception
+        traceback.print_exc()
+        raise
     if return_dict:
         graph = list_to_dict(graph)
     return graph

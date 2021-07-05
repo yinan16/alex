@@ -247,21 +247,6 @@ class ParamCount(Annotator):
         name = node["name"]
         input_nodes = self.get_input_nodes(name, self.annotated)
         input_names = self.get_input_names(name, self.annotated)
-        # FIXME: fix cache block info logic
-        if input_nodes is None:
-            node["block"] = "data"
-        elif node["value"] in const.SCHEDULER_BLOCK:
-            node["block"] = None
-        elif node["value"] in const.OPTIMIZER_BLOCK:
-            node["block"] = None
-        elif node["value"] in const.LOSS_BLOCK:
-            node["block"] = "loss"
-        else:
-            if input_nodes is not None:
-                for _input_node in input_nodes:
-                    if _input_node is not None and ("block" in _input_node) and (_input_node["block"] == "loss"):
-                        node["block"] = "loss"
-                        break
         # FIXME: for regularization
         if input_nodes is not None and input_nodes[0] is None:
             input_nodes = None

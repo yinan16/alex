@@ -215,6 +215,7 @@ def alex_graph_to_json(graph,
     else: # if is an ingredient or hyperparameters
         if isinstance(graph, dict) and "hyperparams" in graph:
             if len(graph["hyperparams"]) != 0: # if is an ingredient with hyperparameter
+
                 if not naive:
                     hyperparam_str = str(uuid.uuid3(uuid.NAMESPACE_DNS,
                                                     json.dumps(graph["hyperparams"],
@@ -232,7 +233,8 @@ def alex_graph_to_json(graph,
                              "name": root_name,
                              "meta": {"hyperparams": graph["hyperparams"],
                                       "position": _position,
-                                      "label_path": label_path}}
+                                      "label_path": label_path,
+                                      "block": graph["meta"]["block"]}}
                 root_name = str(root_name)
                 json_obj[root_name] = collections.OrderedDict()
                 for _name in sorted(graph["hyperparams"]):
@@ -260,7 +262,8 @@ def alex_graph_to_json(graph,
                              "name": root_name,
                              "meta": {"hyperparams": {},
                                       "position": _position,
-                                      "label_path": label_path}}
+                                      "label_path": label_path,
+                                      "block": graph["meta"]["block"]}}
                 root_name = str(root_name)
 
                 json_obj[root_name] = None
@@ -269,7 +272,6 @@ def alex_graph_to_json(graph,
             _root_name = deepcopy(root_name)
             _value = _root_name.split("/")[-1]
             label_path = "%s/%s" % (label_path, _value)
-
             root_name = {"value": _value,
                          "label": label_path,
                          "name":  _root_name,
