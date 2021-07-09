@@ -640,7 +640,7 @@ class CodeGen(param_count.ParamCount):
         self.inline_index_translation = []
         self.inline_index_python = []
         self.blocks = {"param": {**const.ALL_PARAMS, **const.ALL_INITIALIZERS},
-                       "component": const.COMPONENT_BLOCK,
+                       "model": const.MODEL_BLOCK,
                        "optimizer": const.OPTIMIZER_BLOCK,
                        "loss": const.LOSS_BLOCK,
                        "scheduler": const.SCHEDULER_BLOCK,
@@ -650,26 +650,26 @@ class CodeGen(param_count.ParamCount):
                                         **self.blocks["scheduler"]}
             self.blocks["scheduler"] = {}
         self.filepaths = {"param": os.path.join(self.alex_cache_code_path, "_param_.py"),
-                          "component": os.path.join(self.alex_cache_code_path, "_component_.py"),
+                          "model": os.path.join(self.alex_cache_code_path, "_component_.py"),
                           "optimizer": os.path.join(self.alex_cache_code_path, "_optimizer_.py"),
                           "loss": os.path.join(self.alex_cache_code_path, "_loss_.py"),
                           "scheduler": os.path.join(self.alex_cache_code_path, "_scheduler_.py"),
                           "data": ""
         }
         self.alex_defs = {"param": [],
-                          "component": [],
+                          "model": [],
                           "optimizer": [],
                           "scheduler": [],
                           "loss": [],
                           "data": []}
         self.alex_code = {"param": [],
-                          "component": [],
+                          "model": [],
                           "optimizer": [],
                           "scheduler": [],
                           "loss": [],
                           "data": []}
         self.alex_inline = {"param": [],
-                            "component": [],
+                            "model": [],
                             "optimizer": [],
                             "scheduler": [],
                             "loss": [],
@@ -849,7 +849,7 @@ class CodeGen(param_count.ParamCount):
         optimizer_str = self.get_dl_code(block="optimizer",
                                          fn_name="get_optimizer",
                                          manual_args=["trainable_params", ])
-        component_str = self.get_dl_code(block="component",
+        component_str = self.get_dl_code(block="model",
                                          fn_name="model",
                                          manual_args=["input_data",
                                                       "trainable_params",

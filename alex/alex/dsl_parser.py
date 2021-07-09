@@ -515,8 +515,8 @@ def global_update(components):
                 elif isinstance(_input, dict):
                     if "connect_to" in _input:
                         component[const.META][const.INPUTS][i] = connect_to(components[:icomponent+1],
-                                                                                     component[const.META][const.TYPE],
-                                                                                     **_input["connect_to"])
+                                                                            component[const.META][const.TYPE],
+                                                                            **_input["connect_to"])
                     need_flatten = True
             if need_flatten:
                 component[const.META][const.INPUTS] = flatten(component[const.META][const.INPUTS])
@@ -542,7 +542,7 @@ def _user_fn(fn, kwargs):
 
 
 ######################################### Different views:
-def draw_graph(graph_list, level=2, graph_path='example.png'):
+def draw_graph(graph_list, level=2, graph_path='example.png', show="name"):
     graph = pydot.Dot(graph_type='digraph', rankdir='LR', dpi=800, size=5, fontsize=18)
 
     added = []
@@ -554,7 +554,10 @@ def draw_graph(graph_list, level=2, graph_path='example.png'):
             continue
         added.append(name)
         node = pydot.Node(name, shape="box")
-        label = name.split("/")[-1]# .split("_")[0]
+        if show == "name":
+            label = name.split("/")[-1]# .split("_")[0]
+        else:
+            label = component["meta"]["type"]
         node.set_label(label)
         graph.add_node(node)
 
@@ -613,7 +616,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
                 _network["visible"] = component[const.META]["visible"]
                 _network[const.META] = component[const.META]
                 # if _network[const.META]["type"] in const.COMPONENT_RECIPES:
-                #     _network[const.META]["block"] = "component"
+                #     _network[const.META]["block"] = "model"
 
                 _subgraph[scope[:-1]] = _network
             else:
@@ -657,13 +660,16 @@ def draw_hyperparam_tree(graph,
             color = colors["DET_COMPONENTS_NO_HYPE"]
         elif label in const.INFERENCE:
             color = colors["INFERENCE"]
-        elif label in flatten(list(const.PARAMS.values())):
-            color = colors["PARAMS"]
+        elif label in const.ALL_TRAINABLE_PARAMS:
+            color = colors["TRAINABLE_PARAMS"]
+        elif label in const.ALL_OTHER_PARAMS:
+            color = colors["NONTRAINABLE_PARAMS"]
         else:
-            color = "black"
+            color = "white"
         node = pydot.Node(name,
                           shape="box",
-                          color=color,
+                          style="filled",
+                          fillcolor=color,
                           fontsize=16)
         node.set_label(label)
         graph.add_node(node)
@@ -745,10 +751,10 @@ def draw_hyperparam_tree(graph,
     colors = {"COMPONENTS": "red",
               "DET_COMPONENTS_HYPE": "green",
               "DET_COMPONENTS_NO_HYPE": "yellow",
-              "INFERENCE": "blue",
-              "PARAMS": "purple"}
+              "INFERENCE": "cyan",
+              "NONTRAINABLE_PARAMS": "#8ecae6",
+              "TRAINABLE_PARAMS": "#ffafcc"}
     _graph = list_to_graph(graph)
-    # pprint(_graph)
     dot_graph = pydot.Dot(graph_type='digraph', rankdir='LR', dpi=100, size=100, fontsize=18)
     parent_node = const.ROOT
     dot_graph = _draw_hyperparam_tree(_graph[const.SUBGRAPH], parent_node, dot_graph)
@@ -806,6 +812,7 @@ def annotate(components):
     for i, component in enumerate(components.values()):
         try:
             inputs = component["meta"]["inputs"]
+            # Annotate block: data, model, loss, optimizer
             if component["meta"]["type"] in const.INPUT_TYPES:
                 component["meta"]["block"] = "data"
             elif component["meta"]["type"] not in const.OPTIMIZER_BLOCK \
@@ -818,7 +825,7 @@ def annotate(components):
                                     component["meta"]["inputs"])))!=0:
                 component["meta"]["block"] = "optimizer"
             else:
-                component["meta"]["block"] = "component"
+                component["meta"]["block"] = "model"
         except Exception:
             print("------------- Component %s (%i) annotation failed ----------" % (component["meta"]["name"], i))
             traceback.print_exc()
@@ -922,9 +929,9 @@ def dict_to_arg_str(d):
     return out
 
 
-def make_graph_from_yml(yml_file, png_file, level):
+def make_graph_from_yml(yml_file, png_file, level, show="label"):
     graph = parse(yml_file)
-    draw_graph(graph, level, png_file)
+    draw_graph(graph, level, png_file, show=show)
 
 
 def make_ast_from_yml(yml_file, png_file):

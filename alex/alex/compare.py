@@ -264,7 +264,7 @@ def diff(network_config_1,
 
     operations = []
     cost = 0
-    for block in ["data", "component", "loss", "optimizer"]:
+    for block in ["data", "model", "loss", "optimizer"]:
 
         graph_list1_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list1))
         graph_list2_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list2))

@@ -114,13 +114,17 @@ PARAMS = {"conv": {"filters": {"derivative": True,
 
 ALL_PARAMS = dict()
 ALL_TRAINABLE_PARAMS = dict()
+ALL_OTHER_PARAMS = dict()
 for ingredient in PARAMS:
     for param in PARAMS[ingredient]:
         ALL_PARAMS[param] = PARAMS[ingredient][param]
         if PARAMS[ingredient][param]["derivative"]:
             ALL_TRAINABLE_PARAMS[param] = PARAMS[ingredient][param]
+        else:
+            ALL_OTHER_PARAMS[param] = PARAMS[ingredient][param]
 ALL_PARAMS_LIST = list(ALL_PARAMS.keys())
 ALL_TRAINABLE_PARAMS_LIST = list(ALL_TRAINABLE_PARAMS.keys())
+ALL_OTHER_PARAMS_LIST = list(ALL_OTHER_PARAMS.keys())
 
 INITIALIZERS_NO_HYPE = {"zeros_initializer": {"keras": ["",
                                                         []],
@@ -437,7 +441,7 @@ AS_TENSOR = {"as_tensor": {"tf": ["tf.convert_to_tensor",
                                                   "dtype": True,
                                                   "device": False,
                                                   "name": True}]}}
-COMPONENT_BLOCK = {**DL_LAYERS, **AS_TENSOR}
+MODEL_BLOCK = {**DL_LAYERS, **AS_TENSOR}
 
 UTILITY = {**TENSOR_SHAPE, **LEARNING_RATE_DECAY, **AS_TENSOR}
 

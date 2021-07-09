@@ -29,6 +29,7 @@ params_network:
       dropout
 
   - type: resnet_16
+    repeat: 3
   - type: flatten
   - type: dense
   - type: softmax
