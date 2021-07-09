@@ -140,7 +140,7 @@ def instantiate_node(name, label, value, meta, parent, children, descendants):
     node["descendants"] = deepcopy(descendants)
     node["parent"] = parent
     node["lmd"] = descendants[0] if len(descendants)>=1 else name
-    node["type"] = get_value_type(label)
+    node["type"] = get_value_type(value)
     node["meta"] = meta
     return node
 
