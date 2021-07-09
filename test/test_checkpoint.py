@@ -15,16 +15,19 @@ class TestCheckpoint(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        print("Testing checkpoint")
 
     def setUp(self):
         pass
 
-    # def test_checkpoint(self):
-    #     ckpt = checkpoint.Checkpoint("examples/configs/small1.yml",
-    #                                  ["checkpoints",
-    #                                   "config_1622420349826577.json"],
-    #                                  ["checkpoints", None])
-    #     pprint(ckpt.matched)
+    def test_checkpoint(self):
+        ckpt = checkpoint.Checkpoint("examples/configs/small2.yml",
+                                     ["checkpoints",
+                                      "config_1625826546926544.json"],
+                                     ["checkpoints", None])
+        # ckpt.save()
+        print("Matched components")
+        pprint(ckpt.matched)
 
 
 if __name__ == '__main__':

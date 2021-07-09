@@ -278,4 +278,5 @@ class ParamCount(Annotator):
             node["dtype"] = self.components[node["ancestor"]["name"]]["meta"]["dtype"]
         else:
             node["dtype"] = None
+
         return node

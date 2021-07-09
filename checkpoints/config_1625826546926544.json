@@ -1,0 +1,459 @@
+{
+    "state": {},
+    "components": [
+        {
+            "value": {
+                "hyperparams": {
+                    "shape": {
+                        "batch_size": null,
+                        "height": 32,
+                        "width": 32,
+                        "channels": 3
+                    }
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "input_data",
+                "inputs": null,
+                "type": "data",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "data"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "shape": {
+                        "batch_size": null,
+                        "dim": 10
+                    }
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "labels",
+                "inputs": null,
+                "type": "label",
+                "dtype": "int64",
+                "visible": true,
+                "scope": "root",
+                "block": "data"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "filters": {
+                        "shape": {
+                            "n_filters": 16,
+                            "kernel_size_w": 3,
+                            "kernel_size_h": 3,
+                            "input_shape": "channels"
+                        },
+                        "dtype": "float32",
+                        "initializer": {
+                            "xavier_uniform": {
+                                "seed": 1
+                            }
+                        }
+                    },
+                    "padding": "SAME",
+                    "strides": [
+                        2,
+                        2
+                    ],
+                    "dilation": 1
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "conv_5fo",
+                "inputs": [
+                    "input_data"
+                ],
+                "type": "conv",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "model"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {},
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "reluu",
+                "inputs": [
+                    "conv_5fo"
+                ],
+                "type": "relu",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "model"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "dropout_rate": 0.2
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "dropout_9ju",
+                "inputs": [
+                    "reluu"
+                ],
+                "type": "dropout",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "model"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "mean": {
+                        "dtype": "float32",
+                        "initializer": {
+                            "zeros_initializer": {}
+                        },
+                        "shape": {
+                            "input_shape": "channels"
+                        }
+                    },
+                    "variance": {
+                        "dtype": "float32",
+                        "initializer": {
+                            "ones_initializer": {}
+                        },
+                        "shape": {
+                            "input_shape": "channels"
+                        }
+                    },
+                    "offset": {
+                        "dtype": "float32",
+                        "initializer": {
+                            "zeros_initializer": {}
+                        },
+                        "shape": {
+                            "input_shape": "channels"
+                        }
+                    },
+                    "scale": {
+                        "dtype": "float32",
+                        "initializer": {
+                            "ones_initializer": {}
+                        },
+                        "shape": {
+                            "input_shape": "channels"
+                        }
+                    },
+                    "momentum": 0.1,
+                    "epsilon": 0.001
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "batch_normalize_11lk",
+                "inputs": [
+                    "dropout_9ju"
+                ],
+                "type": "batch_normalize",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "model"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "filters": {
+                        "shape": {
+                            "n_filters": 16,
+                            "kernel_size_w": 3,
+                            "kernel_size_h": 3,
+                            "input_shape": "channels"
+                        },
+                        "dtype": "float32",
+                        "initializer": {
+                            "xavier_uniform": {
+                                "seed": 1
+                            }
+                        }
+                    },
+                    "padding": "SAME",
+                    "strides": [
+                        1,
+                        1
+                    ],
+                    "dilation": 1
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "conv_13na",
+                "inputs": [
+                    "batch_normalize_11lk"
+                ],
+                "type": "conv",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "model"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "filters": {
+                        "shape": {
+                            "n_filters": 16,
+                            "kernel_size_w": 3,
+                            "kernel_size_h": 3,
+                            "input_shape": "channels"
+                        },
+                        "dtype": "float32",
+                        "initializer": {
+                            "xavier_uniform": {
+                                "seed": 1
+                            }
+                        }
+                    },
+                    "padding": "SAME",
+                    "strides": [
+                        1,
+                        1
+                    ],
+                    "dilation": 1
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "conv_15pq",
+                "inputs": [
+                    "conv_13na"
+                ],
+                "type": "conv",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "model"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {},
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "flatten_17rg",
+                "inputs": [
+                    "conv_15pq"
+                ],
+                "type": "flatten",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "model"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "weights": {
+                        "dtype": "float32",
+                        "initializer": {
+                            "xavier_uniform": {
+                                "seed": 2
+                            }
+                        },
+                        "shape": {
+                            "input_shape": "channels",
+                            "n_units": 10
+                        }
+                    },
+                    "bias": {
+                        "dtype": "float32",
+                        "initializer": {
+                            "zeros_initializer": {}
+                        },
+                        "shape": {
+                            "dim": 1
+                        }
+                    }
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "dense_19tw",
+                "inputs": [
+                    "flatten_17rg"
+                ],
+                "type": "dense",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "model"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {},
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "d_1",
+                "inputs": [
+                    "dense_19tw"
+                ],
+                "type": "softmax",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "model"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {},
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "cross_0",
+                "inputs": [
+                    "labels",
+                    "d_1"
+                ],
+                "type": "cross_entropy",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "loss"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "coeff": 0.002
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "regularizer",
+                "inputs": [
+                    "conv_5fo/filters",
+                    "conv_13na/filters",
+                    "conv_15pq/filters",
+                    "dense_19tw/weights"
+                ],
+                "type": "regularizer_l2",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "loss"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {},
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "losses",
+                "inputs": [
+                    "cross_0",
+                    "regularizer"
+                ],
+                "type": "add",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "loss"
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "learning_rate": 0.0001,
+                    "decay": {
+                        "exponential_decay": {
+                            "initial_learning_rate": 0.0001,
+                            "decay_steps": 100000,
+                            "decay_rate": 0.96,
+                            "staircase": true
+                        }
+                    },
+                    "beta1": 0.9,
+                    "beta2": 0.999,
+                    "epsilon": 1e-08
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "solver",
+                "inputs": [
+                    "losses"
+                ],
+                "type": "adam",
+                "dtype": "float32",
+                "visible": true,
+                "scope": "root",
+                "block": "optimizer"
+            }
+        }
+    ]
+}

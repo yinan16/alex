@@ -257,10 +257,12 @@ def diff(network_config_1,
          dpi=800):
     graph_list1 = dsl_parser.parse(network_config_1)
     graph_list2 = dsl_parser.parse(network_config_2)
+    # Do not include dimensionality in diff
     # graph1 = dsl_parser.list_to_graph(graph_list1)
     # graph2 = dsl_parser.list_to_graph(graph_list2)
     # tree_full1 = core.alex_graph_to_tree(graph1, naive=False)
     # tree_full2 = core.alex_graph_to_tree(graph2, naive=False)
+    # Include dimensionality in diff
     tree_full1 = param_count.ParamCount(network_config_1).annotate_tree()
     tree_full2 = param_count.ParamCount(network_config_2).annotate_tree()
 
@@ -305,10 +307,12 @@ def dist(network_config_1,
          dpi=800):
     graph_list1 = dsl_parser.parse(network_config_1)
     graph_list2 = dsl_parser.parse(network_config_2)
+    # Do not include dimensionality in dist
     # graph1 = dsl_parser.list_to_graph(graph_list1)
     # graph2 = dsl_parser.list_to_graph(graph_list2)
     # tree1 = core.alex_graph_to_tree(graph1, exclude_types=exclude_types)
     # tree2 = core.alex_graph_to_tree(graph2, exclude_types=exclude_types)
+    # Include dimensionality in dist
     tree1 = param_count.ParamCount(graph_list1).annotate_tree()
     tree2 = param_count.ParamCount(graph_list2).annotate_tree()
 
@@ -334,15 +338,19 @@ def matched_ingredients(network_config_1,
         graph_list1 = deepcopy(network_config_1)
     else:
         graph_list1 = dsl_parser.parse(network_config_1)
-    n1 = dsl_parser.list_to_graph(graph_list1)
     if isinstance(network_config_1, list):
         graph_list2 = deepcopy(network_config_2)
     else:
         graph_list2 = dsl_parser.parse(network_config_2)
-    n2 = dsl_parser.list_to_graph(graph_list2)
-    tree1 = core.alex_graph_to_tree(n1, exclude_types=["hyperparam"], naive=False)
-    # pprint(tree1)
-    tree2 = core.alex_graph_to_tree(n2, exclude_types=["hyperparam"], naive=False)
+    # n1 = dsl_parser.list_to_graph(graph_list1)
+    # n2 = dsl_parser.list_to_graph(graph_list2)
+    # tree1 = core.alex_graph_to_tree(n1, exclude_types=["hyperparam"], naive=False)
+    # tree2 = core.alex_graph_to_tree(n2, exclude_types=["hyperparam"], naive=False)
+
+    tree1 = param_count.ParamCount(graph_list1,
+                                   naive=False).annotate_tree()
+    tree2 = param_count.ParamCount(graph_list2,
+                                   naive=False).annotate_tree()
     _, operations = ted(tree1, tree2)
     # pprint(operations)
     if render_to is not None:

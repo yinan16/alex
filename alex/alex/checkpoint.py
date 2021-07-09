@@ -24,7 +24,8 @@ def get_checkpoint(graph_list, states, trainable_params):
         component = dict()
         component["value"] = dict()
         name = component_block["meta"]["name"]
-        names_trainable_params = list(filter(lambda x: name+"/" in x, trainable_params))
+        names_trainable_params = list(filter(lambda x: name+"/" in x,
+                                             trainable_params))
         component["meta"] = deepcopy(component_block["meta"])
         for _key in component_block["value"]:
             if _key == const.TENSOR:
@@ -156,6 +157,7 @@ def get_load_path(ckpt_dir, ckpt_name=None, ext=".json"):
             json_file = os.path.join(ckpt_dir,
                                      ckpt_name)
     if json_file is None or not Path(json_file).is_file():
+        print("Checkpoint %s does not exist" % json_file)
         return None
     else:
         return json_file
@@ -189,7 +191,6 @@ class Checkpoint():
         else:
             self.matched = None
 
-
     def load(self):
         if self.load_path is None:
             trainable_params = None
@@ -201,6 +202,6 @@ class Checkpoint():
                                                                  matched=self.matched)
         return trainable_params
 
-    def save(self, trainable_params, stats={}):
+    def save(self, trainable_params=dict(), stats={}):
         save(self.components_list, stats, trainable_params, self.save_path)
         print("Saving to path", self.save_path)

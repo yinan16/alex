@@ -35,6 +35,7 @@ CONSTRUCTORS = {"params": {"tf": ["tf.Variable",
                                      "is_trainable": True}]}}
 
 
+# TODO: as it is now, the param names need to be globally unique
 PARAMS = {"conv": {"filters": {"derivative": True,
                                "ingredient": "conv",
                                "shape": {"pytorch": ["[n_filters, input_shape, kernel_size_h, kernel_size_w]",
