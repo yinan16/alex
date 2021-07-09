@@ -271,11 +271,11 @@ class Regularizer(param_count.Ingredient):
         children = core.get_children(node["name"], annotated)
         args = dict()
         args[const.ALEX_ARG_INPUTS] = {"key": const.ALEX_ARG_INPUTS,
-                                       "value": node["input_names"],
+                                       "value": node["meta"]["position"]["inputs"],
                                        "ref": None,
                                        "type": IDENTIFIER,
                                        "str": value_to_kwarg_str("",
-                                                                 node["input_names"],
+                                                                 node["meta"]["position"]["inputs"],
                                                                  literal=True)}
         args[const.ALEX_ARG_NAME] = {"key": const.ALEX_ARG_NAME,
                                      "value": _name_strs_to_names(node["name"]),

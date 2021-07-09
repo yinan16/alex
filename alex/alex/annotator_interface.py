@@ -15,10 +15,12 @@ from alex.alex import core, dsl_parser
 class Annotator(ABC):
 
     def __init__(self, config_path):
-        self.config_path = config_path
-        self.components_list = dsl_parser.parse(self.config_path)
-        network_graph = dsl_parser.list_to_graph(self.components_list)
-        self.tree = core.alex_graph_to_tree(network_graph)
+        if isinstance(config_path, str):
+            self.config_path = config_path
+            self.components_list = dsl_parser.parse(self.config_path)
+        elif isinstance(config_path, list):
+            self.components_list = config_path
+        self.tree = core.alex_graph_to_tree(dsl_parser.list_to_graph(self.components_list))
         self.components = dsl_parser.list_to_dict(self.components_list)
 
         self.passes = [None]
@@ -56,7 +58,6 @@ class Annotator(ABC):
             if not isinstance(operation, list):
                 operation = [operation]
             for sub_op in operation:
-                # print("sub_op: %s" % sub_op.__name__)
                 for name in self.annotated:
                     node = self.annotated[name]
                     self.annotated[name] = sub_op(node)

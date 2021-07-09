@@ -6,7 +6,7 @@
 # Description:
 # ----------------------------------------------------------------------
 import os
-from alex.alex import compare, const
+from alex.alex import compare
 
 
 def main():
@@ -15,14 +15,14 @@ def main():
 
     # config_path_1 = "examples/configs/cifar_test_params.yml"
     # config_path_2 = "examples/configs/cifar_test_params_modify.yml"
-    render_dist_ingredient_path = os.path.join(const.CACHE_BASE_PATH, "network_ingredient_diff.png")
+    render_dist_ingredient_path = os.path.join("./", "network_ingredient_diff.png")
     print("Compare %s and %s" % (config_path_1, config_path_2))
     compare.dist(config_path_1, config_path_2, exclude_types=["hyperparam"], render_to=render_dist_ingredient_path)
 
-    render_diff_path = os.path.join(const.CACHE_BASE_PATH, "network_diff.png")
+    render_diff_path = os.path.join("./", "network_diff.png")
     compare.diff(config_path_1, config_path_2, render_to=render_diff_path)
 
-    render_dist_path = os.path.join(const.CACHE_BASE_PATH, "network_dist.png")
+    render_dist_path = os.path.join("./", "network_dist.png")
     compare.dist(config_path_1, config_path_2, render_to=render_dist_path)
 
 

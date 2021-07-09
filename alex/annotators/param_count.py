@@ -246,7 +246,6 @@ class ParamCount(Annotator):
         node = deepcopy(node)
         name = node["name"]
         input_nodes = self.get_input_nodes(name, self.annotated)
-        input_names = self.get_input_names(name, self.annotated)
         # FIXME: for regularization
         if input_nodes is not None and input_nodes[0] is None:
             input_nodes = None
@@ -258,7 +257,6 @@ class ParamCount(Annotator):
             if node["value"] == "channels":
                 node["value"] = input_shape[-1]
                 node["name"] = input_shape[-1]
-                # print(input_shape, name, node["shape"])
         else:
             input_shape = None
             if name in self.components:
@@ -274,8 +272,7 @@ class ParamCount(Annotator):
         else:
             inputs = list(map(lambda x: x["name"], input_nodes))
         node["input_nodes"] = inputs
-        node["input_names"] = input_names
-        node["input_shape"] = input_shape
+        node["meta"]["position"]["input_shape"] = input_shape
         node["ancestor"] = core.get_ancestor_ingredient_node(node, self.tree)
         if node["ancestor"]["name"] in self.components:
             node["dtype"] = self.components[node["ancestor"]["name"]]["meta"]["dtype"]

@@ -762,6 +762,7 @@ def draw_hyperparam_tree(graph,
 
 
 def list_to_dict(components):
+    components = deepcopy(components)
     components = OrderedDict(map(lambda x:
                                  (components[x]["meta"]["name"],
                                   components[x]), range(len(components))))
@@ -809,7 +810,8 @@ def graph_to_d3_ast(graph):
 
 def annotate(components):
     components = list_to_dict(components)
-    for i, component in enumerate(components.values()):
+    for name in components:
+        component = components[name]
         try:
             inputs = component["meta"]["inputs"]
             # Annotate block: data, model, loss, optimizer
@@ -818,16 +820,16 @@ def annotate(components):
             elif component["meta"]["type"] not in const.OPTIMIZER_BLOCK \
                  and (component["meta"]["type"] in const.LOSS_BLOCK \
                       or len(list(filter(lambda x: components[x]["meta"]["block"] == "loss",
-                                         component["meta"]["inputs"])))!=0):
+                                         inputs)))!=0):
                 component["meta"]["block"] = "loss"
             elif component["meta"]["type"] in const.OPTIMIZER_BLOCK \
                  or len(list(filter(lambda x: components[x]["meta"]["block"] == "optimizer",
-                                    component["meta"]["inputs"])))!=0:
+                                    inputs)))!=0:
                 component["meta"]["block"] = "optimizer"
             else:
                 component["meta"]["block"] = "model"
         except Exception:
-            print("------------- Component %s (%i) annotation failed ----------" % (component["meta"]["name"], i))
+            print("------------- Component %s annotation failed ----------" % (name))
             traceback.print_exc()
             raise
     return list(components.values())
@@ -900,7 +902,7 @@ def parse(yml_file, return_dict=False):
         graph:list = global_update(graph)
         if config_to_type(yml_file) not in const.ALL_RECIPES:
             graph = annotate(graph)
-        validate_components(graph)
+        validate_components(graph) # json schema
         # Step 5: load graph and states from checkpoint; check if the structure matches the one defined in the DSL
     except Exception:
         message = "-------------- Error during parsing configuration %s ----------" % yml_file

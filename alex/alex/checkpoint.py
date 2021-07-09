@@ -165,8 +165,8 @@ class Checkpoint():
 
     def __init__(self,
                  config,
-                 load=["log", None],
-                 save=["log", None]):
+                 load=["log", None], # [dir, path]
+                 save=["log", None]): # [dir, path]
 
         self.components_list = dsl_parser.parse(config)
         self.load_path = get_load_path(ckpt_dir=load[0],

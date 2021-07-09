@@ -8,7 +8,7 @@
 import unittest
 import os
 from pprint import pprint
-from alex.alex import core, const, dsl_parser
+from alex.alex import core, const
 from alex.annotators import param_count
 
 
