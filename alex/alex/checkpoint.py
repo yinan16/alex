@@ -92,44 +92,6 @@ def init_states(train_info={"meta": {"epoch": 0}},
             "test": test_info}
 
 
-def setup_variable(component_value, init, init_value, var_name, **kwargs):
-    """
-    component_value (dict):
-        "hyperparams" (dict)
-        "var" (dict): {"variable name": a framework specific varialbel}
-        "stats" (dict): {"variable name": statistics and additional information summarized from the training data}
-        "tensor" (dict): {"variable name": framework specific tensor that contains the values of the parameters}
-        "value" (dict): {"variable name": numpy array that contains the values of the parameters (or other serializable container)}
-    init (callable): a framework specific callable to return a variable, e.g. tf.Variable
-    init_value (numpy array): initial value for the variable; returned by an initializer
-    var_name (str): name of the variable
-    """
-    if const.VAR not in component_value:
-        component_value[const.VAR] = dict()
-    if var_name not in component_value[const.VAR]:
-        component_value[const.VAR][var_name] = None
-    if component_value[const.VALUE] == {} or (var_name not in component_value[const.VALUE]):
-        var = init(initial_value=init_value, name=var_name, trainable=True, **kwargs)
-    else:
-        var = init(initial_value=np.asarray(component_value[const.VALUE][var_name]),
-                   name=var_name,
-                   trainable=True,
-                   **kwargs)
-    component_value[const.VAR][var_name] = var
-    return var
-
-
-def setup(component_info, var_def, var_init, var_name, **kwargs):
-    if var_name not in component_info[const.VAR]:
-        component_info[const.VAR][var_name] = None
-    if component_info[const.VALUE] == {} or (var_name not in component_info[const.VALUE]):
-        var = var_def(initial_value=var_init, name=var_name, **kwargs)
-    else:
-        var = var_def(initial_value=np.asarray(component_info[const.VALUE][var_name], dtype=np.float32), name=var_name, **kwargs)
-    component_info[const.VAR][var_name] = var
-    return var
-
-
 def save(graph_list, states, trainable_params, path):
     os.makedirs(path.split("/")[0], exist_ok=True)
     dump(graph_list, states, trainable_params, path)
