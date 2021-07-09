@@ -227,9 +227,7 @@ def _distance(i, j, Al, Bl, An, Bn, Anames, Bnames, cost_matrix, operations):
                         operations[x+ioff][y+joff]
 
 
-def _dist_graph_list(graph1, graph2, exclude_types=[], render_to=None, dpi=800):
-    tree1 = core.alex_graph_to_tree(graph1, exclude_types=exclude_types)
-    tree2 = core.alex_graph_to_tree(graph2, exclude_types=exclude_types)
+def _dist_graph_list(tree1, tree2, exclude_types=[], render_to=None, dpi=800):
     cost, operations = ted(tree1, tree2)
     if render_to is not None:
         print("Done computing distance. Rendering image")
@@ -251,16 +249,20 @@ def _dist_graph_list(graph1, graph2, exclude_types=[], render_to=None, dpi=800):
     return cost, operations
 
 
+from alex.annotators import param_count
+
 def diff(network_config_1,
          network_config_2,
          render_to=None,
          dpi=800):
     graph_list1 = dsl_parser.parse(network_config_1)
     graph_list2 = dsl_parser.parse(network_config_2)
-    graph1 = dsl_parser.list_to_graph(graph_list1)
-    graph2 = dsl_parser.list_to_graph(graph_list2)
-    tree_full1 = core.alex_graph_to_tree(graph1, naive=False)
-    tree_full2 = core.alex_graph_to_tree(graph2, naive=False)
+    # graph1 = dsl_parser.list_to_graph(graph_list1)
+    # graph2 = dsl_parser.list_to_graph(graph_list2)
+    # tree_full1 = core.alex_graph_to_tree(graph1, naive=False)
+    # tree_full2 = core.alex_graph_to_tree(graph2, naive=False)
+    tree_full1 = param_count.ParamCount(network_config_1).annotate_tree()
+    tree_full2 = param_count.ParamCount(network_config_2).annotate_tree()
 
     operations = []
     cost = 0
@@ -302,11 +304,16 @@ def dist(network_config_1,
          exclude_types=[],
          dpi=800):
     graph_list1 = dsl_parser.parse(network_config_1)
-    graph1 = dsl_parser.list_to_graph(graph_list1)
     graph_list2 = dsl_parser.parse(network_config_2)
-    graph2 = dsl_parser.list_to_graph(graph_list2)
-    cost, operations = _dist_graph_list(graph1,
-                                        graph2,
+    # graph1 = dsl_parser.list_to_graph(graph_list1)
+    # graph2 = dsl_parser.list_to_graph(graph_list2)
+    # tree1 = core.alex_graph_to_tree(graph1, exclude_types=exclude_types)
+    # tree2 = core.alex_graph_to_tree(graph2, exclude_types=exclude_types)
+    tree1 = param_count.ParamCount(graph_list1).annotate_tree()
+    tree2 = param_count.ParamCount(graph_list2).annotate_tree()
+
+    cost, operations = _dist_graph_list(tree1,
+                                        tree2,
                                         exclude_types=exclude_types,
                                         render_to=render_to,
                                         dpi=dpi)
