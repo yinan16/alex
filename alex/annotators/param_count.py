@@ -8,6 +8,7 @@
 import numpy as np
 from math import floor
 from pprint import pprint
+import traceback
 from copy import deepcopy
 from alex.alex import core, const, node_interface
 from alex.alex.annotator_interface import Annotator
@@ -17,8 +18,7 @@ from alex.engine import ns_alex
 class Ingredient(node_interface.Ingredient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.required_input_rank = None
-        self.required_input_num = None
+        self.transformation = None
 
     def get_shape(self, input_shape, *args):
         return input_shape
@@ -29,46 +29,56 @@ class Ingredient(node_interface.Ingredient):
                             core.get_children(name,
                                               annotated))))
 
-    def get_rank(self, node):
-        return [len(node["meta"]["position"]["input_shape"]), # input rank
-                len(node["shape"])] # output rank
+    def get_dimensions(self, node):
+        input_shape = node["meta"]["position"]["input_shape"]
+        if input_shape is not None:
+            input_shape = [input_shape] if not isinstance(input_shape[0], list) else input_shape  # FIXME: backward compatibility, remove (see same note below)
+        return [input_shape, # input shape
+                node["shape"]] # output shape
 
-    def get_required_input_rank(self):
-        return self.required_input_rank
-
-
-    def get_required_input_num(self):
-        return self.required_input_num
-
-    def validate_input_dims(self, node):
-        # Validate if input dimensions are valid
-        pass
-
-    def validate_input_rank(self, node):
-        required_input_rank = self.get_required_input_rank()
-        if required_input_rank is not None:
-            ranks = self.get_rank(node)
-            if required_input_rank != ranks[0]:
-                raise Exception("""Connection is invalid between
-                %s (required rank %s) and %s (rank %s)""" % (node["name"],
-                                                             str(required_input_rank),
-                                                             str(node["meta"]["position"]["inputs"]),
-                                                             str(ranks[0])))
-
-    def validate_input_num(self, node):
-        if self.get_required_input_num() is not None and node["meta"]["position"]["inputs"] is not None:
-            if self.get_required_input_num() != len(node["meta"]["position"]["inputs"]):
-                raise Exception("""Connection is invalud between
-                %s (required inputs %s) and
-                %s (inputs %s)""" % (node["name"],
-                                     str(self.get_required_input_num()),
-                                     str(node["meta"]["position"]["inputs"]),
-                                     str(len(node["meta"]["position"]["inputs"]))))
+    def get_transformation(self):
+        return self.transformation
 
     def validate_connection(self, node):
-        self.validate_input_num(node)
-        self.validate_input_rank(node)
-        self.validate_input_dims(node)
+        transformations = self.get_transformation()
+        dims = self.get_dimensions(node)
+        if transformations is None:
+            return True
+        else:
+            valid = False
+            msg = ""
+            for trans in transformations:
+                if valid:
+                    return valid
+                try:
+                    if len(trans[0]) != len(dims[0]):
+                        msg = "Number of inputs mismatch %s (ingredient: %s, dim %s)" % (node["name"],
+                                                                                         node["value"],
+                                                                         str(dims))
+                        raise Exception(msg)
+                    elif len(list(filter(lambda x: len(x[0]) != len(x[1]),
+                                     zip(trans[0], dims[0]))))!=0:
+                        msg = "Tensor rank mismatch %s (ingredient: %s, dim: %s)" % (node["name"],
+                                                                                     node["value"],
+                                                                                     str(dims))
+                        raise Exception(msg)
+                    else:
+                        trans_ = [i for sub in trans[0] for i in sub] + trans[1]
+                        dims_ = [i for sub in dims[0] for i in sub] + dims[1]
+                        n = len(trans_)
+                        pattern_required = [trans_[i]==trans_[i+j] for i in range(n-1) for j in range(1, n-i)]
+                        pattern_data = [dims_[i]==dims_[i+j] for i in range(n-1) for j in range(1, n-i)]
+                    for r in pattern_required:
+                        if pattern_required and (not pattern_data):
+                            msg = "Tensor dimension mismatch" % node["name"]
+                            raise Exception(msg)
+                    valid = True
+                except:
+                    # traceback.print_exc()
+                    pass
+            if not valid:
+                traceback.print_exc()
+                raise Exception
 
 
 class Recipe(node_interface.Recipe):
@@ -104,34 +114,47 @@ class Hyperparam(node_interface.Hyperparam):
 class Dense(Ingredient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.required_input_rank = 1
+        self.transformation = [[[["a"]], ["b"]]]
 
 
 class CrossEntropy(Ingredient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.required_input_num = 2
+        self.transformation = [[[["a"], ["a"]], ["c"]]]
+
+    def get_shape(self, input_shape, name, annotated):
+        return [0]
+
+
+class Regularizer(Ingredient):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_shape(self, input_shape, name, annotated):
+        return [0]
 
 
 class Batchnorm(Ingredient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.required_input_rank = 3
+        self.transformation = [[[["a", "b", "c"]], ["a", "b", "c"]]]
 
 
 class Add(Ingredient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.required_input_num = 2
+        self.transformation = [[[["a", "b", "c"], ["a", "b", "c"]], ["a", "b", "c"]],
+                               [[["a", "b"], ["a", "b"]], ["a", "b"]],
+                               [[["a"], ["a"]], ["a"]]]
 
-    def validate_input_dims(self, node):
-        # TODO
-        pass
+    def get_shape(self, input_shape, name, annotated):
+        return input_shape[0]
 
 
 class Conv2D(Ingredient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.transformation = [[[["a", "b", "c"]], ["d", "e", "f"]]]
 
     def get_shape(self, input_shape, name, annotated):
         hyperparams = annotated[name]["meta"]["hyperparams"]
@@ -159,6 +182,7 @@ class MaxPool2D(Ingredient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.required_input_rank = 3
+        self.transformation = [[[["a", "b", "c"]], ["d", "e", "f"]]]
 
     def get_shape(self, input_shape, name, annotated):
         hyperparams = annotated[name]["meta"]["hyperparams"]
@@ -260,6 +284,8 @@ class Flatten(Ingredient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.required_input_rank = None
+        self.transformation = [[[["a", "b", "c"]], ["d"]],
+                               [[["a", "b"]], ["d"]]]
 
     def get_shape(self, input_shape, *args):
         return [np.prod(np.asarray(input_shape)), ]
@@ -285,6 +311,7 @@ class Label(Ingredient):
 
 def nodes(node):
     value = node["value"]
+    # TODO: group ingredient by block
     nodes_ingredient = {"ingredient": Ingredient,
                         "data": Data,
                         "cross_entropy": CrossEntropy,
@@ -292,6 +319,7 @@ def nodes(node):
                         "dense": Dense,
                         "add": Add,
                         "batch_normalize": Batchnorm,
+                        "regularizer_l2": Regularizer,
                         "conv": Conv2D,
                         "max_pool2d": MaxPool2D,
                         "flatten": Flatten}
@@ -336,8 +364,11 @@ class ParamCount(Annotator):
         if input_nodes is not None and input_nodes[0] is None:
             input_nodes = None
         if input_nodes is not None:
-            # FIXME: do not handle validation for more than one inputs
-            input_shape = input_nodes[0]["shape"]
+            input_shape = []
+            for _input_node in input_nodes:
+                input_shape.append(_input_node["shape"])
+            if len(input_shape) == 1:
+                input_shape = input_shape[0] # FIXME: backward compatibility, remove
             node["shape"] = nodes(node).get_shape(input_shape,
                                                   name,
                                                   self.annotated)
