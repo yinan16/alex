@@ -66,3 +66,38 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
         code.append(ns_alex.indent(scheduler_code.replace("\n", "\n\t"), levels=1))
     code = "\n".join(code)
     return code
+
+
+## User defined layers:
+
+### Linear regression 2D
+def linear(x, weight, n_filters, k_w, k_h, dilation, strides):
+    from math import floor
+    import torch
+    # Unfolding results in size [batch_size, k_w*k_h*channels, L]
+    batch_size, channels, h, w = x.size()
+    n_coeffs, L, n_filters = weight.size()
+    x = torch.nn.functional.unfold(input=x,
+                                   kernel_size=[k_w, k_h],
+                                   dilation=dilation,
+                                   padding=0,
+                                   stride=strides)
+    # weight has size [k_w*k_h*channels, L, n_filters]
+
+    def lr2d(x, w):
+        L = x.size()[-1]
+
+        def _mult(_w):
+            _out = torch.zeros((x.size()[0], L))
+            for i in range(L):
+                _out[:, i] = torch.inner(x[:, :, i], _w[:, i])
+            return _out
+        out = list(map(_mult, torch.unbind(w, 2)))
+        out = torch.stack(out, 2)
+        return out
+    h_out = floor((h - dilation*(k_h-1) - 1)/strides[0] + 1)
+    w_out = floor((w - dilation*(k_w-1) - 1)/strides[1] + 1)
+
+    return lr2d(x, weight).transpose_(1, 2).view((batch_size,
+                                                  n_filters,
+                                                  h_out, w_out))
