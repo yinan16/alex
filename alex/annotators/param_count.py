@@ -6,7 +6,7 @@
 # Description:
 # ----------------------------------------------------------------------
 import numpy as np
-from math import floor
+from math import floor, ceil
 from pprint import pprint
 import traceback
 from copy import deepcopy
@@ -168,12 +168,15 @@ class Conv2D(Ingredient):
         h = input_shape[0]
         w = input_shape[1]
         if padding == "SAME":
-            padding = [1, 1] # FIXME
+            padding_h = ceil(((strides[0]-1)*h+dilation*(k_h-1)-strides[0] + 1)/2)
+            padding_w = ceil(((strides[1]-1)*w+dilation*(k_w-1)-strides[0] + 1)/2)
+            padding = [padding_h, padding_w]
+            shape = [h, w, n_filters]
         elif padding == "VALID":
             padding = [0, 0]
-        shape = [floor((h + 2*padding[0] - dilation*(k_h-1) - 1)/strides[0] + 1),
-                 floor((w + 2*padding[1] - dilation*(k_w-1) - 1)/strides[1] + 1),
-                 n_filters]
+            shape = [floor((h + 2*padding[0] - dilation*(k_h-1) - 1)/strides[0] + 1),
+                     floor((w + 2*padding[1] - dilation*(k_w-1) - 1)/strides[1] + 1),
+                     n_filters]
         return shape
 
 
@@ -196,12 +199,15 @@ class MaxPool2D(Ingredient):
         h = input_shape[0]
         w = input_shape[1]
         if padding == "SAME":
-            padding = [1, 1] # FIXME
+            padding_h = ceil(((strides[0]-1)*h+dilation*(k_h-1)-strides[0]+1)/2)
+            padding_w = ceil(((strides[1]-1)*w+dilation*(k_w-1)-strides[0]+1)/2)
+            padding = [padding_h, padding_w]
+            shape = [h, w, input_shape[-1]]
         elif padding == "VALID":
             padding = [0, 0]
-        shape = [floor((h + 2*padding[0] - dilation*(k_h-1) - 1)/strides[0] + 1),
-                 floor((w + 2*padding[1] - dilation*(k_w-1) - 1)/strides[1] + 1),
-                 input_shape[-1]]
+            shape = [floor((h + 2*padding[0] - dilation*(k_h-1) - 1)/strides[0] + 1),
+                     floor((w + 2*padding[1] - dilation*(k_w-1) - 1)/strides[1] + 1),
+                     input_shape[-1]]
         return shape
 
 

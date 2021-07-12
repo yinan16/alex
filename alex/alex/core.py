@@ -452,9 +452,9 @@ def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, lab
                 else:
                     label = str(tree[child][label_field])
                 node = pydot.Node(child,
-                                  label = label,
+                                  label=label,
                                   shape="box",
-                                  style = 'filled',
+                                  style='filled',
                                   fillcolor=color)
                 # if isinstance(tree[child]["meta"], dict):
                 #     if tree[child]["name"] != "root" and "block" in tree[child]["meta"]:
