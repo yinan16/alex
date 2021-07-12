@@ -55,14 +55,14 @@ def get_trainable_params(ckpt=None):
     dense_30eg_bias_initializer_zeros_initializer = tf.zeros_initializer()(shape=[1, ])
     dense_30eg_bias = tf.Variable(initial_value=dense_30eg_bias_initializer_zeros_initializer, trainable=True, caching_device=None, name='dense_30eg/bias', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['dense_30eg/bias'] = dense_30eg_bias
-    dense_30eg_weights_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=2)(shape=[4096, 10])
+    dense_30eg_weights_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=2)(shape=[16384, 10])
     dense_30eg_weights = tf.Variable(initial_value=dense_30eg_weights_initializer_xavier_uniform, trainable=True, caching_device=None, name='dense_30eg/weights', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['dense_30eg/weights'] = dense_30eg_weights
     return trainable_params
 
 
 def model(input_data, trainable_params, training):
-    conv_5fo = tf.nn.conv2d(input=input_data, filters=trainable_params['conv_5fo/filters'], strides=2, padding='SAME', data_format='NHWC', dilations=1, name='conv_5fo/filters')
+    conv_5fo = tf.nn.conv2d(input=input_data, filters=trainable_params['conv_5fo/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='conv_5fo/filters')
     relu_7he = tf.nn.relu(name='relu_7he', features=conv_5fo)
     dropout_9ju = tf.nn.dropout(x=relu_7he, rate=0.2, noise_shape=None, seed=None, name='dropout_9ju')
     batch_normalize_11lk = tf.nn.batch_normalization(x=dropout_9ju, mean=trainable_params['batch_normalize_11lk/mean'], variance=trainable_params['batch_normalize_11lk/variance'], offset=trainable_params['batch_normalize_11lk/offset'], scale=trainable_params['batch_normalize_11lk/scale'], variance_epsilon=0.001, name='batch_normalize_11lk/variance')
@@ -73,7 +73,7 @@ def model(input_data, trainable_params, training):
     resnet_16_26aa_conv = tf.nn.batch_normalization(x=resnet_16_26aa_conv_19tw, mean=trainable_params['resnet_16_26aa/conv/mean'], variance=trainable_params['resnet_16_26aa/conv/variance'], offset=trainable_params['resnet_16_26aa/conv/offset'], scale=trainable_params['resnet_16_26aa/conv/scale'], variance_epsilon=0.001, name='resnet_16_26aa/conv/variance')
     resnet_16_26aa_add_23xc = tf.math.add(x=[batch_normalize_11lk, resnet_16_26aa_conv][0], y=[batch_normalize_11lk, resnet_16_26aa_conv][1], name='resnet_16_26aa/add_23xc')
     resnet_16_26aa_relu_25zs = tf.nn.relu(name='resnet_16_26aa/relu_25zs', features=resnet_16_26aa_add_23xc)
-    flatten_28cq = tf.reshape(tensor=resnet_16_26aa_relu_25zs, shape=(-1, tf.math.reduce_prod(tf.convert_to_tensor([16, 16, 16]))), name='flatten_28cq')
+    flatten_28cq = tf.reshape(tensor=resnet_16_26aa_relu_25zs, shape=(-1, tf.math.reduce_prod(tf.convert_to_tensor([32, 32, 16]))), name='flatten_28cq')
     dense_30eg = tf.add(x=tf.matmul(a=flatten_28cq, b=trainable_params['dense_30eg/weights']), y=trainable_params['dense_30eg/bias'], name='dense_30eg/weights')
     softmax_32gw = tf.nn.softmax(logits=dense_30eg, name='softmax_32gw')
     d_1 = tf.math.sigmoid(x=softmax_32gw, name='d_1')

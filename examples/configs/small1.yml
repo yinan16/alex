@@ -44,6 +44,8 @@ params_network:
     hyperparams:
       filters:
         shape:
+          kernel_size_w: 5
+          kernel_size_h: 5
           n_filters: 16
       padding: SAME
       strides: [1,1]

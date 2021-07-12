@@ -13,8 +13,9 @@ from alex.alex import const, util
 
 def main(network_config,
          filename = "generated_code",
-         code_dir="./",
+         code_dir="./cache/",
          engines=["tf"]):
+    os.makedirs(code_dir, exist_ok=True)
     for engine in engines:
         _filename = "%s_%s.py" % (filename, engine)
         code_generator = code_gen.CodeGen(_filename,

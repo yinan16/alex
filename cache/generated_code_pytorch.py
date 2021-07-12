@@ -42,25 +42,25 @@ class Model(torch.nn.Module):
         conv_13na_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 16, 3, 3]))
         conv_13na_filters = torch.nn.parameter.Parameter(data=conv_13na_filters_initializer_xavier_uniform, requires_grad=True)
         trainable_params['conv_13na/filters'] = conv_13na_filters
-        conv_15pq_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 16, 3, 3]))
+        conv_15pq_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 16, 5, 5]))
         conv_15pq_filters = torch.nn.parameter.Parameter(data=conv_15pq_filters_initializer_xavier_uniform, requires_grad=True)
         trainable_params['conv_15pq/filters'] = conv_15pq_filters
         dense_19tw_bias_initializer_zeros_initializer = torch.nn.init.zeros_(tensor=torch.empty(*[1, ]))
         dense_19tw_bias = torch.nn.parameter.Parameter(data=dense_19tw_bias_initializer_zeros_initializer, requires_grad=True)
         trainable_params['dense_19tw/bias'] = dense_19tw_bias
-        dense_19tw_weights_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[10, 4096]))
+        dense_19tw_weights_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[10, 16384]))
         dense_19tw_weights = torch.nn.parameter.Parameter(data=dense_19tw_weights_initializer_xavier_uniform, requires_grad=True)
         trainable_params['dense_19tw/weights'] = dense_19tw_weights
         return trainable_params
     
     @staticmethod
     def model(input_data, trainable_params, training):
-        conv_5fo = torch.nn.functional.conv2d(input=input_data, weight=trainable_params['conv_5fo/filters'], bias=None, stride=2, padding=[1, 1], dilation=1, groups=1)
+        conv_5fo = torch.nn.functional.conv2d(input=input_data, weight=trainable_params['conv_5fo/filters'], bias=None, stride=1, padding='same', dilation=1, groups=1)
         reluu = torch.nn.functional.relu(input=conv_5fo, inplace=False)
         dropout_9ju = torch.nn.functional.dropout(input=reluu, p=0.2, training=training, inplace=False)
         batch_normalize_11lk = torch.nn.functional.batch_norm(input=dropout_9ju, running_mean=trainable_params['batch_normalize_11lk/mean'], running_var=trainable_params['batch_normalize_11lk/variance'], weight=trainable_params['batch_normalize_11lk/scale'], bias=trainable_params['batch_normalize_11lk/offset'], training=training, momentum=0.1, eps=0.001)
-        conv_13na = torch.nn.functional.conv2d(input=batch_normalize_11lk, weight=trainable_params['conv_13na/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
-        conv_15pq = torch.nn.functional.conv2d(input=conv_13na, weight=trainable_params['conv_15pq/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
+        conv_13na = torch.nn.functional.conv2d(input=batch_normalize_11lk, weight=trainable_params['conv_13na/filters'], bias=None, stride=1, padding='same', dilation=1, groups=1)
+        conv_15pq = torch.nn.functional.conv2d(input=conv_13na, weight=trainable_params['conv_15pq/filters'], bias=None, stride=1, padding='same', dilation=1, groups=1)
         flatten_17rg = torch.flatten(input=conv_15pq, start_dim=1, end_dim=-1)
         dense_19tw = torch.nn.functional.linear(weight=trainable_params['dense_19tw/weights'], bias=trainable_params['dense_19tw/bias'], input=flatten_17rg)
         d_1 = torch.nn.functional.softmax(input=dense_19tw, dim=None)

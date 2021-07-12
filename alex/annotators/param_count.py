@@ -170,10 +170,6 @@ class Conv2D(Ingredient):
         if padding == "SAME":
             hout = ceil(h/strides[0])
             wout = ceil(w/strides[1])
-            padding_h_min = (hout-1)*strides[0] - h + k_h
-            padding_w_min = (wout-1)*strides[1] - w + k_w
-
-            padding = [padding_h_min, padding_w_min]
             shape = [hout, wout, n_filters]
         elif padding == "VALID":
             padding = [0, 0]
@@ -204,10 +200,6 @@ class MaxPool2D(Ingredient):
         if padding == "SAME":
             hout = ceil(h/strides[0])
             wout = ceil(w/strides[1])
-            # Note:
-            # padding_h_min = (hout-1)*strides[0] - h + k_h
-            # padding_w_min = (wout-1)*strides[1] - w + k_w
-            # padding = [padding_h_min, padding_w_min]
             shape = [hout, wout, input_shape[-1]]
         elif padding == "VALID":
             padding = [0, 0]
