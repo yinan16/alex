@@ -376,10 +376,9 @@ class Value(param_count.Hyperparam):
     def generate_code(self, node, annotated, engine):
         if "padding" in node["parent"] and engine=="pytorch":
             if node["value"] == "SAME":
-                _value = [1, 1]
+                _value = "same"
             elif node["value"] == "VALID":
-                # FIXME: calculate this
-                _value = [0, 0]
+                _value = "valid"
         else:
             _value = node["value"]
         node = cache_fn(node=deepcopy(node),

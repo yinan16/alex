@@ -9,12 +9,11 @@
 import os
 from alex.annotators import code_gen
 from alex.alex import const, util
-from alex.engine import ns_alex
 
 
 def main(network_config,
          filename = "generated_code",
-         code_dir=const.CACHE_BASE_PATH,
+         code_dir="./",
          engines=["tf"]):
     for engine in engines:
         _filename = "%s_%s.py" % (filename, engine)
