@@ -18,8 +18,7 @@ import traceback
 
 from typing import Union
 
-from alex.alex import checkpoint, const, util
-from jsonschema import validate
+from alex.alex import checkpoint, const, util, validation
 
 
 strs = list(string.ascii_lowercase)
@@ -808,14 +807,32 @@ def graph_to_d3_ast(graph):
     return children
 
 
-def annotate(components):
+def annotate(components, lazy=True):
+    schemas = dict()
     components = list_to_dict(components)
     for name in components:
         component = components[name]
+        component_type = component["meta"]["type"]
+        validator = validation.get(component)
         try:
+            if component_type not in schemas:
+                schemas[component_type] = validator.load_schema(component_type)
+            if schemas[component_type] is not None:
+                validator.validate_schema(component, schemas[component_type])
+
+            component["meta"]["input_shape"] = validator.get_input_shape(component, components)
+            component["meta"]["shape"] = validator.get_shape(component, components)
+            if not lazy:
+                validator.eval_input_channels(component, components)
+                validator.validate_connection(component, components)
+
+
             inputs = component["meta"]["inputs"]
             # Annotate block: data, model, loss, optimizer
-            if component["meta"]["type"] in const.INPUT_TYPES:
+            # TODO: move this to nodes
+            if inputs is not None and "inputs" in inputs:
+                component["meta"]["block"] = "model"
+            elif component["meta"]["type"] in const.INPUT_TYPES:
                 component["meta"]["block"] = "data"
             elif component["meta"]["type"] not in const.OPTIMIZER_BLOCK \
                  and (component["meta"]["type"] in const.LOSS_BLOCK \
@@ -832,24 +849,9 @@ def annotate(components):
             print("------------- Component %s annotation failed ----------" % (name))
             traceback.print_exc()
             raise
+        components[name] = component
     return list(components.values())
 
-
-def validate_components(components):
-    schemas = dict()
-    for component in components:
-        component_type = component["meta"]["type"]
-        if component_type not in schemas:
-            schema_path = os.path.join(const.COMPONENT_BASE_PATH,
-                                       "." + component_type + ".yml")
-            try:
-                schemas[component_type] = util.read_yaml(schema_path)["definitions"][component_type]
-            except Exception:
-                schemas[component_type] = None
-                # TODO:
-                # print("%s schema not implemented" % component_type)
-        if schemas[component_type] is not None:
-            validate(instance=component["value"]["hyperparams"], schema=schemas[component_type])
 
 def config_to_type(yml_file):
     return yml_file.split("/")[-1].split(".")[0]
@@ -858,11 +860,12 @@ def config_to_type(yml_file):
 ################################################################################
 # Public API
 ################################################################################
-def parse(yml_file, return_dict=False):
+def parse(yml_file, return_dict=False, lazy=True):
     global global_count0, global_count1, component_count, prev_component
     global_count0 = 0
     global_count1 = 0
     component_count = 0
+    # print("parsing, yml_file", yml_file)
     prev_component = None
     try:
         # Read the yml file
@@ -900,9 +903,9 @@ def parse(yml_file, return_dict=False):
         graph:list = eval_ast_to_graph(ast)
         # Step 4: second pass: same data structure; populate inputs
         graph:list = global_update(graph)
-        if config_to_type(yml_file) not in const.ALL_RECIPES:
-            graph = annotate(graph)
-        validate_components(graph) # json schema
+        # if config_to_type(yml_file) not in const.ALL_RECIPES:
+        graph = annotate(graph, lazy=lazy) # json schema
+        # pprint(graph)
         # Step 5: load graph and states from checkpoint; check if the structure matches the one defined in the DSL
     except Exception:
         message = "-------------- Error during parsing configuration %s ----------" % yml_file
@@ -911,12 +914,6 @@ def parse(yml_file, return_dict=False):
     if return_dict:
         graph = list_to_dict(graph)
     return graph
-
-
-def load(config_yml, ckpt_name=None, checkpoint_dir=const.CHECKPOINT_BASE_PATH):
-    graph = parse(config_yml)
-    graph, states = checkpoint.load(graph, checkpoint_dir, ckpt_name)
-    return graph, states
 
 
 ## Util
@@ -931,12 +928,12 @@ def dict_to_arg_str(d):
     return out
 
 
-def make_graph_from_yml(yml_file, png_file, level, show="label"):
-    graph = parse(yml_file)
+def make_graph_from_yml(yml_file, png_file, level, show="label", lazy=True):
+    graph = parse(yml_file, lazy)
     draw_graph(graph, level, png_file, show=show)
 
 
-def make_ast_from_yml(yml_file, png_file):
-    graph = parse(yml_file)
+def make_ast_from_yml(yml_file, png_file, lazy=True):
+    graph = parse(yml_file, lazy)
     draw_hyperparam_tree(graph,
                          graph_path=png_file)
