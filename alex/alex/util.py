@@ -94,12 +94,10 @@ def replace_key(data, key, new_value):
             data[key] = deepcopy(new_value)
         for _key in data:
             if isinstance(data[_key], dict):
-                for __key in data[_key]:
-                    if isinstance(data[_key][__key], dict):
-                        replace_key(data[_key][__key], key, new_value)
-                    else:
-                        if __key == key:
-                            data[_key][__key] = deepcopy(new_value)
+                if key in data[_key]:
+                    data[_key][key] = deepcopy(new_value)
+                else:
+                    replace_key(data[_key], key, new_value)
 
 
 def get_value(data, key, found=False):

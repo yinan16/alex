@@ -71,7 +71,7 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
 ## User defined layers:
 
 ### Linear regression 2D
-def linear(x, weight, n_filters, k_w, k_h, dilation, strides):
+def linear2d(x, weight, n_filters, k_w, k_h, dilation, strides):
     from math import floor
     import torch
     # Unfolding results in size [batch_size, k_w*k_h*channels, L]
@@ -83,7 +83,6 @@ def linear(x, weight, n_filters, k_w, k_h, dilation, strides):
                                    padding=0,
                                    stride=strides)
     # weight has size [k_w*k_h*channels, L, n_filters]
-
     def lr2d(x, w):
         L = x.size()[-1]
 
