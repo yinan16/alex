@@ -652,7 +652,7 @@ class CodeGen(param_count.ParamCount):
         self.output_file = os.path.join(dirname, output_file)
         util.clear_file(self.cache_def_path)
 
-        self.passes = [[self.cache_input],
+        self.passes = [[self.cache_shape],
                        [self.generate_alex]]
         self.inline_index_translation = []
         self.inline_index_python = []
