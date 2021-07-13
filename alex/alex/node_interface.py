@@ -39,7 +39,9 @@ class Recipe(Node):
         if self.name != "root":
             self.config_path = os.path.join(const.COMPONENT_BASE_PATH,
                                             self.name + ".yml")
-            self.recipe = dsl_parser.parse(self.config_path, return_dict=False)
+            self.recipe = dsl_parser.parse(self.config_path,
+                                           return_dict=False,
+                                           lazy=True)
         else:
             self.recipe = None
 

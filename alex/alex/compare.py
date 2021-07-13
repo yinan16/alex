@@ -78,11 +78,12 @@ def label_to_value(label):
     return label.split("#")[0]
 
 
-def _diff_graph_list(n1, n2):
-    tree1 = core.alex_graph_to_tree(n1, exclude_types=["hyperparam"], naive=False)
-    tree2 = core.alex_graph_to_tree(n2, exclude_types=["hyperparam"], naive=False)
-    tree_full1 = core.alex_graph_to_tree(n1, naive=False)
-    tree_full2 = core.alex_graph_to_tree(n2, naive=False)
+def _diff_graph_list(n1, n2, tree_full1, tree_full2):
+    list1 = dsl_parser.list_to_graph(n1)
+    list2 = dsl_parser.list_to_graph(n2)
+    tree1 = core.alex_graph_to_tree(list1, exclude_types=["hyperparam"], naive=False)
+    tree2 = core.alex_graph_to_tree(list2, exclude_types=["hyperparam"], naive=False)
+
     cost, _operations = ted(tree1, tree2)
     operations = []
     for operation in _operations:
@@ -110,7 +111,6 @@ def _diff_graph_list(n1, n2):
             name2 = operation[0][1]
             label1 = operation[1][1]
             label2 = operation[1][2]
-
             if label1 != label2:
                 if label_to_value(label1) == label_to_value(label2):
                     subtree1 = core.get_subtree(tree_full1, name1)
@@ -119,6 +119,7 @@ def _diff_graph_list(n1, n2):
                                               subtree2)
                     cost += _cost
                     operations += __operations[:-1]
+                    # pprint(__operations[:-1])
                 else:
                     operations.append((name1, ("DELETE", label1, "")))
                     operations.append((name2, ("INSERT", "", label2)))
@@ -254,17 +255,17 @@ from alex.annotators import param_count
 def diff(network_config_1,
          network_config_2,
          render_to=None,
-         dpi=800):
-    graph_list1 = dsl_parser.parse(network_config_1)
-    graph_list2 = dsl_parser.parse(network_config_2)
+         dpi=800, lazy=False):
+    graph_list1 = dsl_parser.parse(network_config_1, lazy=lazy)
+    graph_list2 = dsl_parser.parse(network_config_2, lazy=lazy)
     # Do not include dimensionality in diff
     # graph1 = dsl_parser.list_to_graph(graph_list1)
     # graph2 = dsl_parser.list_to_graph(graph_list2)
     # tree_full1 = core.alex_graph_to_tree(graph1, naive=False)
     # tree_full2 = core.alex_graph_to_tree(graph2, naive=False)
     # Include dimensionality in diff
-    tree_full1 = param_count.ParamCount(network_config_1).annotate_tree()
-    tree_full2 = param_count.ParamCount(network_config_2).annotate_tree()
+    tree_full1 = param_count.ParamCount(graph_list1).annotate_tree()
+    tree_full2 = param_count.ParamCount(graph_list2).annotate_tree()
 
     operations = []
     cost = 0
@@ -272,10 +273,16 @@ def diff(network_config_1,
 
         graph_list1_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list1))
         graph_list2_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list2))
-        graph1_block = dsl_parser.list_to_graph(graph_list1_block)
-        graph2_block = dsl_parser.list_to_graph(graph_list2_block)
-        _cost, _operations = _diff_graph_list(graph1_block,
-                                              graph2_block)
+        # for component in graph_list1_block:
+        #     name = component["meta"]["name"]
+        #     component["meta"]["shape"] = tree_full1[name]["shape"]
+        # for component in graph_list2_block:
+        #     name = component["meta"]["name"]
+        #     component["meta"]["shape"] = tree_full2[name]["shape"]
+
+        _cost, _operations = _diff_graph_list(graph_list1_block,
+                                              graph_list2_block,
+                                              tree_full1, tree_full2)
         cost += _cost
         operations += _operations
 
@@ -304,9 +311,9 @@ def dist(network_config_1,
          network_config_2,
          render_to=None,
          exclude_types=[],
-         dpi=800):
-    graph_list1 = dsl_parser.parse(network_config_1)
-    graph_list2 = dsl_parser.parse(network_config_2)
+         dpi=800, lazy=False):
+    graph_list1 = dsl_parser.parse(network_config_1, lazy=lazy)
+    graph_list2 = dsl_parser.parse(network_config_2, lazy=lazy)
     # Do not include dimensionality in dist
     # graph1 = dsl_parser.list_to_graph(graph_list1)
     # graph2 = dsl_parser.list_to_graph(graph_list2)
@@ -334,22 +341,13 @@ def matched_ingredients(network_config_1,
                         network_config_2,
                         render_to=None,
                         dpi=800):
-    if isinstance(network_config_1, list):
-        graph_list1 = deepcopy(network_config_1)
-    else:
-        graph_list1 = dsl_parser.parse(network_config_1)
-    if isinstance(network_config_1, list):
-        graph_list2 = deepcopy(network_config_2)
-    else:
-        graph_list2 = dsl_parser.parse(network_config_2)
     # n1 = dsl_parser.list_to_graph(graph_list1)
     # n2 = dsl_parser.list_to_graph(graph_list2)
     # tree1 = core.alex_graph_to_tree(n1, exclude_types=["hyperparam"], naive=False)
     # tree2 = core.alex_graph_to_tree(n2, exclude_types=["hyperparam"], naive=False)
-
-    tree1 = param_count.ParamCount(graph_list1,
+    tree1 = param_count.ParamCount(network_config_1,
                                    naive=False).annotate_tree()
-    tree2 = param_count.ParamCount(graph_list2,
+    tree2 = param_count.ParamCount(network_config_2,
                                    naive=False).annotate_tree()
     _, operations = ted(tree1, tree2)
     # pprint(operations)

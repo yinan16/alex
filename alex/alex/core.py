@@ -15,11 +15,7 @@ from io import BytesIO
 from pprint import pprint
 import json
 
-from alex.alex import const, dsl_parser
-
-
-def get_inputss(component):
-    return component[const.META][const.INPUTS]
+from alex.alex import const, dsl_parser, util
 
 
 # FIXME: use typing
@@ -174,6 +170,7 @@ def alex_graph_to_json(graph,
                        label_path=None,
                        position: dict = {"inputs": None,
                                          "component": None,
+                                         "shape": None,
                                          "input_shape": None}):
     """
     This function converts alex graph into a json object.
@@ -191,6 +188,7 @@ def alex_graph_to_json(graph,
        and isinstance(graph["subgraph"], dict): # is a recipe
         _position = {"inputs": graph["inputs"],
                      "component": root_name,
+                     "shape": None,
                      "input_shape": None}
         label = deepcopy(graph["type"])
         root_name = {"value": graph["type"],
@@ -204,6 +202,7 @@ def alex_graph_to_json(graph,
         for _name, _graph in graph["subgraph"].items():
             _position = {"inputs": _graph["inputs"],
                          "component": _name,
+                         "shape": None,
                          "input_shape": None}
             _json_obj = alex_graph_to_json(_graph,
                                            _name,
@@ -221,12 +220,13 @@ def alex_graph_to_json(graph,
                                                     json.dumps(graph["hyperparams"],
                                                                sort_keys=True)))
                     label = "%s#%s#" % (graph["type"], hyperparam_str)
+
                 else:
                     label = graph["type"]
-
                 _position = {"inputs": graph["inputs"],
                              "component": root_name,
-                             "input_shape": None}
+                             "shape": graph["meta"]["shape"],
+                             "input_shape": graph["meta"]["input_shape"]}
                 _root_name = root_name
                 root_name = {"value": graph["type"],
                              "label": label,
@@ -235,6 +235,7 @@ def alex_graph_to_json(graph,
                                       "position": _position,
                                       "label_path": label_path,
                                       "block": graph["meta"]["block"]}}
+
                 root_name = str(root_name)
                 json_obj[root_name] = collections.OrderedDict()
                 for _name in sorted(graph["hyperparams"]):
@@ -255,7 +256,8 @@ def alex_graph_to_json(graph,
             else:
                 _position = {"inputs": graph["inputs"],
                              "component": root_name,
-                             "input_shape": None}
+                             "shape": graph["meta"]["shape"],
+                             "input_shape": graph["meta"]["input_shape"]}
 
                 root_name = {"value": graph["type"],
                              "label": graph["type"],

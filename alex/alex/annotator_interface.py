@@ -14,13 +14,14 @@ from alex.alex import core, dsl_parser
 
 class Annotator(ABC):
 
-    def __init__(self, config_path, exclude_types=[], naive=True):
+    def __init__(self, config_path, exclude_types=[], naive=True, lazy=False):
         if isinstance(config_path, str):
             self.config_path = config_path
-            self.components_list = dsl_parser.parse(self.config_path)
+            self.components_list = dsl_parser.parse(self.config_path, lazy=lazy)
         elif isinstance(config_path, list):
-            self.components_list = config_path
-        self.tree = core.alex_graph_to_tree(dsl_parser.list_to_graph(self.components_list),
+            self.components_list = deepcopy(config_path)
+        graph = dsl_parser.list_to_graph(self.components_list)
+        self.tree = core.alex_graph_to_tree(graph,
                                             exclude_types=exclude_types,
                                             naive=naive)
         self.components = dsl_parser.list_to_dict(self.components_list)
