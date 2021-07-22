@@ -1,0 +1,80 @@
+data_block:
+  - type: data
+    hyperparams:
+      shape:
+        batch_size: null
+        height: 32
+        width: 32
+        channels: 3
+    name: input_data
+
+  - type: label
+    dtype: int64
+    hyperparams:
+      shape:
+        batch_size: null
+        dim: 10
+    name: labels
+
+model_block:
+  - type: conv
+    hyperparams:
+      filters:
+        shape:
+          n_filters:
+            16
+    inputs: input_data
+  - type:
+      relu
+    name: "reluu"
+  - type:
+      dropout
+  - type:
+      batch_normalize
+
+  - type: conv
+    hyperparams:
+      filters:
+        shape:
+          n_filters:
+            16
+      padding: SAME
+      strides: [1,1]
+  # - type: max_pool2d
+  - type: resnet_16
+    repeat: 2
+  - type: flatten
+  - type: dense
+  - type: softmax
+    name: d_1
+
+loss_block:
+  - type:
+      cross_entropy
+    inputs:
+      - labels
+      - d_1
+    name: cross_0
+  - type:
+      regularizer_l2
+    inputs:
+      - connect_to:
+          range: :-1
+          types:
+            dense: weights
+            conv: filters
+          scope: all # default: all
+    name: regularizer
+  - type: add
+    inputs:
+      - cross_0
+      - regularizer
+    name: losses
+
+optimizer_block:
+  - type: adam
+    inputs: losses
+    name: solver
+    hyperparams:
+      learning_rate:
+        0.0001

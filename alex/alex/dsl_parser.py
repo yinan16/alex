@@ -23,15 +23,6 @@ from alex.alex import checkpoint, const, util, validation
 
 strs = list(string.ascii_lowercase)
 
-# FIXME: find a better solution
-# These are used to set up names
-global global_count0, global_count1, component_count, prev_component
-global_count0 = 0
-global_count1 = 0
-component_count = 0
-
-prev_component = None
-
 # Each keywords in the yml file is a function
 """
 repeat: component -> [component]
@@ -103,7 +94,7 @@ def clone(component):
 def recipe_defined(rtype):
     # TODO: temporary. Use types instead
     return rtype not in list(const.DET_COMPONENTS_NO_HYPE.keys()) + [const.DATA,
-                                                                 const.LABEL]
+                                                                     const.LABEL]
 
 # FIXME
 def _resolve_hyperparams(hyperparams):
@@ -124,36 +115,50 @@ def _parse_ingredient_hyperparams(hyperparams):
     return hyperparams
 
 
-def _config_to_inter_graph(user_defined, reader, config=None, recipe=None):
+def _config_to_inter_graph(user_defined, reader, block, config=None, recipe=None):
     if config is None:
         config = user_defined
-    if recipe is None:
         recipe = const.ROOT
-    # If configuration is not an ingredient
-    if const.PARAMS_NETWORK in config:
+        block = recipe
         component = dict()
-        if const.PARAMS_NETWORK not in user_defined:
-            component = fill_mandatory(clone(user_defined), reader)
-        component[const.HYPERPARAMS] = []
         component[const.TYPE] = recipe
-        for subconfig in config[const.PARAMS_NETWORK]:
-            component[const.HYPERPARAMS].append(dict())
-            component[const.HYPERPARAMS][-1] = deepcopy(subconfig)
-            if recipe_defined(subconfig[const.TYPE]):
-                subconfig_def = util.read_yaml(os.path.join(const.COMPONENT_BASE_PATH,
-                                                            subconfig[const.TYPE] + const.YAML))
-            else:
-                subconfig_def = {}
-            component[const.HYPERPARAMS][-1] = _config_to_inter_graph(subconfig,
-                                                                      reader,
-                                                                      subconfig_def,
-                                                                      subconfig[const.TYPE])
+        component[const.HYPERPARAMS] = []
+        for block in user_defined:
+            _user_defined = {"type": block,
+                             "hyperparams": deepcopy(user_defined[block])}
+            _config = {"params_network": deepcopy(user_defined[block])}
+            component[const.HYPERPARAMS].append(_config_to_inter_graph(_user_defined,
+                                                                       reader,
+                                                                       block,
+                                                                       config=_config,
+                                                                       recipe=block))
+
     else:
-        # TODO: make it recursive
-        component = fill_mandatory(clone(user_defined), reader)
-        hyperparams = clone(config)
-        util.fill_dict(hyperparams, component[const.HYPERPARAMS])
-        component[const.HYPERPARAMS] = _parse_ingredient_hyperparams(component[const.HYPERPARAMS])
+        # If configuration is not an ingredient
+        if const.PARAMS_NETWORK in config:
+            component = dict()
+            component[const.TYPE] = recipe
+            component["block"] = block
+            if const.PARAMS_NETWORK not in user_defined:
+                component = fill_mandatory(clone(user_defined), reader)
+            component[const.HYPERPARAMS] = []
+            for subconfig in config[const.PARAMS_NETWORK]:
+                if recipe_defined(subconfig[const.TYPE]):
+                    subconfig_def = util.read_yaml(os.path.join(const.COMPONENT_BASE_PATH,
+                                                                subconfig[const.TYPE] + const.YAML))
+                else:
+                    subconfig_def = {}
+                component[const.HYPERPARAMS].append(_config_to_inter_graph(subconfig,
+                                                                           reader,
+                                                                           block,
+                                                                           subconfig_def,
+                                                                           subconfig[const.TYPE]))
+        else:
+            component = fill_mandatory(clone(user_defined), reader)
+            hyperparams = clone(config)
+            component["block"] = block
+            util.fill_dict(hyperparams, component[const.HYPERPARAMS])
+            component[const.HYPERPARAMS] = _parse_ingredient_hyperparams(component[const.HYPERPARAMS])
     return component
 
 
@@ -164,7 +169,11 @@ def _inter_graph_valid(inter_graph):
 
 
 def config_to_inter_graph(user_defined, reader):
-    graph = _config_to_inter_graph(user_defined, reader, config=None, recipe=None)
+    graph = _config_to_inter_graph(user_defined,
+                                   reader,
+                                   block="root",
+                                   config=None,
+                                   recipe=None)
     _inter_graph_valid(graph)
     return graph
 
@@ -184,6 +193,7 @@ def _get_node(component):
             graph[const.META][m] = component[m]
     graph[const.META][const.NAME] = None
     graph[const.META]["visible"] = component["visible"]
+    graph[const.META]["block"] = component["block"]
     graph[const.META]["dtype"] = component["dtype"]
     graph[const.META][const.SCOPE] = component[const.SCOPE] if const.SCOPE in component else component[const.TYPE]
     graph[const.VALUE][const.VALUE] = dict()
@@ -261,14 +271,18 @@ def eval_repeat(times, components):
     return components
 
 
+def _is_block(scope):
+    return scope in const.BLOCKS
+
+
 def eval_name(name, components):
     components = clone(components)
     top_name = _get_name(name)
-    if components[0][const.META][const.SCOPE] == const.ROOT:
+    __scope = components[0][const.META][const.SCOPE]
+    if __scope == const.ROOT:
         scope = ""
     else:
-        scope = "%s_" % components[0][const.META][const.SCOPE]
-
+        scope = __scope
     for component in components:
         is_atomic = False
         __name = clone(component[const.META][const.NAME])  # name resolved so far; might add prefix (path) to it
@@ -276,7 +290,6 @@ def eval_name(name, components):
         if __name is None:  # it is the lowest level - component name has not been resolved yet
             is_atomic = True
             __name = _get_name(name)
-
         if const.RPT_IDX in component[const.META]:  # repeat
             rpt_info = component[const.META][const.RPT_IDX]
             rpt_idx = rpt_info["block_repeat_idx"]
@@ -290,10 +303,11 @@ def eval_name(name, components):
             if name is None:  # if no user defined name
                 __name = "%s_%s"%(component[const.META][const.TYPE], __name)  # const.TYPE + "_" + "id_string"
         else: # when component is not on the lowest level
-            if name is None:
-                __name = "%s%s/%s" % (scope, _name, __name)
-            else: # user defined name in recipe
-                __name = "%s/%s" % (_name, __name)
+            if not _is_block(scope):
+                if name is None:
+                    __name = "%s_%s/%s" % (scope, _name, __name)
+                else:  # user defined name in recipe
+                    __name = "%s/%s" % (_name, __name)
         component[const.META][const.NAME] = __name
     return components
 
@@ -323,7 +337,7 @@ def eval_inputs(inputs, components):
                     prev_dir = _prev_component.replace(_prev_component.split("/")[-1], "")
                     for _b, _base in enumerate(component[const.META][const.INPUTS]):
                         if isinstance(_base, dict):
-                            pass
+                            continue
                         base_name = _base.split("/")[-1]
                         _in = prev_dir + base_name
                         component[const.META][const.INPUTS][_b] = _in
@@ -571,9 +585,10 @@ def draw_graph(graph_list, level=2, graph_path='example.png', show="name"):
     return graph
 
 
-def _get_dir_name(path):
+def _get_dir_name(path, level):
     _dir = path.split("/")
     scope = path.replace(_dir[-1], "")
+    scope = "/".join(scope.split("/")[0:level-1]) + "/"
     return scope, _dir[-1]
 
 
@@ -590,48 +605,53 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
     while i < len(components):
         component = components[i]
         hyperparams = component[const.VALUE][const.HYPERPARAMS]
-        _dir = component[const.META][const.NAME].split("/")
+        block = component["meta"]["block"]
+        path = "%s/%s" % (block, component[const.META][const.NAME])
+        _dir = path.split("/")
         level = len(_dir)
-        scope, _name = _get_dir_name(component[const.META][const.NAME])
-        if scope == "":
-            _scope = _name
-        else:
-            _scope = scope + component[const.META][const.NAME].replace(scope, "").split("/")[0]
+        scope, _name = _get_dir_name(path, level)
         inputs = component[const.META][const.INPUTS]
-        if parent_scope!=scope:
-            if level>parent_level:
+        if parent_scope != scope:
+            if level > parent_level:
                 _components = []
+                in_scope = False
+                in_scope_previous = False
                 for _component in components[i:]:
-                    __scope, __ = _get_dir_name(_component[const.META][const.NAME])
-                    if scope in __scope:
+                    _block = _component[const.META]["block"]
+                    _path = "%s/%s" % (_block, _component[const.META][const.NAME])
+                    __scope, __ = _get_dir_name(_path, level)
+                    if scope == __scope:
+                        in_scope = True
                         _components.append(_component)
                         i += 1
                     else:
+                        in_scope = False
+                    if in_scope_previous and not (in_scope):
                         break
+                    in_scope_previous = in_scope
                 _network = list_to_graph(_components, level, scope)
                 _network[const.INPUTS] = inputs
                 _network[const.HYPERPARAMS] = dict() # hyperparams for recipes
                 _network[const.TYPE] = component[const.META][const.SCOPE]
                 _network["visible"] = component[const.META]["visible"]
+                _network["block"] = component[const.META]["block"]
                 _network[const.META] = component[const.META]
-                # if _network[const.META]["type"] in const.COMPONENT_RECIPES:
-                #     _network[const.META]["block"] = "model"
-
-                _subgraph[scope[:-1]] = _network
+                _subgraph[scope] = _network
             else:
                 break
         else:
             _network = dict()
             _network[const.SUBGRAPH] = component[const.META][const.NAME]
             _network[const.TYPE] = component[const.META][const.TYPE]
-            _network["visible"] = component[const.META]["visible"]
             _network[const.META] = component[const.META]
             _network["dtype"] = component[const.META]["dtype"]
+            _network["visible"] = component[const.META]["visible"]
+            _network["block"] = component[const.META]["block"]
             _network[const.INPUTS] = inputs
             _network[const.LEVEL] = level
             _network[const.HYPERPARAMS] = hyperparams
 
-            _subgraph[_scope] = _network
+            _subgraph[path] = _network
             i += 1
 
     network[const.SUBGRAPH] = _subgraph
@@ -826,25 +846,7 @@ def annotate(components, lazy=True):
                 validator.eval_input_channels(component, components)
                 validator.validate_connection(component, components)
 
-
             inputs = component["meta"]["inputs"]
-            # Annotate block: data, model, loss, optimizer
-            # TODO: move this to nodes
-            if inputs is not None and "inputs" in inputs:
-                component["meta"]["block"] = "model"
-            elif component["meta"]["type"] in const.INPUT_TYPES:
-                component["meta"]["block"] = "data"
-            elif component["meta"]["type"] not in const.OPTIMIZER_BLOCK \
-                 and (component["meta"]["type"] in const.LOSS_BLOCK \
-                      or len(list(filter(lambda x: components[x]["meta"]["block"] == "loss",
-                                         inputs)))!=0):
-                component["meta"]["block"] = "loss"
-            elif component["meta"]["type"] in const.OPTIMIZER_BLOCK \
-                 or len(list(filter(lambda x: components[x]["meta"]["block"] == "optimizer",
-                                    inputs)))!=0:
-                component["meta"]["block"] = "optimizer"
-            else:
-                component["meta"]["block"] = "model"
         except Exception:
             print("------------- Component %s annotation failed ----------" % (name))
             traceback.print_exc()
@@ -905,7 +907,6 @@ def parse(yml_file, return_dict=False, lazy=True):
         graph:list = global_update(graph)
         # if config_to_type(yml_file) not in const.ALL_RECIPES:
         graph = annotate(graph, lazy=lazy) # json schema
-        # pprint(graph)
         # Step 5: load graph and states from checkpoint; check if the structure matches the one defined in the DSL
     except Exception:
         message = "-------------- Error during parsing configuration %s ----------" % yml_file
@@ -929,11 +930,11 @@ def dict_to_arg_str(d):
 
 
 def make_graph_from_yml(yml_file, png_file, level, show="label", lazy=True):
-    graph = parse(yml_file, lazy)
+    graph = parse(yml_file, return_dict=False, lazy=lazy)
     draw_graph(graph, level, png_file, show=show)
 
 
 def make_ast_from_yml(yml_file, png_file, lazy=True):
-    graph = parse(yml_file, lazy)
+    graph = parse(yml_file, return_dict=False, lazy=lazy)
     draw_hyperparam_tree(graph,
                          graph_path=png_file)

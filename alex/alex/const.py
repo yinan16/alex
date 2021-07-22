@@ -36,7 +36,10 @@ CONSTRUCTORS = {"params": {"tf": ["tf.Variable",
 
 
 # TODO: as it is now, the param names need to be globally unique
-PARAMS = {"conv": {"filters": {"derivative": True,
+PARAMS = {"linear2d": {"lr_weights": {"derivative": True,
+                                      "ingredient": "linear2d",
+                                      "shape": {"pytorch": ["[kernel_size_h*kernel_size_w*input_size, ]", {}]}}}, # FIXME: WIP
+          "conv": {"filters": {"derivative": True,
                                "ingredient": "conv",
                                "shape": {"pytorch": ["[n_filters, input_shape, kernel_size_h, kernel_size_w]",
                                                      {}],
@@ -463,7 +466,9 @@ COMPONENT_RECIPES = {"adense",
                      "resnet_256", "resnet_256_short_cut",
                      "resnet_512", "resnet_512_short_cut"}
 
+BLOCKS = ["data_block", "model_block", "loss_block", "optimizer_block"]
 ALL_RECIPES = {"root",
+               *BLOCKS,
                *COMPONENT_RECIPES}
 
 TYPES = {0: "DETERMINISTIC_COMPONENTS_WITHOUT_HYPERPARAMETER",
