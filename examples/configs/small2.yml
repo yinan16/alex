@@ -1,4 +1,4 @@
-params_network:
+data_block:
   - type: data
     hyperparams:
       shape:
@@ -16,6 +16,7 @@ params_network:
         dim: 10
     name: labels
 
+model_block:
   - type: conv
     hyperparams:
       filters:
@@ -36,7 +37,8 @@ params_network:
   - type: softmax
   - type: sigmoid
     name: d_1
-# losses:
+
+loss_block:
   - type:
       cross_entropy
     inputs:
@@ -44,7 +46,7 @@ params_network:
       - d_1
     name: losses
 
-# solvers:
+optimizer_block:
   - type: adam
     inputs: losses
     name: solver
