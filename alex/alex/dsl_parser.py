@@ -115,11 +115,10 @@ def _parse_ingredient_hyperparams(hyperparams):
     return hyperparams
 
 
-def _config_to_inter_graph(user_defined, reader, block, config=None, recipe=None):
+def _config_to_inter_graph(user_defined, reader, block, parent_type="root", config=None, recipe=None):
     if config is None:
         config = user_defined
         recipe = const.ROOT
-        block = recipe
         component = dict()
         component[const.TYPE] = recipe
         component[const.HYPERPARAMS] = []
@@ -130,6 +129,7 @@ def _config_to_inter_graph(user_defined, reader, block, config=None, recipe=None
             component[const.HYPERPARAMS].append(_config_to_inter_graph(_user_defined,
                                                                        reader,
                                                                        block,
+                                                                       parent_type,
                                                                        config=_config,
                                                                        recipe=block))
 
@@ -138,10 +138,12 @@ def _config_to_inter_graph(user_defined, reader, block, config=None, recipe=None
         if const.PARAMS_NETWORK in config:
             component = dict()
             component[const.TYPE] = recipe
-            component["block"] = block
             if const.PARAMS_NETWORK not in user_defined:
                 component = fill_mandatory(clone(user_defined), reader)
             component[const.HYPERPARAMS] = []
+            component["block"] = block
+            component[const.SCOPE] = parent_type
+            parent_type = recipe
             for subconfig in config[const.PARAMS_NETWORK]:
                 if recipe_defined(subconfig[const.TYPE]):
                     subconfig_def = util.read_yaml(os.path.join(const.COMPONENT_BASE_PATH,
@@ -151,6 +153,7 @@ def _config_to_inter_graph(user_defined, reader, block, config=None, recipe=None
                 component[const.HYPERPARAMS].append(_config_to_inter_graph(subconfig,
                                                                            reader,
                                                                            block,
+                                                                           parent_type,
                                                                            subconfig_def,
                                                                            subconfig[const.TYPE]))
         else:
@@ -159,6 +162,7 @@ def _config_to_inter_graph(user_defined, reader, block, config=None, recipe=None
             component["block"] = block
             util.fill_dict(hyperparams, component[const.HYPERPARAMS])
             component[const.HYPERPARAMS] = _parse_ingredient_hyperparams(component[const.HYPERPARAMS])
+            component["scope"] = parent_type
     return component
 
 
@@ -557,29 +561,39 @@ def _user_fn(fn, kwargs):
 ######################################### Different views:
 def draw_graph(graph_list, level=2, graph_path='example.png', show="name"):
     graph = pydot.Dot(graph_type='digraph', rankdir='LR', dpi=800, size=5, fontsize=18)
-
-    added = []
+    prev = None
     for component in graph_list:
         _dir = component[const.META][const.NAME].split("/")
         _dir = _dir[:level]
         name = "/".join(_dir)
-        if name in added:
+        if prev is None:
+            prev = name
+
+        if name == prev:
             continue
-        added.append(name)
+        else:
+            prev = name
+        component_scope = component[const.META][const.SCOPE]
+        component_type = component[const.META][const.TYPE]
         node = pydot.Node(name, shape="box")
         if show == "name":
             label = name.split("/")[-1]# .split("_")[0]
         else:
-            label = component["meta"]["type"]
+            if show not in component["meta"]:
+                raise Exception("Lable '%s' is not available" % show)
+            label = str(component["meta"][show])
         node.set_label(label)
         graph.add_node(node)
 
-        if not component[const.META][const.TYPE] in const.INPUT_TYPES:
+        _type = component[const.META][const.TYPE]
+        if not _type in const.INPUT_TYPES:
             inputs = component[const.META][const.INPUTS]
             for _input in inputs:
-                __input = "/".join(_input.split("/")[:level])
-                edge = pydot.Edge(_input, name)
-                graph.add_edge(edge)
+                if _type not in const.REGULARIZERS:
+                    _input = "/".join(_input.split("/")[:level])
+                print(name, component_scope)
+                _edge = pydot.Edge(_input, name)
+                graph.add_edge(_edge)
 
     graph.write_png(graph_path)
     return graph
@@ -929,7 +943,7 @@ def dict_to_arg_str(d):
     return out
 
 
-def make_graph_from_yml(yml_file, png_file, level, show="label", lazy=True):
+def make_graph_from_yml(yml_file, png_file, level, show="name", lazy=True):
     graph = parse(yml_file, return_dict=False, lazy=lazy)
     draw_graph(graph, level, png_file, show=show)
 
