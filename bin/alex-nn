@@ -78,8 +78,11 @@ def inspect(component):
 
 def codegen(engine, config, out_dir, filename):
     if not config:
-        print("Must give a network configuration --config")
+        print("Must give a network configuration")
         sys.exit()
+    else:
+        config = config[0]
+
     try:
         code_generator = code_gen.CodeGen(filename,
                                           config,
@@ -93,8 +96,10 @@ def codegen(engine, config, out_dir, filename):
 
 def render(config, type, path, level):
     if not config:
-        print("Must give a network configuration --config example.yml")
+        print("Must give a network configuration")
         sys.exit()
+    else:
+        config = config[0]
 
     if type == "ast":
         dsl_parser.make_ast_from_yml(config, path)
@@ -114,7 +119,8 @@ def main(fn, kwargs=dict()):
 
 
 if __name__=="__main__":
-    if len(sys.argv)<2:
+
+    if len(sys.argv) < 2:
         print("Choose one of the following: diff, ls, inspect, codegen, render; or -h for help")
         sys.exit()
     fn = sys.argv[1]
@@ -153,7 +159,6 @@ if __name__=="__main__":
                              type=int, nargs="?",
                              help="Resolution of the image")
 
-
     ls_parser = subparsers.add_parser("ls", help="List information, e.g. alex-nn ls [functions, coponents, recipes, ingredients, initializers, regularizers, optimizers, losses]")
     ls_parser.add_argument("option", metavar="option", type=str, nargs="?",
                            default="components",
@@ -166,15 +171,17 @@ if __name__=="__main__":
 
     codegen_parser = subparsers.add_parser("codegen", help="Generate python code, e.g. alex-nn codegen example_config.yml")
 
+    codegen_parser.add_argument("config",
+                                metavar="Network configuration file path",
+                                type=str,
+                                nargs=1,
+                                help="Network configuration")
+
     codegen_parser.add_argument("--engine",
                                 default="pytorch",
                                 metavar="Currently support tf and pytorch",
                                 type=str,
                                 help="Which framework?")
-
-    codegen_parser.add_argument("--config", metavar="Network configuration file path",
-                                type=str,
-                                help="Network configuration")
 
     codegen_parser.add_argument("--out_dir", metavar="Output dir", default="./",
                                 type=str,
@@ -190,6 +197,7 @@ if __name__=="__main__":
 
     render_parser.add_argument("config",
                                metavar="Network configuration file path",
+                               nargs=1,
                                type=str,
                                help="Network configuration")
 
