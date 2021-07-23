@@ -650,8 +650,8 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
                 _network[const.INPUTS] = inputs
                 _network[const.HYPERPARAMS] = dict() # hyperparams for recipes
                 _network[const.TYPE] = component[const.META][const.SCOPE]
-                _network["visible"] = component[const.META]["visible"]
-                _network["block"] = component[const.META]["block"]
+                # _network["visible"] = component[const.META]["visible"]
+                # _network["block"] = component[const.META]["block"]
                 _network[const.META] = component[const.META]
                 _subgraph[scope] = _network
             else:
@@ -661,9 +661,9 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
             _network[const.SUBGRAPH] = component[const.META][const.NAME]
             _network[const.TYPE] = component[const.META][const.TYPE]
             _network[const.META] = component[const.META]
-            _network["dtype"] = component[const.META]["dtype"]
-            _network["visible"] = component[const.META]["visible"]
-            _network["block"] = component[const.META]["block"]
+            # _network["dtype"] = component[const.META]["dtype"]
+            # _network["visible"] = component[const.META]["visible"]
+            # _network["block"] = component[const.META]["block"]
             _network[const.INPUTS] = inputs
             _network[const.LEVEL] = level
             _network[const.HYPERPARAMS] = hyperparams
@@ -744,7 +744,7 @@ def draw_hyperparam_tree(graph,
 
                 if isinstance(_graph, dict) and _is_component(_graph[_node]):
                     # FIXME:
-                    if not _graph[_node]["visible"]:
+                    if not _graph[_node]["meta"]["visible"]:
                         continue
                     label = clone(_graph[_node][const.TYPE])
 

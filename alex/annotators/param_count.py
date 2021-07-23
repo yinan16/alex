@@ -198,8 +198,15 @@ class ParamCount(Annotator):
             inputs = list(map(lambda x: x["name"], input_nodes))
         node["input_nodes"] = inputs
         node["ancestor"] = core.get_ancestor_ingredient_node(node, self.tree)
-        if node["ancestor"]["name"] in self.components:
-            node["dtype"] = self.components[node["ancestor"]["name"]]["meta"]["dtype"]
+        ancestor = node["ancestor"]["name"]
+        if ancestor in self.components:
+            node["dtype"] = self.components[ancestor]["meta"]["dtype"]
+            if node["value"] in const.ALL_PARAMS_LIST or node["value"] in const.ALL_INITIALIZERS or self.annotated[node["parent"]]["value"] in const.ALL_PARAMS_LIST:
+                node["meta"]["code_block"] = "param_block"
+            elif node["value"] in const.SCHEDULER_BLOCK:
+                node["meta"]["code_block"] = "scheduler_block"
+            else:
+                node["meta"]["code_block"] = self.components[ancestor]["meta"]["block"]
         else:
             node["dtype"] = None
         return node

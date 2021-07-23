@@ -265,16 +265,8 @@ def diff(network_config_1,
     cost = 0
     for block in const.BLOCKS:
 
-        # TODO_ use get sub tree
         graph_list1_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list1))
         graph_list2_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list2))
-        # for component in graph_list1_block:
-        #     name = component["meta"]["name"]
-        #     component["meta"]["shape"] = tree_full1[name]["shape"]
-        # for component in graph_list2_block:
-        #     name = component["meta"]["name"]
-        #     component["meta"]["shape"] = tree_full2[name]["shape"]
-
         _cost, _operations = _diff_graph_list(graph_list1_block,
                                               graph_list2_block,
                                               tree_full1, tree_full2)
