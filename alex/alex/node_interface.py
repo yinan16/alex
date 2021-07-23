@@ -36,7 +36,7 @@ class Ingredient(Node):
 class Recipe(Node):
     def __init__(self, recipe_name):
         self.name = recipe_name
-        if self.name != "root":
+        if self.name != "root" and self.name not in const.BLOCKS:
             self.config_path = os.path.join(const.COMPONENT_BASE_PATH,
                                             self.name + ".yml")
             self.recipe = dsl_parser.parse(self.config_path,
@@ -47,7 +47,7 @@ class Recipe(Node):
 
     def get_node_count(self, node=None):
         if self.recipe is None:
-            return len(node["children"])
+            return len(node["descendants"])
         else:
             return len(self.recipe)
 
@@ -56,7 +56,7 @@ class Recipe(Node):
             return sum(list(map(lambda x: len(x["meta"][const.INPUTS]),
                                 self.recipe)))
         else:
-            return len(node["children"]) - 1
+            return len(node["descendants"]) - 1
 
     def connection(self):
         """draw connection"""

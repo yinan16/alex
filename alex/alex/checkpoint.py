@@ -53,7 +53,6 @@ def dump(graph_list, states, trainable_params, path):
 def load_json(checkpoint_dir, json_file=None):
     json_file = get_load_path(checkpoint_dir, json_file)
     data = util.read_json(json_file)
-    data["components"] = dsl_parser.annotate(data["components"], lazy=False)
     return data
 
 

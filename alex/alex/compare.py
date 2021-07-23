@@ -258,19 +258,14 @@ def diff(network_config_1,
          dpi=800, lazy=False):
     graph_list1 = dsl_parser.parse(network_config_1, lazy=lazy)
     graph_list2 = dsl_parser.parse(network_config_2, lazy=lazy)
-    # Do not include dimensionality in diff
-    # graph1 = dsl_parser.list_to_graph(graph_list1)
-    # graph2 = dsl_parser.list_to_graph(graph_list2)
-    # tree_full1 = core.alex_graph_to_tree(graph1, naive=False)
-    # tree_full2 = core.alex_graph_to_tree(graph2, naive=False)
-    # Include dimensionality in diff
     tree_full1 = param_count.ParamCount(graph_list1).annotate_tree()
     tree_full2 = param_count.ParamCount(graph_list2).annotate_tree()
 
     operations = []
     cost = 0
-    for block in ["data", "model", "loss", "optimizer"]:
+    for block in const.BLOCKS:
 
+        # TODO_ use get sub tree
         graph_list1_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list1))
         graph_list2_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list2))
         # for component in graph_list1_block:

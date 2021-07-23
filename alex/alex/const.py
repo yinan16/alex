@@ -36,10 +36,11 @@ CONSTRUCTORS = {"params": {"tf": ["tf.Variable",
 
 
 # TODO: as it is now, the param names need to be globally unique
-PARAMS = {"linear2d": {"lr_weights": {"derivative": True,
-                                      "ingredient": "linear2d",
-                                      "shape": {"pytorch": ["[kernel_size_h*kernel_size_w*input_size, ]", {}]}}}, # FIXME: WIP
-          "conv": {"filters": {"derivative": True,
+# "linear2d": {"lr_weights": {"derivative": True,
+#                                       "ingredient": "linear2d",
+#                                       "shape": {"pytorch": ["[kernel_size_h*kernel_size_w*input_size, ]", {}]}}}, # FIXME: WIP
+
+PARAMS = {"conv": {"filters": {"derivative": True,
                                "ingredient": "conv",
                                "shape": {"pytorch": ["[n_filters, input_shape, kernel_size_h, kernel_size_w]",
                                                      {}],

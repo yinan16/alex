@@ -34,7 +34,10 @@ class Recipe(node_interface.Recipe):
 
     def get_shape(self, node, annotated):
         last_component = annotated[node["children"][-1]]
-        input_shape = last_component["meta"]["position"]["input_shape"][0]
+        input_shape = last_component["meta"]["position"]["input_shape"]
+
+        if input_shape is not None:
+            input_shape = input_shape[0]
         return input_shape
 
     def get_trainable_params_count(self, node, annotated):

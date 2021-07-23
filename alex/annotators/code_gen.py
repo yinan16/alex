@@ -656,46 +656,46 @@ class CodeGen(param_count.ParamCount):
                        [self.generate_alex]]
         self.inline_index_translation = []
         self.inline_index_python = []
-        self.blocks = {"param": {**const.ALL_PARAMS, **const.ALL_INITIALIZERS},
-                       "model": const.MODEL_BLOCK,
-                       "optimizer": const.OPTIMIZER_BLOCK,
-                       "loss": const.LOSS_BLOCK,
-                       "scheduler": const.SCHEDULER_BLOCK,
-                       "data": const.INPUT_TYPES}
+        self.blocks = {"param_block": {**const.ALL_PARAMS, **const.ALL_INITIALIZERS},
+                       "model_block": const.MODEL_BLOCK,
+                       "optimizer_block": const.OPTIMIZER_BLOCK,
+                       "loss_block": const.LOSS_BLOCK,
+                       "scheduler_block": const.SCHEDULER_BLOCK,
+                       "data_block": const.INPUT_TYPES}
         if engine == "tf":
-            self.blocks["optimizer"] = {**self.blocks["optimizer"],
-                                        **self.blocks["scheduler"]}
-            self.blocks["scheduler"] = {}
-        self.filepaths = {"param": os.path.join(self.alex_cache_code_path, "_param_.py"),
-                          "model": os.path.join(self.alex_cache_code_path, "_component_.py"),
-                          "optimizer": os.path.join(self.alex_cache_code_path, "_optimizer_.py"),
-                          "loss": os.path.join(self.alex_cache_code_path, "_loss_.py"),
-                          "scheduler": os.path.join(self.alex_cache_code_path, "_scheduler_.py"),
-                          "data": ""
+            self.blocks["optimizer_block"] = {**self.blocks["optimizer_block"],
+                                        **self.blocks["scheduler_block"]}
+            self.blocks["scheduler_block"] = {}
+        self.filepaths = {"param_block": os.path.join(self.alex_cache_code_path, "_param_.py"),
+                          "model_block": os.path.join(self.alex_cache_code_path, "_component_.py"),
+                          "optimizer_block": os.path.join(self.alex_cache_code_path, "_optimizer_.py"),
+                          "loss_block": os.path.join(self.alex_cache_code_path, "_loss_.py"),
+                          "scheduler_block": os.path.join(self.alex_cache_code_path, "_scheduler_.py"),
+                          "data_block": ""
         }
-        self.alex_defs = {"param": [],
-                          "model": [],
-                          "optimizer": [],
-                          "scheduler": [],
-                          "loss": [],
-                          "data": []}
-        self.alex_code = {"param": [],
-                          "model": [],
-                          "optimizer": [],
-                          "scheduler": [],
-                          "loss": [],
-                          "data": []}
-        self.alex_inline = {"param": [],
-                            "model": [],
-                            "optimizer": [],
-                            "scheduler": [],
-                            "loss": [],
-                            "data": []}
+        self.alex_defs = {"param_block": [],
+                          "model_block": [],
+                          "optimizer_block": [],
+                          "scheduler_block": [],
+                          "loss_block": [],
+                          "data_block": []}
+        self.alex_code = {"param_block": [],
+                          "model_block": [],
+                          "optimizer_block": [],
+                          "scheduler_block": [],
+                          "loss_block": [],
+                          "data_block": []}
+        self.alex_inline = {"param_block": [],
+                            "model_block": [],
+                            "optimizer_block": [],
+                            "scheduler_block": [],
+                            "loss_block": [],
+                            "data_block": []}
 
         for block in self.blocks:
-            if block == "param":
+            if block == "param_block":
                 self.cache_param_translation()
-            elif block == "data":
+            elif block == "data_block":
                 continue
             self.cache_translation(block)
             write_list_to_file(self.alex_defs[block],
@@ -793,7 +793,7 @@ class CodeGen(param_count.ParamCount):
                                                       src_args_str,
                                                       trg_fn,
                                                       trg_args_str)
-                self.alex_defs["param"].append(shape_code_str)
+                self.alex_defs["param_block"].append(shape_code_str)
                 constructor = const.CONSTRUCTORS["params"]
                 src_fn = "%s_%s" % (component, param)
 
@@ -804,7 +804,7 @@ class CodeGen(param_count.ParamCount):
                                                             src_args_str,
                                                             trg_fn,
                                                             trg_args_str)
-                self.alex_defs["param"].append(constructor_code_str)
+                self.alex_defs["param_block"].append(constructor_code_str)
                 self.inline_index_translation.append(src_fn)
 
     def cache_boiler_plate(self):
@@ -855,24 +855,24 @@ class CodeGen(param_count.ParamCount):
         boiler_str = self.cache_boiler_plate()
 
         param_args = ["ckpt=None"] # if self.load else []
-        param_str = self.get_dl_code(block="param",
+        param_str = self.get_dl_code(block="param_block",
                                      fn_name="get_trainable_params",
                                      return_str="trainable_params",
                                      manual_args=param_args,
                                      prefix="trainable_params = dict()\n")
-        loss_str = self.get_dl_code(block="loss",
+        loss_str = self.get_dl_code(block="loss_block",
                                     fn_name="get_loss",
                                     manual_args=["trainable_params", "inputs"])
-        optimizer_str = self.get_dl_code(block="optimizer",
+        optimizer_str = self.get_dl_code(block="optimizer_block",
                                          fn_name="get_optimizer",
                                          manual_args=["trainable_params", ])
-        component_str = self.get_dl_code(block="model",
+        component_str = self.get_dl_code(block="model_block",
                                          fn_name="model",
-                                         manual_args=["input_data",
+                                         manual_args=["data_block_input_data", # FIXME:
                                                       "trainable_params",
                                                       "training"])
-        if len(self.blocks["scheduler"]) != 0:
-            scheduler_str = self.get_dl_code(block="scheduler",
+        if len(self.blocks["scheduler_block"]) != 0:
+            scheduler_str = self.get_dl_code(block="scheduler_block",
                                              fn_name="get_scheduler",
                                              manual_args=["optimizer"])
         else:
