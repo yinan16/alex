@@ -851,7 +851,7 @@ class ParamCodeBlock(CodeBlock):
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="get_trainable_params",
                                 return_str="trainable_params",
-                                manual_args=["ckpt=None"], # if self.load else [],
+                                manual_args=["ckpt"] if self.load else [],
                                 prefix="trainable_params = dict()\n")
 
 

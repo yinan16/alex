@@ -22,7 +22,7 @@ class Model(torch.nn.Module):
         return x
 
     @staticmethod
-    def get_trainable_params(ckpt=None):
+    def get_trainable_params():
         trainable_params = dict()
         model_block_conv_6gw_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 3, 3, 3]))
         model_block_conv_6gw_filters = torch.nn.parameter.Parameter(data=model_block_conv_6gw_filters_initializer_xavier_uniform, requires_grad=True)

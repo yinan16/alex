@@ -5,7 +5,7 @@ import numpy as np
 tf_dtypes = {'float32': tf.float32, 'int8': tf.int8}
 
 
-def get_trainable_params(ckpt=None):
+def get_trainable_params(ckpt):
     trainable_params = dict()
     model_block_conv_6gw_filters_initializer_xavier_uniform = tf.convert_to_tensor(value=np.asarray(ckpt['model_block/conv_6gw/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
     model_block_conv_6gw_filters = tf.Variable(initial_value=model_block_conv_6gw_filters_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/conv_6gw/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
