@@ -18,7 +18,7 @@ class TestCodeGen(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self.config_path = "examples/configs/small1.yml"
         self.config_path_alt = "examples/configs/small2.yml"
-        self.engines = ["tf", "pytorch"]
+        self.engines = ["pytorch", "tf"]
 
     def test_code_genenration(self):
 
@@ -27,19 +27,13 @@ class TestCodeGen(unittest.TestCase):
             self.boiler_plate = "alex/engine/example_boilerplate_%s.py" % engine
             code_path = os.path.join(const.CACHE_BASE_PATH,
                                      filename)
-            # code_generator = code_gen.CodeGen(filename,
-            #                                   self.config_path,
-            #                                   engine,
-            #                                   dirname=const.CACHE_BASE_PATH,
-            #                                   load_ckpt=["cache",
-            #                                              None])
-            code_generator = code_gen.CodeGen(filename,
-                                              self.config_path,
-                                              engine,
-                                              dirname=const.CACHE_BASE_PATH,
-                                              load_ckpt=["checkpoints",
-                                                         "config_1626993992750915.json"]) # "config_1622411488965296.json"
-            code_generator.generate_python()
+
+            code_gen.generate_python(code_path,
+                                     self.config_path,
+                                     engine,
+                                     dirname=const.CACHE_BASE_PATH)
+                                     # load_ckpt=["checkpoints",
+                                     #            "config_1626993992750915.json"])
             util.concatenate_files([code_path,
                                     self.boiler_plate],
                                    code_path)
@@ -48,13 +42,12 @@ class TestCodeGen(unittest.TestCase):
     # def test_mismatched(self):
     #     code_path = os.path.join(const.CACHE_BASE_PATH,
     #                              "new_mismatched_generated.py")
-    #     code_generator = code_gen.CodeGen("new_mismatched_generated.py",
-    #                                       self.config_path_alt,
-    #                                       "pytorch",
-    #                                       dirname=const.CACHE_BASE_PATH,
-    #                                       load_ckpt=["cache",
-    #                                                  "config_1622420349826577.json"]) # "config_1622411488965296.json"
-    #     annotated = code_generator.generate_python()
+    #     code_gen.generate_python(code_path,
+    #                              self.config_path_alt,
+    #                              "pytorch",
+    #                              dirname=const.CACHE_BASE_PATH,
+    #                              load_ckpt=["cache",
+    #                                         "config_1622420349826577.json"]) # "config_1622411488965296.json"
     #     util.concatenate_files([code_path,
     #                             "alex/engine/example_boilerplate_pytorch.py"],
     #                            code_path)

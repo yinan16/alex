@@ -23,6 +23,25 @@ class TestCli(unittest.TestCase):
     def setUp(self):
         pass
 
+    def test_codegen(self):
+        command = ["alex-nn",
+                   "codegen",
+                   "examples/configs/small1.yml",
+                   "--engine", "pytorch",
+                   "--out_dir", "cache",
+                   "--filename", "cli_codegen_pytorch.py"]
+        run(command)
+        print(" ".join(command))
+
+        command = ["alex-nn",
+                   "codegen",
+                   "examples/configs/small1.yml",
+                   "--engine", "tf",
+                   "--out_dir", "cache",
+                   "--filename", "cli_codegen_tf.py"]
+        run(command)
+        print(" ".join(command))
+
     def test_diff(self):
         command = ["alex-nn",
                    "diff",

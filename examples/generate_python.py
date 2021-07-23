@@ -12,17 +12,16 @@ from alex.alex import const, util
 
 
 def main(network_config,
-         filename = "generated_code",
+         filename="generated_code",
          code_dir="./cache/",
          engines=["tf"]):
     os.makedirs(code_dir, exist_ok=True)
     for engine in engines:
         _filename = "%s_%s.py" % (filename, engine)
-        code_generator = code_gen.CodeGen(_filename,
-                                          network_config,
-                                          engine=engine,
-                                          dirname=code_dir)
-        code_generator.generate_python()
+        code_gen.generate_python(_filename,
+                                 network_config,
+                                 engine=engine,
+                                 dirname=code_dir)
         filepath = os.path.join(code_dir, _filename)
         boilerplate_file = os.path.join(const.ENGINE_PATH,
                                         "example_boilerplate_%s.py" % engine)

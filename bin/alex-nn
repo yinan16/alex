@@ -85,12 +85,12 @@ def codegen(engine, config, out_dir, filename):
         config = config[0]
 
     try:
-        code_generator = code_gen.CodeGen(filename,
-                                          config,
-                                          engine=engine,
-                                          dirname=out_dir)
-        code_generator.generate_python()
-        print("Generated code is written to file %s in dir %s" % (filename, out_dir))
+        filepath = os.path.join(out_dir, filename)
+        code_gen.generate_python(filepath,
+                                 config,
+                                 engine=engine,
+                                 dirname=out_dir)
+        print("Generated code is written to file %s" % filepath)
     except Exception as err:
         print(err)
 
