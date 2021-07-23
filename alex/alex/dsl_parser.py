@@ -307,7 +307,10 @@ def eval_name(name, components):
             if name is None:  # if no user defined name
                 __name = "%s_%s"%(component[const.META][const.TYPE], __name)  # const.TYPE + "_" + "id_string"
         else: # when component is not on the lowest level
-            if not _is_block(scope):
+            if _is_block(scope):
+                name_cache = __name
+                __name = "%s/%s" % (scope, __name)
+            else:
                 if name is None:
                     __name = "%s_%s/%s" % (scope, _name, __name)
                 else:  # user defined name in recipe
@@ -342,8 +345,11 @@ def eval_inputs(inputs, components):
                     for _b, _base in enumerate(component[const.META][const.INPUTS]):
                         if isinstance(_base, dict):
                             continue
-                        base_name = _base.split("/")[-1]
-                        _in = prev_dir + base_name
+                        if prev_dir in _base:
+                            _in = name_map[_base]
+                        else:
+                            base_name = _base.split("/")[-1]
+                            _in = prev_dir + base_name
                         component[const.META][const.INPUTS][_b] = _in
 
         if const.RPT_IDX in component[const.META]:
@@ -579,7 +585,7 @@ def draw_graph(graph_list, level=2, graph_path='example.png', show="name"):
         if show == "name":
             label = name.split("/")[-1]# .split("_")[0]
         else:
-            if show not in component["meta"]:
+            if show not in component["meta"] or show=="type":
                 raise Exception("Lable '%s' is not available" % show)
             label = str(component["meta"][show])
         node.set_label(label)
@@ -591,7 +597,6 @@ def draw_graph(graph_list, level=2, graph_path='example.png', show="name"):
             for _input in inputs:
                 if _type not in const.REGULARIZERS:
                     _input = "/".join(_input.split("/")[:level])
-                print(name, component_scope)
                 _edge = pydot.Edge(_input, name)
                 graph.add_edge(_edge)
 
@@ -619,8 +624,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
     while i < len(components):
         component = components[i]
         hyperparams = component[const.VALUE][const.HYPERPARAMS]
-        block = component["meta"]["block"]
-        path = "%s/%s" % (block, component[const.META][const.NAME])
+        path = component[const.META][const.NAME]
         _dir = path.split("/")
         level = len(_dir)
         scope, _name = _get_dir_name(path, level)
@@ -631,8 +635,7 @@ def list_to_graph(components, parent_level=1, parent_scope=""):
                 in_scope = False
                 in_scope_previous = False
                 for _component in components[i:]:
-                    _block = _component[const.META]["block"]
-                    _path = "%s/%s" % (_block, _component[const.META][const.NAME])
+                    _path = _component[const.META][const.NAME]
                     __scope, __ = _get_dir_name(_path, level)
                     if scope == __scope:
                         in_scope = True

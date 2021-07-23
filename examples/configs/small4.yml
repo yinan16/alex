@@ -23,7 +23,7 @@ model_block:
         shape:
           n_filters:
             16
-    inputs: input_data
+    inputs: data_block/input_data
   - type:
       relu
     name: "reluu"
@@ -52,8 +52,8 @@ loss_block:
   - type:
       cross_entropy
     inputs:
-      - labels
-      - d_1
+      - data_block/labels
+      - model_block/d_1
     name: cross_0
   - type:
       regularizer_l2
@@ -73,7 +73,7 @@ loss_block:
 
 optimizer_block:
   - type: adam
-    inputs: losses
+    inputs: loss_block/losses
     name: solver
     hyperparams:
       learning_rate:

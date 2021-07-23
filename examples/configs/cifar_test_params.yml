@@ -1,4 +1,4 @@
-params_network:
+data_block:
   - type: data
     dtype: float32
     hyperparams:
@@ -17,6 +17,7 @@ params_network:
         dim: 10
     name: labels
 
+model_block:
   - type: conv
     hyperparams:
       strides:
@@ -26,23 +27,20 @@ params_network:
         shape:
           n_filters:
             16
-    inputs: input_data
+    inputs: data_block/input_data
 
   - type: batch_normalize
 
   - type: relu
 
   - type: resnet_16
-    repeat: 1
 
   - type: resnet_32_short_cut
 
   - type: resnet_32
-    repeat: 1
 
   - type: resnet_64_short_cut
   - type: resnet_64
-    repeat: 1
 
     name: features
 
@@ -53,7 +51,7 @@ params_network:
   - type: dropout
     name: d_1
 
-# losses:
+loss_block:
   - type:
       cross_entropy
     inputs:
@@ -62,9 +60,9 @@ params_network:
     name: losses
 
 
-# solvers:
+optimizer_block:
   - type: adam
-    inputs: losses
+    inputs: loss_block/losses
     name: solver
     hyperparams:
       learning_rate:

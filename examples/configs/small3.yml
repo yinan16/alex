@@ -23,7 +23,7 @@ model_block:
         shape:
           n_filters:
             32
-    inputs: input_data
+    inputs: data_block/input_data
   - type:
       relu
   - type:
@@ -41,13 +41,13 @@ loss_block:
   - type:
       cross_entropy
     inputs:
-      - labels
-      - d_1
+      - data_block/labels
+      - momdel_block/d_1
     name: losses
 
 optimizer_block:
   - type: adam
-    inputs: losses
+    inputs: loss_block/losses
     name: solver
     hyperparams:
       learning_rate:
