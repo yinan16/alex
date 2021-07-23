@@ -20,6 +20,7 @@
 import numpy as np
 import os
 import collections
+from abc import ABC, abstractmethod
 from math import floor
 from pprint import pprint
 from copy import deepcopy
@@ -36,11 +37,6 @@ from alex.alex.annotator_interface import Annotator
 from alex.engine import ns_alex, ns_tf, ns_pytorch
 from alex.annotators import param_count
 
-# TODO:
-# [ ] Modify annotation (node_type, block, etc)
-# [x] Add checkpoint
-# [ ] Refine user interface
-# [ ] Cache shape info during tree construction so we can also check the size at "compile" time
 
 NAMESPACES = {"tf": ns_tf,
               "pytorch": ns_pytorch}
@@ -50,7 +46,7 @@ VALUE = TypeVar('VALUE', str, list, int, float)
 FUNCTION = TypeVar('FUNCTION')
 IDENTIFIER = TypeVar('IDENTIFIER')
 
-special_keys = ["channels", "batch_size"]
+runtime_keys = ["channels", "batch_size"]
 
 
 def get_node_type(node):
@@ -81,7 +77,7 @@ def _name_strs_to_names(name_strs):
 def _parse_str(value, node=None, literal=True):
     if not isinstance(value, str):
         return str(value)
-    if value in special_keys:
+    if value in runtime_keys:
         if value == "channels":
             parsed = node["input_shape"][-1]
         elif value == "batch_size":
@@ -623,196 +619,154 @@ def nodes(node):
     return _nodes[value](node["value"])
 
 
-class CodeGen(param_count.ParamCount):
+def generate_python(output_file,
+                    config_path,
+                    engine,
+                    dirname=const.CACHE_BASE_PATH,
+                    load_ckpt=[const.CACHE_BASE_PATH, None],
+                    save_ckpt=[const.CACHE_BASE_PATH, None]):
 
+    if load_ckpt[1] is not None:
+        load_from_ckpt = True
+    else:
+        load_from_ckpt = False
+
+    ckpt = checkpoint.Checkpoint(config_path,
+                                 load_ckpt,
+                                 save_ckpt)
+    util.clear_file(output_file)
+
+    param_str = ParamCodeBlock(output_file,
+                               config_path,
+                               engine,
+                               ckpt,
+                               load_from_ckpt=load_from_ckpt,
+                               dirname=const.CACHE_BASE_PATH)()
+
+    component_str = ModelCodeBlock(output_file,
+                                   config_path,
+                                   engine,
+                                   ckpt,
+                                   load_from_ckpt=load_from_ckpt,
+                                   dirname=const.CACHE_BASE_PATH)()
+
+    loss_str = LossCodeBlock(output_file,
+                             config_path,
+                             engine,
+                             ckpt,
+                             load_from_ckpt=load_from_ckpt,
+                             dirname=const.CACHE_BASE_PATH)()
+
+    optimizer_str = OptimizerCodeBlock(output_file,
+                                       config_path,
+                                       engine,
+                                       ckpt,
+                                       load_from_ckpt=load_from_ckpt,
+                                       dirname=const.CACHE_BASE_PATH)()
+
+    scheduler_str = SchedulerCodeBlock(output_file,
+                                       config_path,
+                                       engine,
+                                       ckpt,
+                                       load_from_ckpt=load_from_ckpt,
+                                       dirname=const.CACHE_BASE_PATH)()
+
+    boiler_str = cache_boiler_plate(engine)
+
+    code = NAMESPACES[engine].wrap_in_class(param_str,
+                                            component_str,
+                                            loss_str,
+                                            optimizer_str,
+                                            scheduler_str)
+    util.write_to(boiler_str, output_file)
+    util.write_to(code, output_file)
+
+
+class CodeBlock(param_count.ParamCount):
     def __init__(self,
                  output_file,
                  config_path,
                  engine,
-                 dirname=const.CACHE_BASE_PATH,
-                 load_ckpt=[const.CACHE_BASE_PATH, None],
-                 save_ckpt=[const.CACHE_BASE_PATH, None]):
+                 ckpt,
+                 load_from_ckpt=False,
+                 dirname=const.CACHE_BASE_PATH):
         super().__init__(config_path)
 
-        if load_ckpt[1] is not None:
-            self.load = True
-        else:
-            self.load = False
-
-        self.ckpt = checkpoint.Checkpoint(config_path,
-                                          load_ckpt,
-                                          save_ckpt)
+        self.load = load_from_ckpt
+        self.ckpt = ckpt
         self.anno_name = "code generation"
         self.engine = engine
         self.dirname = dirname
         self.alex_cache_code_path = os.path.join(dirname, "python_code_cache/")
         os.makedirs(self.alex_cache_code_path, exist_ok=True)
+        self.block_name = self.get_block_name()
+        self.code_registry = self.get_code_registry()
+        self.blocks = self.get_blocks()
+        self.cache_code_path = os.path.join(self.alex_cache_code_path,
+                                            "%s.py" % self.block_name)
+        self.cache_def_path = os.path.join(self.alex_cache_code_path,
+                                           "%s_def.py" % self.block_name)
 
-        self.cache_def_path = os.path.join(self.alex_cache_code_path, ".def.py")
-        self.output_file = os.path.join(dirname, output_file)
+        self.inline_index_fns = []
+        self.inline_index_python = []
+
+        self.translation_code = []
+        self.alex_code = []
+        self.alex_inline = []
+
+        self.output_file = output_file
         util.clear_file(self.cache_def_path)
 
         self.passes = [[self.cache_shape],
-                       [self.generate_alex]]
-        self.inline_index_translation = []
-        self.inline_index_python = []
-        self.blocks = {"param_block": {**const.ALL_PARAMS, **const.ALL_INITIALIZERS},
-                       "model_block": const.MODEL_BLOCK,
-                       "optimizer_block": const.OPTIMIZER_BLOCK,
-                       "loss_block": const.LOSS_BLOCK,
-                       "scheduler_block": const.SCHEDULER_BLOCK,
-                       "data_block": const.INPUT_TYPES}
-        if engine == "tf":
-            self.blocks["optimizer_block"] = {**self.blocks["optimizer_block"],
-                                        **self.blocks["scheduler_block"]}
-            self.blocks["scheduler_block"] = {}
-        self.filepaths = {"param_block": os.path.join(self.alex_cache_code_path, "_param_.py"),
-                          "model_block": os.path.join(self.alex_cache_code_path, "_component_.py"),
-                          "optimizer_block": os.path.join(self.alex_cache_code_path, "_optimizer_.py"),
-                          "loss_block": os.path.join(self.alex_cache_code_path, "_loss_.py"),
-                          "scheduler_block": os.path.join(self.alex_cache_code_path, "_scheduler_.py"),
-                          "data_block": ""
-        }
-        self.alex_defs = {"param_block": [],
-                          "model_block": [],
-                          "optimizer_block": [],
-                          "scheduler_block": [],
-                          "loss_block": [],
-                          "data_block": []}
-        self.alex_code = {"param_block": [],
-                          "model_block": [],
-                          "optimizer_block": [],
-                          "scheduler_block": [],
-                          "loss_block": [],
-                          "data_block": []}
-        self.alex_inline = {"param_block": [],
-                            "model_block": [],
-                            "optimizer_block": [],
-                            "scheduler_block": [],
-                            "loss_block": [],
-                            "data_block": []}
+                       [self._cache_alex_function_calls]]
 
-        for block in self.blocks:
-            if block == "param_block":
-                self.cache_param_translation()
-            elif block == "data_block":
+
+    def __call__(self):
+        return self.generate_dl_code()
+
+    def get_blocks(self):
+        return [self.block_name]
+
+    def _write_cache_to_file(self):
+        util.clear_file(self.cache_code_path)
+        write_list_to_file(self.translation_code,
+                           self.cache_def_path)
+
+    def _cache_translation_code(self):
+        cached = []
+        for fn in self.code_registry:
+            code = self.code_registry[fn]
+            if fn in cached:
                 continue
-            self.cache_translation(block)
-            write_list_to_file(self.alex_defs[block],
-                               self.cache_def_path)
-            util.clear_file(self.filepaths[block])
-        util.clear_file(self.output_file)
-
-    # FIXME: fix get_block logic
-    def get_block(self, node):
-        fn = node["value"]
-        if "block" in node["meta"] and node["meta"]["block"] is not None:
-            block = node["meta"]["block"]
-        else:
-            block = list(filter(lambda x: fn in self.blocks[x],
-                                self.blocks))
-            if len(block) != 0:
-                block = block[0]
-            else:
-
-                _component_ = core.get_ancestor_ingredient_node(node,
-                                                                self.annotated,
-                                                                "value")
-                _param_ = core.get_ancestor_param_node(node,
-                                                       self.annotated,
-                                                       "value")
-                if _param_ is not None:
-                    fn = _param_
-                elif _component_ is not None:
-                    fn = _component_
-                block = list(filter(lambda x: fn in self.blocks[x],
-                                    self.blocks))[0]
-        return block
-
-    @staticmethod
-    def get_trg_fn(component, engine):
-        return component[engine][0]
-
-    @staticmethod
-    def get_trg_args_str(component, engine):
-        trg_args = list(map(lambda x: "%s=%s" % (x,
-                                                 component[engine][1][x]),
-                            component[engine][1]))
-        return "(%s)" % (", ".join(trg_args)) if len(trg_args) != 0 else ""
-
-    def get_src_fn(self, component):
-        fn = component["alex"][0]
-        return fn
-
-    @staticmethod
-    def get_src_args_str(component):
-        src_args = list(component["alex"][1].keys())
-        return ", ".join(src_args)
-
-    @staticmethod
-    def get_translation(src_fn, src_args, trg_fn, trg_args):
-        code_str = "def %s(%s):\n" % (src_fn, src_args)
-        code_str += "\treturn %s%s\n\n" % (trg_fn, trg_args)
-        return code_str
-
-    def cache_translation(self, block):
-        for fn in self.blocks[block]:
-            component = self.blocks[block][fn]
+            cached.append(fn)
+            code = self.code_registry[fn]
             try:
-                if "alex" not in component:
+                if "alex" not in code:
                     continue
-                src_fn = self.get_src_fn(component)
-                src_args_str = self.get_src_args_str(component)
-                trg_fn = self.get_trg_fn(component, self.engine)
-                trg_args_str = self.get_trg_args_str(component, self.engine)
+                src_fn = get_src_fn(code)
+                src_args_str = get_src_args_str(code)
+                trg_fn = get_trg_fn(code, self.engine)
+                trg_args_str = get_trg_args_str(code, self.engine)
 
-                code_str = self.get_translation(src_fn,
-                                                src_args_str,
-                                                trg_fn,
-                                                trg_args_str)
-                self.alex_defs[block].append(code_str)
-                self.inline_index_translation.append(src_fn)
+                code_str = get_translation(src_fn,
+                                           src_args_str,
+                                           trg_fn,
+                                           trg_args_str)
+                self.translation_code.append(code_str)
+                self.inline_index_fns.append(src_fn)
 
             except Exception as error:
                 traceback.print_exc()
                 print("%s not implemented" % fn)
 
-    def cache_param_translation(self):
-        # Generate transltion for shape function
-        for component in const.PARAMS:
-            for param in const.PARAMS[component]:
-                shape = const.PARAMS[component][param]["shape"]
-                src_fn = self.get_src_fn(shape)
-                self.inline_index_translation.append(src_fn)
+    def _in_block(self, node):
+        if "code_block" not in node["meta"]:
+            return False
 
-                src_args_str = self.get_src_args_str(shape)
-                trg_fn = self.get_trg_fn(shape, self.engine)
-                trg_args_str = self.get_trg_args_str(shape, self.engine)
+        code_block = node["meta"]["code_block"]
+        return code_block in self.blocks
 
-                shape_code_str = self.get_translation(src_fn,
-                                                      src_args_str,
-                                                      trg_fn,
-                                                      trg_args_str)
-                self.alex_defs["param_block"].append(shape_code_str)
-                constructor = const.CONSTRUCTORS["params"]
-                src_fn = "%s_%s" % (component, param)
-
-                src_args_str = self.get_src_args_str(constructor)
-                trg_fn = self.get_trg_fn(constructor, self.engine)
-                trg_args_str = self.get_trg_args_str(constructor, self.engine)
-                constructor_code_str = self.get_translation(src_fn,
-                                                            src_args_str,
-                                                            trg_fn,
-                                                            trg_args_str)
-                self.alex_defs["param_block"].append(constructor_code_str)
-                self.inline_index_translation.append(src_fn)
-
-    def cache_boiler_plate(self):
-        imports = NAMESPACES[self.engine].add_imports()
-        configs = NAMESPACES[self.engine].add_global_configs()
-        return imports + configs
-
-    def generate_alex(self, node):
+    def _cache_alex_function_calls(self, node):
         try:
             _node = nodes(node).generate_code(node,
                                               self.annotated,
@@ -821,6 +775,8 @@ class CodeGen(param_count.ParamCount):
                 return node
             else:
                 node = _node
+            if not self._in_block(node):
+                return node
             if node["code"]["type"] == FUNCTION:
                 _param_node = self.annotated[self.annotated[node["parent"]]["parent"]]
 
@@ -837,72 +793,35 @@ class CodeGen(param_count.ParamCount):
                     code_str = "%s = %s\n" % (node["code"]["return_symbol"],
                                               node["code"]["str"])
 
-                block = self.get_block(node)
                 if node["code"]["inline"]:
                     self.inline_index_python.append(_name_strs_to_names(node["code"]["return_symbol"]))
-                    self.alex_inline[block].append(code_str)
+                    self.alex_inline.append(code_str)
                 else:
-                    self.alex_code[block].append(code_str)
+                    self.alex_code.append(code_str)
                     if node["code"]["extra"]:
-                        self.alex_code[block].append(node["code"]["extra"])
+                        self.alex_code.append(node["code"]["extra"])
 
         except Exception as err:
             traceback.print_exc()
         return node
 
-    def generate_python(self):
-        self.annotate_tree()
-        boiler_str = self.cache_boiler_plate()
-
-        param_args = ["ckpt=None"] # if self.load else []
-        param_str = self.get_dl_code(block="param_block",
-                                     fn_name="get_trainable_params",
-                                     return_str="trainable_params",
-                                     manual_args=param_args,
-                                     prefix="trainable_params = dict()\n")
-        loss_str = self.get_dl_code(block="loss_block",
-                                    fn_name="get_loss",
-                                    manual_args=["trainable_params", "inputs"])
-        optimizer_str = self.get_dl_code(block="optimizer_block",
-                                         fn_name="get_optimizer",
-                                         manual_args=["trainable_params", ])
-        component_str = self.get_dl_code(block="model_block",
-                                         fn_name="model",
-                                         manual_args=["data_block_input_data", # FIXME:
-                                                      "trainable_params",
-                                                      "training"])
-        if len(self.blocks["scheduler_block"]) != 0:
-            scheduler_str = self.get_dl_code(block="scheduler_block",
-                                             fn_name="get_scheduler",
-                                             manual_args=["optimizer"])
-        else:
-            scheduler_str = ""
-
-        code = NAMESPACES[self.engine].wrap_in_class(param_str,
-                                                     component_str,
-                                                     loss_str,
-                                                     optimizer_str,
-                                                     scheduler_str)
-        util.write_to(boiler_str, self.output_file)
-        util.write_to(code, self.output_file)
-
-    def get_dl_code(self, block, fn_name, manual_args=[], return_str=None, prefix=None):
+    def get_dl_code(self, fn_name, manual_args=[], return_str=None, prefix=None):
 
         util.concatenate_files([self.cache_def_path],
-                               self.filepaths[block])
+                               self.cache_code_path)
         if prefix is not None:
-            write_list_to_file(prefix, self.filepaths[block])
+            write_list_to_file(prefix, self.cache_code_path)
 
-        write_list_to_file(self.alex_inline[block], self.filepaths[block])
-        write_list_to_file(self.alex_code[block], self.filepaths[block])
-        filename = self.filepaths[block].split("/")[-1]
-        dirname = "/".join(self.filepaths[block].split("/")[:-1])
+        write_list_to_file(self.alex_inline, self.cache_code_path)
+        write_list_to_file(self.alex_code, self.cache_code_path)
+        filename = self.cache_code_path.split("/")[-1]
+        dirname = "/".join(self.cache_code_path.split("/")[:-1])
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             warnings.warn("deprecated", DeprecationWarning)
-            inline(self.inline_index_translation, dirname, filename)
+            inline(self.inline_index_fns, dirname, filename)
             inline(self.inline_index_python, dirname, filename)
-        with open(self.filepaths[block], "r") as f:
+        with open(self.cache_code_path, "r") as f:
             src_code = f.readlines()
         # TODO: automatically detect args
         if len(src_code) != 0:
@@ -910,6 +829,227 @@ class CodeGen(param_count.ParamCount):
         else:
             src_code = ""
         return src_code
+
+
+class ParamCodeBlock(CodeBlock):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.anno_name = "Parameter code generation"
+        self.cache_param_translation_code()
+        self._cache_translation_code()
+        self.annotate_tree()
+        self._write_cache_to_file()
+
+    @staticmethod
+    def get_block_name():
+        return "param_block"
+
+    def get_code_registry(self):
+        return {**const.ALL_PARAMS, **const.ALL_INITIALIZERS}
+
+    def generate_dl_code(self):
+        return self.get_dl_code(fn_name="get_trainable_params",
+                                return_str="trainable_params",
+                                manual_args=["ckpt=None"], # if self.load else [],
+                                prefix="trainable_params = dict()\n")
+
+
+    def cache_param_translation_code(self):
+        cached = []
+        for component in self.ckpt.components_list:
+            _type = component["meta"]["type"]
+            if _type not in const.PARAMS or _type in cached:
+                continue
+            for param in const.PARAMS[_type]:
+                shape = const.PARAMS[_type][param]["shape"]
+                src_fn = get_src_fn(shape)
+                self.inline_index_fns.append(src_fn)
+
+                src_args_str = get_src_args_str(shape)
+                trg_fn = get_trg_fn(shape, self.engine)
+                trg_args_str = get_trg_args_str(shape, self.engine)
+
+                shape_code_str = get_translation(src_fn,
+                                                 src_args_str,
+                                                 trg_fn,
+                                                 trg_args_str)
+                self.translation_code.append(shape_code_str)
+                constructor = const.CONSTRUCTORS["params"]
+                src_fn = "%s_%s" % (_type, param)
+
+                src_args_str = get_src_args_str(constructor)
+                trg_fn = get_trg_fn(constructor, self.engine)
+                trg_args_str = get_trg_args_str(constructor, self.engine)
+                constructor_code_str = get_translation(src_fn,
+                                                       src_args_str,
+                                                       trg_fn,
+                                                       trg_args_str)
+                self.translation_code.append(constructor_code_str)
+                self.inline_index_fns.append(src_fn)
+            cached.append(_type)
+
+
+class DataCodeBlock(CodeBlock):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.annotate_tree()
+
+    @staticmethod
+    def get_block_name():
+        return "data_block"
+
+    def get_code_registry(self):
+        return const.INPUT_TYPES
+
+
+class ModelCodeBlock(CodeBlock):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.anno_name = "Model code generation"
+        self._cache_translation_code()
+        self.annotate_tree()
+        self._write_cache_to_file()
+
+    def get_code_registry(self):
+        return {**const.MODEL_BLOCK}
+
+    @staticmethod
+    def get_block_name():
+        return "model_block"
+
+    def generate_dl_code(self):
+        return self.get_dl_code(fn_name="model",
+                                manual_args=["data_block_input_data", # FIXME:
+                                             "trainable_params",
+                                             "training"])
+
+
+class LossCodeBlock(CodeBlock):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.anno_name = "Loss code generation"
+        self._cache_translation_code()
+        self.annotate_tree()
+        self._write_cache_to_file()
+
+    def generate_dl_code(self):
+        return self.get_dl_code(fn_name="get_loss",
+                                manual_args=["trainable_params", "inputs"])
+
+    def get_code_registry(self):
+        return {**const.LOSS_BLOCK,
+                **const.MODEL_BLOCK}
+
+    @staticmethod
+    def get_block_name():
+        return "loss_block"
+
+
+class OptimizerCodeBlock(CodeBlock):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.anno_name = "Optimizer code generation"
+        self._cache_translation_code()
+        self.annotate_tree()
+        self._write_cache_to_file()
+
+    def generate_dl_code(self):
+        return self.get_dl_code(fn_name="get_optimizer",
+                                manual_args=["trainable_params", ])
+
+    def get_code_registry(self):
+        if self.engine == "tf":
+            code_registry = {**const.MODEL_BLOCK,
+                             **const.OPTIMIZER_BLOCK,
+                             **const.SCHEDULER_BLOCK}
+        elif self.engine == "pytorch":
+            code_registry = const.OPTIMIZER_BLOCK
+        return code_registry
+
+    def get_blocks(self):
+        if self.engine == "tf":
+            blocks = ["scheduler_block", "optimizer_block"]
+        elif self.engine == "pytorch":
+            blocks = ["optimizer_block"]
+        return blocks
+
+    @staticmethod
+    def get_block_name():
+        return "optimizer_block"
+
+
+class SchedulerCodeBlock(CodeBlock):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.anno_name = "Scheduler code generation"
+        self._cache_translation_code()
+        self.annotate_tree()
+        self._write_cache_to_file()
+
+    def generate_dl_code(self):
+        if len(self.code_registry) != 0:
+            scheduler_str = self.get_dl_code(fn_name="get_scheduler",
+                                             manual_args=["optimizer"])
+        else:
+            scheduler_str = ""
+        return scheduler_str
+
+    def get_code_registry(self):
+        if self.engine == "tf":
+            code_registry = {}
+        elif self.engine == "pytorch":
+            code_registry = const.SCHEDULER_BLOCK
+        return code_registry
+
+    def get_blocks(self):
+        if self.engine == "tf":
+            blocks = []
+        elif self.engine == "pytorch":
+            blocks = ["scheduler_block"]
+        return blocks
+
+    @staticmethod
+    def get_block_name():
+        return "scheduler_block"
+
+
+# ------------------------ Helper function for translation ------------------- #
+def get_trg_fn(component, engine):
+    return component[engine][0]
+
+
+def get_trg_args_str(component, engine):
+    trg_args = list(map(lambda x: "%s=%s" % (x,
+                                             component[engine][1][x]),
+                        component[engine][1]))
+    return "(%s)" % (", ".join(trg_args)) if len(trg_args) != 0 else ""
+
+
+def get_src_fn(component):
+    fn = component["alex"][0]
+    return fn
+
+
+def get_src_args_str(component):
+    src_args = list(component["alex"][1].keys())
+    return ", ".join(src_args)
+
+
+def get_translation(src_fn, src_args, trg_fn, trg_args):
+    code_str = "def %s(%s):\n" % (src_fn, src_args)
+    code_str += "\treturn %s%s\n\n" % (trg_fn, trg_args)
+    return code_str
+
+def cache_boiler_plate(engine):
+    imports = NAMESPACES[engine].add_imports()
+    configs = NAMESPACES[engine].add_global_configs()
+    return imports + configs
 
 
 # -------------------------- Inline -------------------------------
