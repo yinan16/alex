@@ -17,15 +17,16 @@ from alex.alex import compare, const, util, dsl_parser
 from alex.annotators import code_gen
 
 
-def diff(configs, to_png, path, verbose, dpi, mode):
+def diff(configs, to_png, verbose, dpi, mode):
     if to_png:
-        path = path
+        path = to_png
     else:
         path = None
 
     if isinstance(verbose, str):
         verbose = ast.literal_eval(verbose)
     config1, config2 = configs
+    print("Comparing %s and %s" % (config1, config2))
     if mode == "diff":
         cost, operations = compare.diff(config1, config2, render_to=path, dpi=dpi)
     elif mode == "dist":
@@ -140,11 +141,7 @@ if __name__=="__main__":
 
     diff_parser.add_argument("--to_png", metavar="Save diff to a png file",
                              type=str, nargs="?", default=True,
-                             help="Save diff to a png file in the specified path")
-
-    diff_parser.add_argument("--path", metavar="Path",
-                             type=str, nargs="?", default="./diff.png",
-                             help="Path where the png file goes")
+                             help="Save diff to the specified png file")
 
     diff_parser.add_argument("--verbose", metavar="Print the diffs (True/False)",
                              type=str, nargs="?", default=True,
