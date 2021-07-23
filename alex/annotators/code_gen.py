@@ -623,13 +623,13 @@ def generate_python(output_file,
                     config_path,
                     engine,
                     dirname=const.CACHE_BASE_PATH,
-                    load_ckpt=[const.CACHE_BASE_PATH, None],
-                    save_ckpt=[const.CACHE_BASE_PATH, None]):
+                    load_ckpt=None,
+                    save_ckpt=None):
 
-    if load_ckpt[1] is not None:
-        load_from_ckpt = True
-    else:
+    if load_ckpt is None or load_ckpt[1] is None:
         load_from_ckpt = False
+    else:
+        load_from_ckpt = True
 
     ckpt = checkpoint.Checkpoint(config_path,
                                  load_ckpt,
@@ -697,7 +697,7 @@ class CodeBlock(param_count.ParamCount):
         self.anno_name = "code generation"
         self.engine = engine
         self.dirname = dirname
-        self.alex_cache_code_path = os.path.join(dirname, "python_code_cache/")
+        self.alex_cache_code_path = const.ALEX_CACHE_BASE_PATH
         os.makedirs(self.alex_cache_code_path, exist_ok=True)
         self.block_name = self.get_block_name()
         self.code_registry = self.get_code_registry()
@@ -846,7 +846,7 @@ class ParamCodeBlock(CodeBlock):
         return "param_block"
 
     def get_code_registry(self):
-        return {**const.ALL_PARAMS, **const.ALL_INITIALIZERS}
+        return {**const.ALL_PARAMS, **const.ALL_INITIALIZERS, **const.AS_TENSOR}
 
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="get_trainable_params",

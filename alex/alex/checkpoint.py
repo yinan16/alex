@@ -129,17 +129,26 @@ class Checkpoint():
 
     def __init__(self,
                  config,
-                 load=["log", None], # [dir, path]
-                 save=["log", None]): # [dir, path]
+                 load=None, # [dir, path]
+                 save=None): # [dir, path]
 
         self.components_list = dsl_parser.parse(config, lazy=False)
-        self.load_path = get_load_path(ckpt_dir=load[0],
-                                       ckpt_name=load[1])
-        self.save_path = get_checkpoint_path(ckpt_dir=save[0],
-                                             ckpt_name=save[1])
-        self.save_dir = "/".join(self.save_path.split("/")[:-1])
-        self.save_name = self.save_path.split("/")[-1]
-
+        if load is None or (isinstance(load, list) and load[1] is None):
+            self.load_path = None
+            self.load_dir = None
+            self.load_name = None
+        else:
+            self.load_path = get_load_path(ckpt_dir=load[0],
+                                           ckpt_name=load[1])
+        if save is None:
+            self.save_path = None
+            self.save_dir = None
+            self.save_name = None
+        else:
+            self.save_path = get_checkpoint_path(ckpt_dir=save[0],
+                                                 ckpt_name=save[1])
+            self.save_dir = "/".join(self.save_path.split("/")[:-1])
+            self.save_name = self.save_path.split("/")[-1]
         if self.load_path is not None:
             self.load_dir = "/".join(self.load_path.split("/")[:-1])
             self.load_name = self.load_path.split("/")[-1]
@@ -148,7 +157,7 @@ class Checkpoint():
                                               self.load_name)["components"]
             self.matched = compare.matched_ingredients(self.components_list,
                                                        loaded_component_list,
-                                                       os.path.join(self.save_dir,
+                                                       os.path.join(self.load_dir,
                                                                     "ckpt_diff.png"))
         else:
             self.matched = None
