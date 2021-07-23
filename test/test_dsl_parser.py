@@ -21,7 +21,7 @@ class TestDslParser(unittest.TestCase):
     def test_make_graph_from_yml(self):
         dsl_parser.make_graph_from_yml(yml_file=self.config,
                                        png_file="./cache/dsl_parser_graph.png",
-                                       level=1, show="shape")
+                                       level=2, show="name")
 
     def test_make_ast_from_yml(self):
         dsl_parser.make_ast_from_yml(yml_file=self.config,
@@ -31,7 +31,6 @@ class TestDslParser(unittest.TestCase):
     def test_parse(self):
         glist = dsl_parser.parse(self.config, return_dict=False)
         graph = dsl_parser.list_to_graph(glist)
-        pprint(graph)
 
 
 if __name__ == '__main__':

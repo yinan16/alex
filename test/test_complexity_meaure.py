@@ -15,7 +15,7 @@ class TestComplexityMeasure(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.config_path = "examples/configs/small2.yml"
+        self.config_path = "examples/configs/small1.yml"
 
     def test_compute_halstead(self):
         complexity = complexity_measure.halstead(12, 7, 27, 15)

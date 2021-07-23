@@ -16,7 +16,7 @@ class TestParamCount(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.config_path = "examples/configs/small2.yml"
+        self.config_path = "examples/configs/small1.yml"
 
     def test_annotate_trainbale_params(self):
         params_counter = param_count.ParamCount(self.config_path)
