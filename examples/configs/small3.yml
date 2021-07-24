@@ -17,24 +17,31 @@ data_block:
     name: labels
 
 model_block:
-  - type: conv
-    hyperparams:
-      filters:
-        shape:
-          n_filters:
-            32
-    inputs: data_block/input_data
   - type:
-      relu
+      resnet_16
+    inputs:
+      - data_block/input_data
   - type:
-      dropout
+      resnet_16
+  # - type:
+  #     relu
+  # - type:
+  #     dropout
+  # - type:
+  #     batch_normalize
 
-  - type: resnet_16
-    repeat: 3
+  # - type: conv
+  #   hyperparams:
+  #     filters:
+  #       shape:
+  #         n_filters:
+  #           16
+  #     padding: SAME
+  #     strides: [1,1]
+  # - type: max_pool2d
   - type: flatten
   - type: dense
   - type: softmax
-  - type: sigmoid
     name: d_1
 
 loss_block:
@@ -42,7 +49,23 @@ loss_block:
       cross_entropy
     inputs:
       - data_block/labels
-      - momdel_block/d_1
+      - model_block/d_1
+    name: cross_0
+  - type:
+      regularizer_l2
+    inputs:
+      - connect_to:
+          range: :-1
+          types:
+            dense: weights
+            conv: filters
+          scope: all # default: all
+    name: regularizer
+
+  - type: add
+    inputs:
+      - cross_0
+      - regularizer
     name: losses
 
 optimizer_block:
@@ -51,4 +74,4 @@ optimizer_block:
     name: solver
     hyperparams:
       learning_rate:
-        0.1
+        0.0001

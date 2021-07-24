@@ -18,11 +18,11 @@ def main(network_config,
     os.makedirs(code_dir, exist_ok=True)
     for engine in engines:
         _filename = "%s_%s.py" % (filename, engine)
-        code_gen.generate_python(_filename,
+        filepath = os.path.join(code_dir, _filename)
+        code_gen.generate_python(filepath,
                                  network_config,
                                  engine=engine,
                                  dirname=code_dir)
-        filepath = os.path.join(code_dir, _filename)
         boilerplate_file = os.path.join(const.ENGINE_PATH,
                                         "example_boilerplate_%s.py" % engine)
         util.concatenate_files([filepath,

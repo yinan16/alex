@@ -5,7 +5,7 @@ import numpy as np
 tf_dtypes = {'float32': tf.float32, 'int8': tf.int8}
 
 
-def get_trainable_params(ckpt=None):
+def get_trainable_params():
     trainable_params = dict()
     model_block_conv_6gw_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(3, 3, 3, 16))
     model_block_conv_6gw_filters = tf.Variable(initial_value=model_block_conv_6gw_filters_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/conv_6gw/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)

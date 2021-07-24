@@ -49,7 +49,7 @@ class TestCli(unittest.TestCase):
                    "--engine", "pytorch",
                    "--out_dir", "cache",
                    "--filename", "cli_codegen_ckpt_pytorch.py",
-                   "--ckpt_from", "checkpoints/config_1626993992750915.json"]
+                   "--ckpt_from", "checkpoints/test.json"]
         run(command)
         print(" ".join(command))
 
@@ -59,7 +59,7 @@ class TestCli(unittest.TestCase):
                    "--engine", "tf",
                    "--out_dir", "cache",
                    "--filename", "cli_codegen_ckpt_tf.py",
-                   "--ckpt_from", "checkpoints/config_1626993992750915.json"]
+                   "--ckpt_from", "checkpoints/test.json"]
         run(command)
         print(" ".join(command))
 

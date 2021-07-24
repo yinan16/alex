@@ -24,6 +24,10 @@
                 "visible": true,
                 "block": "data_block",
                 "scope": "data_block",
+                "dir": "data_block",
+                "recipes": [
+                    "data_block"
+                ],
                 "input_shape": null,
                 "shape": [
                     32,
@@ -53,6 +57,10 @@
                 "visible": true,
                 "block": "data_block",
                 "scope": "data_block",
+                "dir": "data_block",
+                "recipes": [
+                    "data_block"
+                ],
                 "input_shape": null,
                 "shape": [
                     10
@@ -98,6 +106,10 @@
                 "visible": true,
                 "block": "model_block",
                 "scope": "model_block",
+                "dir": "model_block",
+                "recipes": [
+                    "model_block"
+                ],
                 "input_shape": [
                     [
                         32,
@@ -121,7 +133,7 @@
                 "value": {}
             },
             "meta": {
-                "name": "model_block/relu_8im",
+                "name": "model_block/reluu",
                 "inputs": [
                     "model_block/conv_6gw"
                 ],
@@ -130,6 +142,10 @@
                 "visible": true,
                 "block": "model_block",
                 "scope": "model_block",
+                "dir": "model_block",
+                "recipes": [
+                    "model_block"
+                ],
                 "input_shape": [
                     [
                         32,
@@ -157,13 +173,17 @@
             "meta": {
                 "name": "model_block/dropout_10kc",
                 "inputs": [
-                    "model_block/relu_8im"
+                    "model_block/reluu"
                 ],
                 "type": "dropout",
                 "dtype": "float32",
                 "visible": true,
                 "block": "model_block",
                 "scope": "model_block",
+                "dir": "model_block",
+                "recipes": [
+                    "model_block"
+                ],
                 "input_shape": [
                     [
                         32,
@@ -235,6 +255,10 @@
                 "visible": true,
                 "block": "model_block",
                 "scope": "model_block",
+                "dir": "model_block",
+                "recipes": [
+                    "model_block"
+                ],
                 "input_shape": [
                     [
                         32,
@@ -252,10 +276,6 @@
         {
             "value": {
                 "hyperparams": {
-                    "strides": [
-                        1,
-                        1
-                    ],
                     "filters": {
                         "shape": {
                             "n_filters": 16,
@@ -271,6 +291,10 @@
                         }
                     },
                     "padding": "SAME",
+                    "strides": [
+                        1,
+                        1
+                    ],
                     "dilation": 1
                 },
                 "var": {},
@@ -279,7 +303,7 @@
                 "value": {}
             },
             "meta": {
-                "name": "model_block/resnet_16_27bi/conv_14oi",
+                "name": "model_block/conv_14oi",
                 "inputs": [
                     "model_block/batch_normalize_12ms"
                 ],
@@ -287,7 +311,11 @@
                 "dtype": "float32",
                 "visible": true,
                 "block": "model_block",
-                "scope": "resnet_16",
+                "scope": "model_block",
+                "dir": "model_block",
+                "recipes": [
+                    "model_block"
+                ],
                 "input_shape": [
                     [
                         32,
@@ -305,118 +333,11 @@
         {
             "value": {
                 "hyperparams": {
-                    "mean": {
-                        "dtype": "float32",
-                        "initializer": {
-                            "zeros_initializer": {}
-                        },
-                        "shape": {
-                            "input_shape": 16
-                        }
-                    },
-                    "variance": {
-                        "dtype": "float32",
-                        "initializer": {
-                            "ones_initializer": {}
-                        },
-                        "shape": {
-                            "input_shape": 16
-                        }
-                    },
-                    "offset": {
-                        "dtype": "float32",
-                        "initializer": {
-                            "zeros_initializer": {}
-                        },
-                        "shape": {
-                            "input_shape": 16
-                        }
-                    },
-                    "scale": {
-                        "dtype": "float32",
-                        "initializer": {
-                            "ones_initializer": {}
-                        },
-                        "shape": {
-                            "input_shape": 16
-                        }
-                    },
-                    "momentum": 0.1,
-                    "epsilon": 0.001
-                },
-                "var": {},
-                "stats": {},
-                "tensor": null,
-                "value": {}
-            },
-            "meta": {
-                "name": "model_block/resnet_16_27bi/batch_normalize_16qy",
-                "inputs": [
-                    "model_block/resnet_16_27bi/conv_14oi"
-                ],
-                "type": "batch_normalize",
-                "dtype": "float32",
-                "visible": true,
-                "block": "model_block",
-                "scope": "resnet_16",
-                "input_shape": [
-                    [
-                        32,
-                        32,
-                        16
-                    ]
-                ],
-                "shape": [
-                    32,
-                    32,
-                    16
-                ]
-            }
-        },
-        {
-            "value": {
-                "hyperparams": {},
-                "var": {},
-                "stats": {},
-                "tensor": null,
-                "value": {}
-            },
-            "meta": {
-                "name": "model_block/resnet_16_27bi/relu_18so",
-                "inputs": [
-                    "model_block/resnet_16_27bi/batch_normalize_16qy"
-                ],
-                "type": "relu",
-                "dtype": "float32",
-                "visible": true,
-                "block": "model_block",
-                "scope": "resnet_16",
-                "input_shape": [
-                    [
-                        32,
-                        32,
-                        16
-                    ]
-                ],
-                "shape": [
-                    32,
-                    32,
-                    16
-                ]
-            }
-        },
-        {
-            "value": {
-                "hyperparams": {
-                    "strides": [
-                        1,
-                        1
-                    ],
                     "filters": {
                         "shape": {
+                            "kernel_size_w": 5,
+                            "kernel_size_h": 5,
                             "n_filters": 16,
-                            "kernel_size_w": 3,
-                            "kernel_size_h": 3,
                             "input_shape": 16
                         },
                         "dtype": "float32",
@@ -427,6 +348,10 @@
                         }
                     },
                     "padding": "SAME",
+                    "strides": [
+                        1,
+                        1
+                    ],
                     "dilation": 1
                 },
                 "var": {},
@@ -435,86 +360,19 @@
                 "value": {}
             },
             "meta": {
-                "name": "model_block/resnet_16_27bi/conv_20ue",
+                "name": "model_block/conv_16qy",
                 "inputs": [
-                    "model_block/resnet_16_27bi/relu_18so"
+                    "model_block/conv_14oi"
                 ],
                 "type": "conv",
                 "dtype": "float32",
                 "visible": true,
                 "block": "model_block",
-                "scope": "resnet_16",
-                "input_shape": [
-                    [
-                        32,
-                        32,
-                        16
-                    ]
+                "scope": "model_block",
+                "dir": "model_block",
+                "recipes": [
+                    "model_block"
                 ],
-                "shape": [
-                    32,
-                    32,
-                    16
-                ]
-            }
-        },
-        {
-            "value": {
-                "hyperparams": {
-                    "mean": {
-                        "dtype": "float32",
-                        "initializer": {
-                            "zeros_initializer": {}
-                        },
-                        "shape": {
-                            "input_shape": 16
-                        }
-                    },
-                    "variance": {
-                        "dtype": "float32",
-                        "initializer": {
-                            "ones_initializer": {}
-                        },
-                        "shape": {
-                            "input_shape": 16
-                        }
-                    },
-                    "offset": {
-                        "dtype": "float32",
-                        "initializer": {
-                            "zeros_initializer": {}
-                        },
-                        "shape": {
-                            "input_shape": 16
-                        }
-                    },
-                    "scale": {
-                        "dtype": "float32",
-                        "initializer": {
-                            "ones_initializer": {}
-                        },
-                        "shape": {
-                            "input_shape": 16
-                        }
-                    },
-                    "momentum": 0.1,
-                    "epsilon": 0.001
-                },
-                "var": {},
-                "stats": {},
-                "tensor": null,
-                "value": {}
-            },
-            "meta": {
-                "name": "model_block/resnet_16_27bi/conv",
-                "inputs": [
-                    "model_block/resnet_16_27bi/conv_20ue"
-                ],
-                "type": "batch_normalize",
-                "dtype": "float32",
-                "visible": true,
-                "block": "model_block",
-                "scope": "resnet_16",
                 "input_shape": [
                     [
                         32,
@@ -538,85 +396,19 @@
                 "value": {}
             },
             "meta": {
-                "name": "model_block/resnet_16_27bi/add_24yk",
+                "name": "model_block/flatten_18so",
                 "inputs": [
-                    "model_block/batch_normalize_12ms",
-                    "model_block/resnet_16_27bi/conv"
-                ],
-                "type": "add",
-                "dtype": "float32",
-                "visible": true,
-                "block": "model_block",
-                "scope": "resnet_16",
-                "input_shape": [
-                    [
-                        32,
-                        32,
-                        16
-                    ],
-                    [
-                        32,
-                        32,
-                        16
-                    ]
-                ],
-                "shape": [
-                    32,
-                    32,
-                    16
-                ]
-            }
-        },
-        {
-            "value": {
-                "hyperparams": {},
-                "var": {},
-                "stats": {},
-                "tensor": null,
-                "value": {}
-            },
-            "meta": {
-                "name": "model_block/resnet_16_27bi/relu_26aa",
-                "inputs": [
-                    "model_block/resnet_16_27bi/add_24yk"
-                ],
-                "type": "relu",
-                "dtype": "float32",
-                "visible": true,
-                "block": "model_block",
-                "scope": "resnet_16",
-                "input_shape": [
-                    [
-                        32,
-                        32,
-                        16
-                    ]
-                ],
-                "shape": [
-                    32,
-                    32,
-                    16
-                ]
-            }
-        },
-        {
-            "value": {
-                "hyperparams": {},
-                "var": {},
-                "stats": {},
-                "tensor": null,
-                "value": {}
-            },
-            "meta": {
-                "name": "model_block/flatten_29dy",
-                "inputs": [
-                    "model_block/resnet_16_27bi/relu_26aa"
+                    "model_block/conv_16qy"
                 ],
                 "type": "flatten",
                 "dtype": "float32",
                 "visible": true,
                 "block": "model_block",
                 "scope": "model_block",
+                "dir": "model_block",
+                "recipes": [
+                    "model_block"
+                ],
                 "input_shape": [
                     [
                         32,
@@ -660,15 +452,19 @@
                 "value": {}
             },
             "meta": {
-                "name": "model_block/dense_31fo",
+                "name": "model_block/dense_20ue",
                 "inputs": [
-                    "model_block/flatten_29dy"
+                    "model_block/flatten_18so"
                 ],
                 "type": "dense",
                 "dtype": "float32",
                 "visible": true,
                 "block": "model_block",
                 "scope": "model_block",
+                "dir": "model_block",
+                "recipes": [
+                    "model_block"
+                ],
                 "input_shape": [
                     [
                         16384
@@ -688,15 +484,19 @@
                 "value": {}
             },
             "meta": {
-                "name": "model_block/softmax_33he",
+                "name": "model_block/d_1",
                 "inputs": [
-                    "model_block/dense_31fo"
+                    "model_block/dense_20ue"
                 ],
                 "type": "softmax",
                 "dtype": "float32",
                 "visible": true,
                 "block": "model_block",
                 "scope": "model_block",
+                "dir": "model_block",
+                "recipes": [
+                    "model_block"
+                ],
                 "input_shape": [
                     [
                         10
@@ -716,22 +516,63 @@
                 "value": {}
             },
             "meta": {
-                "name": "model_block/d_1",
+                "name": "loss_block/cross_0",
                 "inputs": [
-                    "model_block/softmax_33he"
+                    "data_block/labels",
+                    "model_block/d_1"
                 ],
-                "type": "sigmoid",
+                "type": "cross_entropy",
                 "dtype": "float32",
                 "visible": true,
-                "block": "model_block",
-                "scope": "model_block",
+                "block": "loss_block",
+                "scope": "loss_block",
+                "dir": "loss_block",
+                "recipes": [
+                    "loss_block"
+                ],
                 "input_shape": [
+                    [
+                        10
+                    ],
                     [
                         10
                     ]
                 ],
                 "shape": [
-                    10
+                    0
+                ]
+            }
+        },
+        {
+            "value": {
+                "hyperparams": {
+                    "coeff": 0.002
+                },
+                "var": {},
+                "stats": {},
+                "tensor": null,
+                "value": {}
+            },
+            "meta": {
+                "name": "loss_block/regularizer",
+                "inputs": [
+                    "model_block/conv_6gw/filters",
+                    "model_block/conv_14oi/filters",
+                    "model_block/conv_16qy/filters",
+                    "model_block/dense_20ue/weights"
+                ],
+                "type": "regularizer_l2",
+                "dtype": "float32",
+                "visible": true,
+                "block": "loss_block",
+                "scope": "loss_block",
+                "dir": "loss_block",
+                "recipes": [
+                    "loss_block"
+                ],
+                "input_shape": null,
+                "shape": [
+                    0
                 ]
             }
         },
@@ -746,20 +587,24 @@
             "meta": {
                 "name": "loss_block/losses",
                 "inputs": [
-                    "data_block/labels",
-                    "model_block/d_1"
+                    "loss_block/cross_0",
+                    "loss_block/regularizer"
                 ],
-                "type": "cross_entropy",
+                "type": "add",
                 "dtype": "float32",
                 "visible": true,
                 "block": "loss_block",
                 "scope": "loss_block",
+                "dir": "loss_block",
+                "recipes": [
+                    "loss_block"
+                ],
                 "input_shape": [
                     [
-                        10
+                        0
                     ],
                     [
-                        10
+                        0
                     ]
                 ],
                 "shape": [
@@ -798,6 +643,10 @@
                 "visible": true,
                 "block": "optimizer_block",
                 "scope": "optimizer_block",
+                "dir": "optimizer_block",
+                "recipes": [
+                    "optimizer_block"
+                ],
                 "input_shape": [
                     [
                         0

@@ -77,7 +77,7 @@ class Ingredient():
                                                                          str(dims))
                         raise Exception(msg)
                     elif len(list(filter(lambda x: len(x[0]) != len(x[1]),
-                                     zip(trans[0], dims[0]))))!=0:
+                                         zip(trans[0], dims[0]))))!=0:
                         msg = "Tensor rank mismatch %s (ingredient: %s, dim: %s)" % (component["meta"]["name"],
                                                                                     component["meta"]["type"],
                                                                                      str(dims))
@@ -98,7 +98,8 @@ class Ingredient():
                     # traceback.print_exc()
                     # raise Exception(msg)
             if not valid:
-                print(msg)
+                print("*************Validation failed", component["meta"]["name"])
+                print("Dimension", dims)
                 raise Exception(msg)
 
 

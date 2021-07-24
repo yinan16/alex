@@ -63,6 +63,7 @@ loss_block:
       - data_block/labels
       - model_block/d_1
     name: cross_0
+
   - type:
       regularizer_l2
     inputs:
@@ -73,6 +74,7 @@ loss_block:
             conv: filters
           scope: all # default: all
     name: regularizer
+
   - type: add
     inputs:
       - cross_0

@@ -42,7 +42,7 @@ class Model(torch.nn.Module):
         model_block_conv_14oi_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_14oi/filters']), dtype=torch_types['float32'], device=device)
         model_block_conv_14oi_filters = torch.nn.parameter.Parameter(data=model_block_conv_14oi_filters_initializer_xavier_uniform, requires_grad=True)
         trainable_params['model_block/conv_14oi/filters'] = model_block_conv_14oi_filters
-        model_block_conv_16qy_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 16, 5, 5]))
+        model_block_conv_16qy_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_16qy/filters']), dtype=torch_types['float32'], device=device)
         model_block_conv_16qy_filters = torch.nn.parameter.Parameter(data=model_block_conv_16qy_filters_initializer_xavier_uniform, requires_grad=True)
         trainable_params['model_block/conv_16qy/filters'] = model_block_conv_16qy_filters
         model_block_dense_20ue_bias_initializer_zeros_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/dense_20ue/bias']), dtype=torch_types['float32'], device=device)

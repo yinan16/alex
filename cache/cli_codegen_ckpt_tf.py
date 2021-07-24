@@ -25,7 +25,7 @@ def get_trainable_params(ckpt):
     model_block_conv_14oi_filters_initializer_xavier_uniform = tf.convert_to_tensor(value=np.asarray(ckpt['model_block/conv_14oi/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
     model_block_conv_14oi_filters = tf.Variable(initial_value=model_block_conv_14oi_filters_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/conv_14oi/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['model_block/conv_14oi/filters'] = model_block_conv_14oi_filters
-    model_block_conv_16qy_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(5, 5, 16, 16))
+    model_block_conv_16qy_filters_initializer_xavier_uniform = tf.convert_to_tensor(value=np.asarray(ckpt['model_block/conv_16qy/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
     model_block_conv_16qy_filters = tf.Variable(initial_value=model_block_conv_16qy_filters_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/conv_16qy/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['model_block/conv_16qy/filters'] = model_block_conv_16qy_filters
     model_block_dense_20ue_bias_initializer_zeros_initializer = tf.convert_to_tensor(value=np.asarray(ckpt['model_block/dense_20ue/bias']), dtype=tf_dtypes['dtype'], dtype_hint=None)

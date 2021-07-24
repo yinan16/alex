@@ -23,7 +23,7 @@ class TestCheckpoint(unittest.TestCase):
     def test_checkpoint(self):
         ckpt = checkpoint.Checkpoint("examples/configs/small1.yml",
                                      ["checkpoints",
-                                      "config_1626993992750915"],
+                                      "test.json"],
                                      ["checkpoints", None])
         # ckpt.save()
         print("Matched components")
