@@ -143,7 +143,6 @@ def _config_to_inter_graph(user_defined, reader, block, parent_type="root", conf
             component[const.HYPERPARAMS] = []
             component["block"] = block
             component[const.SCOPE] = parent_type
-            parent_type = recipe
             for subconfig in config[const.PARAMS_NETWORK]:
                 if recipe_defined(subconfig[const.TYPE]):
                     subconfig_def = util.read_yaml(os.path.join(const.COMPONENT_BASE_PATH,
@@ -153,7 +152,7 @@ def _config_to_inter_graph(user_defined, reader, block, parent_type="root", conf
                 component[const.HYPERPARAMS].append(_config_to_inter_graph(subconfig,
                                                                            reader,
                                                                            block,
-                                                                           parent_type,
+                                                                           recipe,
                                                                            subconfig_def,
                                                                            subconfig[const.TYPE]))
         else:
@@ -283,6 +282,12 @@ def eval_name(name, components):
     components = clone(components)
     top_name = _get_name(name)
     __scope = components[0][const.META][const.SCOPE]
+    __type =  components[0][const.META][const.TYPE]
+    for component in components:
+        if "dir" in component[const.META] and component[const.META]["dir"] != "":
+            continue
+        __scope = component[const.META][const.SCOPE]
+        break
     if __scope == const.ROOT:
         scope = ""
     else:
@@ -316,6 +321,13 @@ def eval_name(name, components):
                 else:  # user defined name in recipe
                     __name = "%s/%s" % (_name, __name)
         component[const.META][const.NAME] = __name
+        component[const.META]["dir"] = "/".join(__name.split("/")[:-1])
+
+        if "recipes" not in component[const.META]:
+            component[const.META]["recipes"] = []
+        component[const.META]["recipes"].append(scope)
+        if len(component[const.META]["recipes"]) > len(__name.split("/")[:-1]):
+            component[const.META]["recipes"] = component[const.META]["recipes"][1:]
     return components
 
 
@@ -606,73 +618,52 @@ def draw_graph(graph_list, level=2, graph_path='example.png', show="name"):
 
 def _get_dir_name(path, level):
     _dir = path.split("/")
-    scope = path.replace(_dir[-1], "")
-    scope = "/".join(scope.split("/")[0:level-1]) + "/"
+    scope = path.replace("/%s"%_dir[-1], "")
+    scope = "/".join(scope.split("/")[0:level])
     return scope, _dir[-1]
 
 
-def list_to_graph(components, parent_level=1, parent_scope=""):
-    network = dict()
-    _subgraph = OrderedDict()
-    network[const.LEVEL] = parent_level-1
-    network[const.META] = dict()
-    # TODO: remove the following info (cached in meta)
-    network[const.INPUTS] = None
-    network["visible"] = True
-    network[const.TYPE] = const.ROOT
+def _register_component(component, level):
+    subgraph = dict()
+    path = component[const.META][const.NAME]
+    subgraph[const.SUBGRAPH] = component[const.META][const.NAME]
+    subgraph[const.TYPE] = component[const.META][const.TYPE]
+    subgraph[const.META] = component[const.META]
+    subgraph[const.LEVEL] = level
+    subgraph[const.HYPERPARAMS] = component[const.VALUE][const.HYPERPARAMS]
+    return subgraph
+
+
+def _register_graph(level, node_type="root", meta={"inputs": None,
+                                                   "name": "root"}):
+    graph = dict()
+    graph[const.SUBGRAPH] = OrderedDict()
+    graph[const.LEVEL] = level
+    graph[const.HYPERPARAMS] = dict()
+    graph[const.TYPE] = node_type
+    graph[const.META] = meta
+    return graph
+
+
+def list_to_graph(components):
+    graph = _register_graph(0)
     i = 0
-    while i < len(components):
-        component = components[i]
-        hyperparams = component[const.VALUE][const.HYPERPARAMS]
+
+    for component in components:
         path = component[const.META][const.NAME]
         _dir = path.split("/")
-        level = len(_dir)
-        scope, _name = _get_dir_name(path, level)
-        inputs = component[const.META][const.INPUTS]
-        if parent_scope != scope:
-            if level > parent_level:
-                _components = []
-                in_scope = False
-                in_scope_previous = False
-                for _component in components[i:]:
-                    _path = _component[const.META][const.NAME]
-                    __scope, __ = _get_dir_name(_path, level)
-                    if scope == __scope:
-                        in_scope = True
-                        _components.append(_component)
-                        i += 1
-                    else:
-                        in_scope = False
-                    if in_scope_previous and not (in_scope):
-                        break
-                    in_scope_previous = in_scope
-                _network = list_to_graph(_components, level, scope)
-                _network[const.INPUTS] = inputs
-                _network[const.HYPERPARAMS] = dict() # hyperparams for recipes
-                _network[const.TYPE] = component[const.META][const.SCOPE]
-                # _network["visible"] = component[const.META]["visible"]
-                # _network["block"] = component[const.META]["block"]
-                _network[const.META] = component[const.META]
-                _subgraph[scope] = _network
-            else:
-                break
-        else:
-            _network = dict()
-            _network[const.SUBGRAPH] = component[const.META][const.NAME]
-            _network[const.TYPE] = component[const.META][const.TYPE]
-            _network[const.META] = component[const.META]
-            # _network["dtype"] = component[const.META]["dtype"]
-            # _network["visible"] = component[const.META]["visible"]
-            # _network["block"] = component[const.META]["block"]
-            _network[const.INPUTS] = inputs
-            _network[const.LEVEL] = level
-            _network[const.HYPERPARAMS] = hyperparams
-
-            _subgraph[path] = _network
-            i += 1
-
-    network[const.SUBGRAPH] = _subgraph
-    return network
+        levels = len(_dir)
+        _graph = graph
+        for _level in range(1, levels+1):
+            scope = "/".join(_dir[0:_level])
+            if scope not in _graph["subgraph"]:
+                _graph["subgraph"][scope] = _register_graph(_level,
+                                                            component["meta"]["recipes"][_level-2],
+                                                            component["meta"])
+            if _level == levels: # is leaf
+                _graph["subgraph"][scope] = _register_component(component, _level)
+            _graph = _graph["subgraph"][scope]
+    return graph
 
 
 def draw_hyperparam_tree(graph,

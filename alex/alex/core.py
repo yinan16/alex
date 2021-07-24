@@ -186,7 +186,7 @@ def alex_graph_to_json(graph,
     if isinstance(graph, dict) \
        and "subgraph" in graph \
        and isinstance(graph["subgraph"], dict): # is a recipe
-        _position = {"inputs": graph["inputs"],
+        _position = {"inputs": graph["meta"]["inputs"],
                      "component": root_name,
                      "shape": None,
                      "input_shape": None}
@@ -200,7 +200,7 @@ def alex_graph_to_json(graph,
         root_name = str(root_name)
         json_obj[root_name] = collections.OrderedDict()
         for _name, _graph in graph["subgraph"].items():
-            _position = {"inputs": _graph["inputs"],
+            _position = {"inputs": _graph["meta"]["inputs"],
                          "component": _name,
                          "shape": None,
                          "input_shape": None}
@@ -223,7 +223,7 @@ def alex_graph_to_json(graph,
 
                 else:
                     label = graph["type"]
-                _position = {"inputs": graph["inputs"],
+                _position = {"inputs": graph["meta"]["inputs"],
                              "component": root_name,
                              "shape": graph["meta"]["shape"],
                              "input_shape": graph["meta"]["input_shape"]}
@@ -254,7 +254,7 @@ def alex_graph_to_json(graph,
                     json_obj[root_name].update(_json_obj)
 
             else:
-                _position = {"inputs": graph["inputs"],
+                _position = {"inputs": graph["meta"]["inputs"],
                              "component": root_name,
                              "shape": graph["meta"]["shape"],
                              "input_shape": graph["meta"]["input_shape"]}
@@ -458,12 +458,6 @@ def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, lab
                                   shape="box",
                                   style='filled',
                                   fillcolor=color)
-                # if isinstance(tree[child]["meta"], dict):
-                #     if tree[child]["name"] != "root" and "block" in tree[child]["meta"]:
-                #         block = tree[child]["meta"]["block"]
-                #         blocks[block].add_node(node)
-                #     else:
-                          # graph.add_node(node)
                 graph.add_node(node)
 
             edge = pydot.Edge(component, child)
