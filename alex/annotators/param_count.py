@@ -203,7 +203,7 @@ class ParamCount(Annotator):
             node["dtype"] = self.components[ancestor]["meta"]["dtype"]
             if node["value"] in registry.ALL_PARAMS_LIST or node["value"] in registry.ALL_INITIALIZERS or self.annotated[node["parent"]]["value"] in registry.ALL_PARAMS_LIST:
                 node["meta"]["code_block"] = "param_block"
-            elif node["value"] in registry.SCHEDULER_BLOCK:
+            elif node["value"] in registry.OPTIMIZER_SCHEDULERS:
                 node["meta"]["code_block"] = "scheduler_block"
             else:
                 node["meta"]["code_block"] = self.components[ancestor]["meta"]["block"]

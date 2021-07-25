@@ -52,7 +52,7 @@ runtime_keys = ["channels", "batch_size"]
 def get_node_type(node):
     if node["value"] in ["input_shape"]:
         return IDENTIFIER # FIXME: temporary for backward compatibility
-    elif node["value"] in registry.FNS + ["shape"] + registry.ALL_PARAMS_LIST:
+    elif node["value"] in (list(registry.ALL_FNS.keys()) + ["shape"] + registry.ALL_PARAMS_LIST):
         return FUNCTION
     elif len(node["children"])==0:
         return VALUE
@@ -83,9 +83,7 @@ def _parse_str(value, node=None, literal=True):
         elif value == "batch_size":
             parsed = "batch_size"
             literal = False
-    if value in registry.ALL_COMPONENTS:
-        parsed = "%s()" % value
-    elif literal:
+    if literal:
         parsed = "'%s'" % value
     else:
         parsed = "%s" % value
@@ -600,7 +598,7 @@ def nodes(node):
         value = "trainable_params"
     elif node["value"] in registry.INGREDIENT_TYPES:
         value = "ingredient"
-    elif node["value"] in registry.SCHEDULER_BLOCK:
+    elif node["value"] in registry.OPTIMIZER_SCHEDULERS:
         value = FUNCTION
     _nodes = {"ingredient": Ingredient,
               "recipe": Recipe,
@@ -903,7 +901,7 @@ class DataCodeBlock(CodeBlock):
         return "data_block"
 
     def get_code_registry(self):
-        return registry.INPUT_TYPES
+        return registry.DATA_BLOCK
 
 
 class ModelCodeBlock(CodeBlock):
@@ -966,11 +964,9 @@ class OptimizerCodeBlock(CodeBlock):
 
     def get_code_registry(self):
         if self.engine == "tf":
-            code_registry = {**registry.MODEL_BLOCK,
-                             **registry.OPTIMIZER_BLOCK,
-                             **registry.SCHEDULER_BLOCK}
-        elif self.engine == "pytorch":
             code_registry = registry.OPTIMIZER_BLOCK
+        elif self.engine == "pytorch":
+            code_registry = registry.OPTIMIZER_INGREDIENTS
         return code_registry
 
     def get_blocks(self):
@@ -1006,7 +1002,7 @@ class SchedulerCodeBlock(CodeBlock):
         if self.engine == "tf":
             code_registry = {}
         elif self.engine == "pytorch":
-            code_registry = registry.SCHEDULER_BLOCK
+            code_registry = registry.OPTIMIZER_SCHEDULERS
         return code_registry
 
     def get_blocks(self):

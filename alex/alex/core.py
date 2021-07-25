@@ -20,11 +20,9 @@ from alex.alex import const, dsl_parser, util, registry
 
 # FIXME: use typing
 def get_value_type(label):
-    if label in registry.INGREDIENT_TYPES \
-       or label in registry.INPUT_TYPES \
-       or label in registry.REGULARIZERS:
+    if label in registry.INGREDIENT_TYPES:
         node_type = "ingredient"
-    elif label in registry.ALL_RECIPES:
+    elif label in registry.RECIPE_TYPES:
         node_type = "recipe"
     else:
         node_type = "hyperparam"

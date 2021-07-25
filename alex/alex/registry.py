@@ -7,7 +7,30 @@
 # ----------------------------------------------------------------------
 
 DEFAULT_DTYPE = "float32"
-# ---------------------------- Trainable parameters ------------------------- #
+# -------------------------------------------------------------------------- #
+# Definitions
+# -------------------------------------------------------------------------- #
+# Utilities
+
+TENSOR_SHAPE = {"input_shape": {"tf": ["inputs.get_shape().as_list()", []]}}
+
+AS_TENSOR = {"as_tensor": {"tf": ["tf.convert_to_tensor",
+                                  {"value": "np.asarray(inputs)",
+                                   "dtype": "tf_dtypes['dtype']",
+                                   "dtype_hint": "None"}],
+                           "pytorch": ["torch.as_tensor",
+                                       {"data": "np.asarray(inputs)",
+                                        "dtype": "torch_types[dtype]",
+                                        "device": "device"}],
+                           "alex": ["as_tensor", {"inputs": False,
+                                                  "dtype": True,
+                                                  "device": False,
+                                                  "name": True}]}}
+
+
+UTILITIES = {**TENSOR_SHAPE, **AS_TENSOR}
+
+# -------------------------------- Parameters -------------------------------- #
 PARAM_CONSTRUCTORS = {"params": {"tf": ["tf.Variable",
                                         {"initial_value": "initializer",
                                          "trainable": "is_trainable",
@@ -126,119 +149,121 @@ ALL_PARAMS_LIST = list(ALL_PARAMS.keys())
 ALL_TRAINABLE_PARAMS_LIST = list(ALL_TRAINABLE_PARAMS.keys())
 ALL_OTHER_PARAMS_LIST = list(ALL_OTHER_PARAMS.keys())
 
-INITIALIZERS_NO_HYPE = {"zeros_initializer": {"keras": ["",
-                                                        []],
-                                              "tf": ["tf.zeros_initializer()",
-                                                     {"shape": "shape"}],
-                                              "pytorch": ["torch.nn.init.zeros_",
-                                                          {"tensor": "torch.empty(*shape)"}],
-                                              "alex": ["zeros_initializer",
-                                                       {"dtype": True,
-                                                        "shape": False}]},
-                        "ones_initializer": {"keras": ["",
-                                                       []],
-                                             "tf": ["tf.ones_initializer()",
+INITIALIZERS_WITHOUT_HYPE = {"zeros_initializer": {"keras": ["",
+                                                             []],
+                                                   "tf": ["tf.zeros_initializer()",
+                                                          {"shape": "shape"}],
+                                                   "pytorch": ["torch.nn.init.zeros_",
+                                                               {"tensor": "torch.empty(*shape)"}],
+                                                   "alex": ["zeros_initializer",
+                                                            {"dtype": True,
+                                                             "shape": False}]},
+                             "ones_initializer": {"keras": ["",
+                                                            []],
+                                                  "tf": ["tf.ones_initializer()",
+                                                         {"shape": "shape"}],
+                                                  "pytorch": ["torch.nn.init.ones_",
+                                                              {"tensor": "torch.empty(*shape)"}],
+                                                  "alex": ["ones_initializer",
+                                                           {"dtype": True,
+                                                            "shape": False}]}}
+
+INITIALIZERS_WITH_HYPE = {"he_uniform": {"keras": ["keras.initializers.he_uniform", []],
+                                         "tf": ["tf.keras.initializers.he_uniform(seed=seed)",
+                                                {"shape": "shape"}],
+                                         "pytorch": ["torch.nn.init.kaiming_uniform",
+                                                     {"tensor": "torch.empty(*shape)"}],
+                                         "alex": ["he_uniform",
+                                                  {"dtype": True,
+                                                   "seed": True,
+                                                   "shape": False}]},
+                          "xavier_uniform": {"keras": ["keras.initializers.glorot_uniform",
+                                                       {}],
+                                             "tf": ["tf.keras.initializers.glorot_uniform(seed=seed)",
                                                     {"shape": "shape"}],
-                                             "pytorch": ["torch.nn.init.ones_",
+                                             "pytorch": ["torch.nn.init.xavier_uniform_",
                                                          {"tensor": "torch.empty(*shape)"}],
-                                             "alex": ["ones_initializer",
+                                             "alex": ["xavier_uniform",
                                                       {"dtype": True,
+                                                       "seed": True,
                                                        "shape": False}]}}
 
-INITIALIZERS = {"he_uniform": {"keras": ["keras.initializers.he_uniform", []],
-                               "tf": ["tf.keras.initializers.he_uniform(seed=seed)",
-                                      {"shape": "shape"}],
-                               "pytorch": ["torch.nn.init.kaiming_uniform",
-                                           {"tensor": "torch.empty(*shape)"}],
-                               "alex": ["he_uniform",
-                                        {"dtype": True,
-                                         "seed": True,
-                                         "shape": False}]},
-                "xavier_uniform": {"keras": ["keras.initializers.glorot_uniform",
-                                             {}],
-                                   "tf": ["tf.keras.initializers.glorot_uniform(seed=seed)",
-                                          {"shape": "shape"}],
-                                   "pytorch": ["torch.nn.init.xavier_uniform_",
-                                               {"tensor": "torch.empty(*shape)"}],
-                                   "alex": ["xavier_uniform",
-                                            {"dtype": True,
-                                             "seed": True,
-                                             "shape": False}]}}
+ALL_INITIALIZERS = {**INITIALIZERS_WITHOUT_HYPE, **INITIALIZERS_WITH_HYPE}
 
-ALL_INITIALIZERS = {**INITIALIZERS_NO_HYPE, **INITIALIZERS}
-
-COMPONENTS = {"conv": {"tf": ["tf.nn.conv2d",
-                              {"input": "inputs",
-                               "filters": "filters",
-                               "strides": "strides",
-                               "padding": "padding",
-                               "data_format": "'NHWC'",
-                               "dilations": "dilation",
-                               "name": "name"}],
-                       "keras": ["keras.layers.Conv2D", {}],
-                       "pytorch": ["torch.nn.functional.conv2d",
-                                   {"input": "inputs",
-                                    "weight": "filters",
-                                    "bias": "None",
-                                    "stride": "strides",
-                                    "padding": "padding",
-                                    "dilation": "dilation",
-                                    "groups": "1"}],
-                       "alex": ["conv",
-                                {"filters": False,
-                                 "padding": True,
-                                 "strides": True,
-                                 "dilation": True,
-                                 "inputs": False,
-                                 "dtype": True,
-                                 "name": True,
-                                 "training": False}]},
-              "dense": {"tf": ["tf.add(x=tf.matmul(a=inputs, b=weights), y=bias, name=name)",
-                               {}], # FIXME
-                        "keras": ["keras.layers.Dense", []],
-                        "pytorch": ["torch.nn.functional.linear",
-                                    {"weight": "weights",
-                                     "bias": "bias",
-                                     "input": "inputs"}],
-                        "alex": ["dense",
-                                 {"inputs": False,
-                                  "weights": False,
-                                  "bias": False,
-                                  "dtype": True,
-                                  "name": True}]},
-              "batch_normalize": {"tf": ["tf.nn.batch_normalization",
-                                         {"x": "inputs",
-                                          "mean": "mean",
-                                          "variance": "variance",
-                                          "offset": "offset",
-                                          "scale": "scale",
-                                          "variance_epsilon": "epsilon",
-                                          "name": "name"}],
-                                  "pytorch": ["torch.nn.functional.batch_norm",
-                                              {"input": "inputs",
-                                               "running_mean": "mean",
-                                               "running_var": "variance",
-                                               "weight": "scale",
-                                               "bias": "offset",
-                                               "training": "training",
-                                               "momentum": "momentum", "eps": "epsilon"}],
-                                  "alex": ["batch_normalize",
-                                           {"mean": False,
-                                            "variance": False,
-                                            "offset": False,
-                                            "scale": False,
-                                            "momentum": True,
-                                            "epsilon": True,
-                                            "inputs": False,
-                                            "name": True,
-                                            "dtype": True,
-                                            "training": False}]}
+# ----------------------------- Model ---------------------------------------- #
+## ---------------------------- Stateful layer ------------------------------ ##
+STATEFUL_INGREDIENTS = {"conv": {"tf": ["tf.nn.conv2d",
+                                       {"input": "inputs",
+                                        "filters": "filters",
+                                        "strides": "strides",
+                                        "padding": "padding",
+                                        "data_format": "'NHWC'",
+                                        "dilations": "dilation",
+                                        "name": "name"}],
+                                "keras": ["keras.layers.Conv2D", {}],
+                                "pytorch": ["torch.nn.functional.conv2d",
+                                            {"input": "inputs",
+                                             "weight": "filters",
+                                             "bias": "None",
+                                             "stride": "strides",
+                                             "padding": "padding",
+                                             "dilation": "dilation",
+                                             "groups": "1"}],
+                                "alex": ["conv",
+                                         {"filters": False,
+                                          "padding": True,
+                                          "strides": True,
+                                          "dilation": True,
+                                          "inputs": False,
+                                          "dtype": True,
+                                          "name": True,
+                                          "training": False}]},
+                       "dense": {"tf": ["tf.add(x=tf.matmul(a=inputs, b=weights), y=bias, name=name)",
+                                        {}], # FIXME
+                                 "keras": ["keras.layers.Dense", []],
+                                 "pytorch": ["torch.nn.functional.linear",
+                                             {"weight": "weights",
+                                              "bias": "bias",
+                                              "input": "inputs"}],
+                                 "alex": ["dense",
+                                          {"inputs": False,
+                                           "weights": False,
+                                           "bias": False,
+                                           "dtype": True,
+                                           "name": True}]},
+                       "batch_normalize": {"tf": ["tf.nn.batch_normalization",
+                                                  {"x": "inputs",
+                                                   "mean": "mean",
+                                                   "variance": "variance",
+                                                   "offset": "offset",
+                                                   "scale": "scale",
+                                                   "variance_epsilon": "epsilon",
+                                                   "name": "name"}],
+                                           "pytorch": ["torch.nn.functional.batch_norm",
+                                                       {"input": "inputs",
+                                                        "running_mean": "mean",
+                                                        "running_var": "variance",
+                                                        "weight": "scale",
+                                                        "bias": "offset",
+                                                        "training": "training",
+                                                        "momentum": "momentum", "eps": "epsilon"}],
+                                           "alex": ["batch_normalize",
+                                                    {"mean": False,
+                                                     "variance": False,
+                                                     "offset": False,
+                                                     "scale": False,
+                                                     "momentum": True,
+                                                     "epsilon": True,
+                                                     "inputs": False,
+                                                     "name": True,
+                                                     "dtype": True,
+                                                     "training": False}]}
 }
 
 # 'deconv': {"tf": "tf.nn.conv2d_transpose"},
 
-# ---------------------------- Deterministic layers -------------------------- #
-STATELESS_COMPONENTS_WITH_HYPE = {"dropout": {"tf": ["tf.nn.dropout",
+## ---------------------------- Stateless layers -------------------------- ##
+STATELESS_INGREDIENTS_WITH_HYPE = {"dropout": {"tf": ["tf.nn.dropout",
                                                      {"x": "inputs",
                                                       "rate": "dropout_rate",
                                                       "noise_shape": "None",
@@ -277,7 +302,7 @@ STATELESS_COMPONENTS_WITH_HYPE = {"dropout": {"tf": ["tf.nn.dropout",
                                                            "dtype": True,
                                                            "name": True}]}}
 
-STATELESS_COMPONENTS_WITHOUT_HYPE = {"relu": {"tf": ["tf.nn.relu",
+STATELESS_INGREDIENTS_WITHOUT_HYPE = {"relu": {"tf": ["tf.nn.relu",
                                                      {"name": "name",
                                                       "features": "inputs"}],
                                               "keras": ["keras.layers.ReLU", []],
@@ -340,11 +365,13 @@ STATELESS_COMPONENTS_WITHOUT_HYPE = {"relu": {"tf": ["tf.nn.relu",
                                                         {"shape": False,
                                                          "name": True}]}}
 # TODO: concatenate, softmax
-DL_LAYERS = {**COMPONENTS,
-             **STATELESS_COMPONENTS_WITH_HYPE,
-             **STATELESS_COMPONENTS_WITHOUT_HYPE}
+MODEL_INGREDIENTS = {**STATEFUL_INGREDIENTS,
+                     **STATELESS_INGREDIENTS_WITH_HYPE,
+                     **STATELESS_INGREDIENTS_WITHOUT_HYPE}
 
-INFERENCE = {} # inference function
+MODEL_BLOCK = {**MODEL_INGREDIENTS, **UTILITIES}
+
+# -------------------------------- Loss -------------------------------------- #
 LOSSES = {"cross_entropy": {"tf": ["tf.nn.softmax_cross_entropy_with_logits",
                                    {"labels": "inputs[0]",
                                     "logits": "inputs[1]",
@@ -374,36 +401,33 @@ REGULARIZERS = {"regularizer_l2": {"tf": ["coeff*sum(list(map(lambda x: tf.nn.l2
                                              "trainable_params": False,
                                              "inputs": False}]}}
 
-OPTIMIZERS = {"adam": {"tf": ["tf.optimizers.Adam",
-                              {"learning_rate": "learning_rate",
-                               "beta_1": "beta1",
-                               "beta_2": "beta2",
-                               "epsilon": "epsilon",
-                               "name": "name"}],
-                       "pytorch": ["torch.optim.Adam",
-                                   {"params": "trainable_params",
-                                    "lr": "learning_rate",
-                                    "betas": "(beta1, beta2)",
-                                    "eps": "epsilon"
-                                   }],
-                       "alex": ["adam",
-                                {"learning_rate": True,
-                                 "beta1": True,
-                                 "beta2": True,
-                                 "epsilon": True,
-                                 "inputs": False,
-                                 "name": True,
-                                 "training": False,
-                                 "dtype": True,
-                                 "trainable_params": False,
-                                 "initial_learning_rate": True}]}
-}
-# TODO: gradient_descent, momentum_optimizer
 LOSS_BLOCK = {**LOSSES, **REGULARIZERS}
-INGREDIENT_TYPES = {**DL_LAYERS, **LOSSES, **OPTIMIZERS, **INFERENCE}
 
-INPUT_TYPES = ("data", "label")
-
+# -------------------------------- Optimizer --------------------------------- #
+# TODO: gradient_descent, momentum_optimizer
+OPTIMIZER_INGREDIENTS = {"adam": {"tf": ["tf.optimizers.Adam",
+                                         {"learning_rate": "learning_rate",
+                                          "beta_1": "beta1",
+                                          "beta_2": "beta2",
+                                          "epsilon": "epsilon",
+                                          "name": "name"}],
+                                  "pytorch": ["torch.optim.Adam",
+                                              {"params": "trainable_params",
+                                               "lr": "learning_rate",
+                                               "betas": "(beta1, beta2)",
+                                               "eps": "epsilon"
+                                              }],
+                                  "alex": ["adam",
+                                           {"learning_rate": True,
+                                            "beta1": True,
+                                            "beta2": True,
+                                            "epsilon": True,
+                                            "inputs": False,
+                                            "name": True,
+                                            "training": False,
+                                            "dtype": True,
+                                            "trainable_params": False,
+                                            "initial_learning_rate": True}]}}
 
 LEARNING_RATE_DECAY = {"exponential_decay": {"tf": ["tf.keras.optimizers.schedules.ExponentialDecay",
                                                     {"initial_learning_rate": "initial_learning_rate",
@@ -423,60 +447,66 @@ LEARNING_RATE_DECAY = {"exponential_decay": {"tf": ["tf.keras.optimizers.schedul
                                                        "staircase": True,
                                                        "optimizer": False
                                                       }]}} # FIXME
-SCHEDULER_BLOCK = {**LEARNING_RATE_DECAY}
-
-OPTIMIZER_BLOCK = {**OPTIMIZERS}
-
-TENSOR_SHAPE = {"input_shape": {"tf": ["inputs.get_shape().as_list()", []]}}
-
-AS_TENSOR = {"as_tensor": {"tf": ["tf.convert_to_tensor",
-                                  {"value": "np.asarray(inputs)",
-                                   "dtype": "tf_dtypes['dtype']",
-                                   "dtype_hint": "None"}],
-                           "pytorch": ["torch.as_tensor",
-                                       {"data": "np.asarray(inputs)",
-                                        "dtype": "torch_types[dtype]",
-                                        "device": "device"}],
-                           "alex": ["as_tensor", {"inputs": False,
-                                                  "dtype": True,
-                                                  "device": False,
-                                                  "name": True}]}}
-MODEL_BLOCK = {**DL_LAYERS, **AS_TENSOR}
-
-UTILITY = {**TENSOR_SHAPE, **LEARNING_RATE_DECAY, **AS_TENSOR}
-
-ALL_COMPONENTS = {**COMPONENTS,
-                  **ALL_INITIALIZERS,
-                  **STATELESS_COMPONENTS_WITH_HYPE,
-                  **STATELESS_COMPONENTS_WITHOUT_HYPE,
-                  **INFERENCE,
-                  **LOSSES,
-                  **REGULARIZERS,
-                  **OPTIMIZERS,}
-                  # **UTILITY}
-COMPONENT_RECIPES = {"adense",
-                     "resnet_16",
-                     "resnet_32", "resnet_32_short_cut",
-                     "resnet_64", "resnet_64_short_cut",
-                     "resnet_128", "resnet_128_short_cut",
-                     "resnet_256", "resnet_256_short_cut",
-                     "resnet_512", "resnet_512_short_cut"}
-
-BLOCKS = ["data_block", "model_block", "loss_block", "optimizer_block"]
-ALL_RECIPES = {"root",
-               *BLOCKS,
-               *COMPONENT_RECIPES}
-
-TYPES = {0: "DETERMINISTIC_COMPONENTS_WITHOUT_HYPERPARAMETER",
-         1: "DETERMINISTIC_COMPONENTS_WITH_HYPERPARAMETER",
-         2: "TRAINABLE_COMPONENTS"}
+OPTIMIZER_SCHEDULERS = {**LEARNING_RATE_DECAY}
+OPTIMIZER_BLOCK = {**OPTIMIZER_INGREDIENTS,
+                   **OPTIMIZER_SCHEDULERS}
+# ---------------------------------- Inference ----------------------------- #
+INFERENCES = {} # inference function
 
 # ------------------------- User defined functions --------------------------- #
 
-USER_FNS = {"lr_scheduler": "engine.ns_user.learning_rate"}
+USER_FNS = {} #"lr_scheduler": "engine.ns_user.learning_rate"
+
+ALL_FNS = {**STATEFUL_INGREDIENTS,
+           **ALL_INITIALIZERS,
+           **STATELESS_INGREDIENTS_WITH_HYPE,
+           **STATELESS_INGREDIENTS_WITHOUT_HYPE,
+           **INFERENCES,
+           **LOSSES,
+           **REGULARIZERS,
+           **OPTIMIZER_INGREDIENTS,
+           **UTILITIES,
+           **USER_FNS,
+           **ALL_TRAINABLE_PARAMS}
+
+PREDEFINED_RECIPES = {"adense",
+                      "resnet_16",
+                      "resnet_32", "resnet_32_short_cut",
+                      "resnet_64", "resnet_64_short_cut",
+                      "resnet_128", "resnet_128_short_cut",
+                      "resnet_256", "resnet_256_short_cut",
+                      "resnet_512", "resnet_512_short_cut"}
+
+BLOCKS = {"data_block",
+          "model_block",
+          "loss_block",
+          "optimizer_block"}
+
+DATA_BLOCK = {"data", "label"}
 
 
-FNS = [*list(ALL_COMPONENTS.keys()),
-       *list(USER_FNS.keys()),
-       *list(SCHEDULER_BLOCK.keys()),
-       *ALL_TRAINABLE_PARAMS, "shape"]
+# -------------------------------------------------------------------------- #
+# Types (sets)
+# -------------------------------------------------------------------------- #
+INGREDIENT_TYPES = {*DATA_BLOCK,
+                    *list(MODEL_INGREDIENTS.keys()),
+                    *list(LOSSES.keys()),
+                    *list(REGULARIZERS.keys()),
+                    *list(OPTIMIZER_INGREDIENTS.keys()),
+                    *list(INFERENCES.keys())}
+
+RECIPE_TYPES = {"root",
+                *BLOCKS,
+                *PREDEFINED_RECIPES}
+
+
+TYPES = {0: "STATELESS_INGREDIENTS_WITHOUT_HYPE",
+         1: "STATELESS_INGREDIENTS_WITH_HYPE",
+         2: "STATEFUL_INGREDIENTS"}
+
+
+# -------------------------------------------------------------------------- #
+# Summary
+# -------------------------------------------------------------------------- #
+ALL_COMPONENTS = {*PREDEFINED_RECIPES,
+                  *INGREDIENT_TYPES}

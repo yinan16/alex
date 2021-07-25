@@ -49,7 +49,7 @@ def ls(option):
     if option == "components":
         pprint(list(filter(lambda x: x!="root", registry.ALL_COMPONENTS)))
     elif option == "recipes":
-        pprint(list(filter(lambda x: x!="root", registry.ALL_RECIPES)))
+        pprint(list(filter(lambda x: x!="root", registry.RECIPE_TYPES)))
     elif option == "ingredients":
         pprint(list(registry.INGREDIENT_TYPES.keys()))
     elif option == "initializers":
@@ -57,7 +57,7 @@ def ls(option):
     elif option == "regularizers":
         pprint(list(registry.REGULARIZERS.keys()))
     elif option == "optimizers":
-        pprint(list(registry.OPTIMIZERS.keys()))
+        pprint(list(registry.OPTIMIZER_INGREDIENTS.keys()))
     elif option == "losses":
         pprint(list(registry.LOSSES.keys()))
     elif option == "functions":
@@ -72,7 +72,7 @@ def inspect(component):
         pprint(hyperparam)
     else:
         if component in registry.ALL_COMPONENTS:
-            print("Ingredient %s has no hyperparameter! Alex loves those!" % component)
+            print("Function %s has no hyperparameter! Alex loves those!" % component)
         else:
             print("Oh no ingredient %s does not exist in Alex yet!\n"
                   "Help us improve please?" % component)

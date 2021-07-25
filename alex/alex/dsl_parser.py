@@ -93,8 +93,8 @@ def clone(component):
 
 def recipe_defined(rtype):
     # TODO: temporary. Use types instead
-    return rtype not in list(registry.STATELESS_COMPONENTS_WITHOUT_HYPE.keys()) + [const.DATA,
-                                                                              const.LABEL]
+    return rtype not in list(registry.STATELESS_INGREDIENTS_WITHOUT_HYPE.keys()) + [const.DATA,
+                                                                                    const.LABEL]
 
 # FIXME
 def _resolve_hyperparams(hyperparams):
@@ -604,7 +604,7 @@ def draw_graph(graph_list, level=2, graph_path='example.png', show="name"):
         graph.add_node(node)
 
         _type = component[const.META][const.TYPE]
-        if not _type in registry.INPUT_TYPES:
+        if not _type in registry.DATA_BLOCK:
             inputs = component[const.META][const.INPUTS]
             for _input in inputs:
                 if _type not in registry.REGULARIZERS:
@@ -679,13 +679,13 @@ def draw_hyperparam_tree(graph,
         return not isinstance(graph, Iterable) or (isinstance(graph, str))
 
     def _add_node(parent_node, label, name, graph):
-        if label in registry.COMPONENTS:
-            color = colors["COMPONENTS"]
-        elif label in registry.STATELESS_COMPONENTS_WITH_HYPE:
-            color = colors["STATELESS_COMPONENTS_WITH_HYPE"]
-        elif label in registry.STATELESS_COMPONENTS_WITHOUT_HYPE:
-            color = colors["STATELESS_COMPONENTS_WITHOUT_HYPE"]
-        elif label in registry.INFERENCE:
+        if label in registry.STATEFUL_INGREDIENTS:
+            color = colors["STATEFUL_INGREDIENTS"]
+        elif label in registry.STATELESS_INGREDIENTS_WITH_HYPE:
+            color = colors["STATELESS_INGREDIENTS_WITH_HYPE"]
+        elif label in registry.STATELESS_INGREDIENTS_WITHOUT_HYPE:
+            color = colors["STATELESS_INGREDIENTS_WITHOUT_HYPE"]
+        elif label in registry.INFERENCES:
             color = colors["INFERENCE"]
         elif label in registry.ALL_TRAINABLE_PARAMS:
             color = colors["TRAINABLE_PARAMS"]
@@ -775,9 +775,9 @@ def draw_hyperparam_tree(graph,
 
         return graph
 
-    colors = {"COMPONENTS": "red",
-              "STATELESS_COMPONENTS_WITH_HYPE": "green",
-              "STATELESS_COMPONENTS_WITHOUT_HYPE": "yellow",
+    colors = {"STATEFUL_INGREDIENTS": "red",
+              "STATELESS_INGREDIENTS_WITH_HYPE": "green",
+              "STATELESS_INGREDIENTS_WITHOUT_HYPE": "yellow",
               "INFERENCE": "cyan",
               "NONTRAINABLE_PARAMS": "#8ecae6",
               "TRAINABLE_PARAMS": "#ffafcc"}
@@ -913,7 +913,7 @@ def parse(yml_file, return_dict=False, lazy=True):
         graph:list = eval_ast_to_graph(ast)
         # Step 4: second pass: same data structure; populate inputs
         graph:list = global_update(graph)
-        # if config_to_type(yml_file) not in const.ALL_RECIPES:
+        # if config_to_type(yml_file) not in const.RECIPE_TYPES:
         graph = annotate(graph, lazy=lazy) # json schema
         # Step 5: load graph and states from checkpoint; check if the structure matches the one defined in the DSL
     except Exception:
