@@ -12,7 +12,7 @@ import os
 import numpy as np
 from pprint import pprint
 from copy import deepcopy
-from alex.alex import core, const, util, dsl_parser
+from alex.alex import core, const, util, dsl_parser, registry
 from alex.engine import ns_alex
 from jsonschema import validate
 
@@ -36,7 +36,7 @@ class Ingredient(Node):
 class Recipe(Node):
     def __init__(self, recipe_name):
         self.name = recipe_name
-        if self.name != "root" and self.name not in const.BLOCKS:
+        if self.name != "root" and self.name not in registry.BLOCKS:
             self.config_path = os.path.join(const.COMPONENT_BASE_PATH,
                                             self.name + ".yml")
             self.recipe = dsl_parser.parse(self.config_path,

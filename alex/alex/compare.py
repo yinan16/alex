@@ -11,7 +11,7 @@ import numpy as np
 import uuid
 import matplotlib.pyplot as plt
 
-from alex.alex import dsl_parser, core, const
+from alex.alex import dsl_parser, core, const, registry
 
 # FIXME: POC
 delete_cost = lambda x: 1
@@ -263,7 +263,7 @@ def diff(network_config_1,
 
     operations = []
     cost = 0
-    for block in const.BLOCKS:
+    for block in registry.BLOCKS:
 
         graph_list1_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list1))
         graph_list2_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list2))
@@ -359,7 +359,7 @@ def matched_ingredients(network_config_1,
     for operation in operations:
         if operation[1][0] == "MATCH":
             component_type = label_to_value(operation[1][1])
-            if component_type in const.PARAMS:
+            if component_type in registry.PARAMS:
                 matched = {**matched,
                            **{operation[0][0]:
                               operation[0][1]}}

@@ -18,7 +18,7 @@ import traceback
 
 from typing import Union
 
-from alex.alex import checkpoint, const, util, validation
+from alex.alex import checkpoint, const, util, validation, registry
 
 
 strs = list(string.ascii_lowercase)
@@ -58,17 +58,17 @@ def alex_reader(user_defined):
         component = clone(component)
         hyperparams = dict() if const.HYPERPARAMS not in component else clone(component[const.HYPERPARAMS])
         component_type = component[const.TYPE]
-        if component_type in const.PARAMS:
-            for param in const.PARAMS[component_type]:
+        if component_type in registry.PARAMS:
+            for param in registry.PARAMS[component_type]:
                 if param not in hyperparams:
                     hyperparams[param] = dict()
                 if const.DTYPE not in hyperparams[param]:
-                    hyperparams[param][const.DTYPE] = const.DEFAULT_DTYPE
+                    hyperparams[param][const.DTYPE] = registry.DEFAULT_DTYPE
         component[const.HYPERPARAMS] = hyperparams
         return component
 
     if "default" not in user_defined:
-        default = {"dtype": const.DEFAULT_DTYPE}
+        default = {"dtype": registry.DEFAULT_DTYPE}
     else:
         default = user_defined["default"]
 
@@ -93,8 +93,8 @@ def clone(component):
 
 def recipe_defined(rtype):
     # TODO: temporary. Use types instead
-    return rtype not in list(const.DET_COMPONENTS_NO_HYPE.keys()) + [const.DATA,
-                                                                     const.LABEL]
+    return rtype not in list(registry.STATELESS_COMPONENTS_WITHOUT_HYPE.keys()) + [const.DATA,
+                                                                              const.LABEL]
 
 # FIXME
 def _resolve_hyperparams(hyperparams):
@@ -275,7 +275,7 @@ def eval_repeat(times, components):
 
 
 def _is_block(scope):
-    return scope in const.BLOCKS
+    return scope in registry.BLOCKS
 
 
 def eval_name(name, components):
@@ -573,7 +573,7 @@ def global_update(components):
 
 ########### Params_Training ###############
 def _user_fn(fn, kwargs):
-    return lambda x: const.USER_FNS[fn](x, **kwargs)
+    return lambda x: registry.USER_FNS[fn](x, **kwargs)
 
 
 ######################################### Different views:
@@ -604,10 +604,10 @@ def draw_graph(graph_list, level=2, graph_path='example.png', show="name"):
         graph.add_node(node)
 
         _type = component[const.META][const.TYPE]
-        if not _type in const.INPUT_TYPES:
+        if not _type in registry.INPUT_TYPES:
             inputs = component[const.META][const.INPUTS]
             for _input in inputs:
-                if _type not in const.REGULARIZERS:
+                if _type not in registry.REGULARIZERS:
                     _input = "/".join(_input.split("/")[:level])
                 _edge = pydot.Edge(_input, name)
                 graph.add_edge(_edge)
@@ -679,17 +679,17 @@ def draw_hyperparam_tree(graph,
         return not isinstance(graph, Iterable) or (isinstance(graph, str))
 
     def _add_node(parent_node, label, name, graph):
-        if label in const.COMPONENTS:
+        if label in registry.COMPONENTS:
             color = colors["COMPONENTS"]
-        elif label in const.DET_COMPONENTS_HYPE:
-            color = colors["DET_COMPONENTS_HYPE"]
-        elif label in const.DET_COMPONENTS_NO_HYPE:
-            color = colors["DET_COMPONENTS_NO_HYPE"]
-        elif label in const.INFERENCE:
+        elif label in registry.STATELESS_COMPONENTS_WITH_HYPE:
+            color = colors["STATELESS_COMPONENTS_WITH_HYPE"]
+        elif label in registry.STATELESS_COMPONENTS_WITHOUT_HYPE:
+            color = colors["STATELESS_COMPONENTS_WITHOUT_HYPE"]
+        elif label in registry.INFERENCE:
             color = colors["INFERENCE"]
-        elif label in const.ALL_TRAINABLE_PARAMS:
+        elif label in registry.ALL_TRAINABLE_PARAMS:
             color = colors["TRAINABLE_PARAMS"]
-        elif label in const.ALL_OTHER_PARAMS:
+        elif label in registry.ALL_OTHER_PARAMS:
             color = colors["NONTRAINABLE_PARAMS"]
         else:
             color = "white"
@@ -776,8 +776,8 @@ def draw_hyperparam_tree(graph,
         return graph
 
     colors = {"COMPONENTS": "red",
-              "DET_COMPONENTS_HYPE": "green",
-              "DET_COMPONENTS_NO_HYPE": "yellow",
+              "STATELESS_COMPONENTS_WITH_HYPE": "green",
+              "STATELESS_COMPONENTS_WITHOUT_HYPE": "yellow",
               "INFERENCE": "cyan",
               "NONTRAINABLE_PARAMS": "#8ecae6",
               "TRAINABLE_PARAMS": "#ffafcc"}

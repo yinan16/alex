@@ -42,10 +42,10 @@ plt.show()
 
 trainable_variables = get_trainable_params()
 
-from alex.alex import const
+from alex.alex import registry
 var_list = []
 for tv in trainable_variables:
-    if tv.split("/")[-1] in const.ALL_TRAINABLE_PARAMS:
+    if tv.split("/")[-1] in registry.ALL_TRAINABLE_PARAMS:
         var_list.append(trainable_variables[tv])
 
 

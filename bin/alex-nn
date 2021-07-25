@@ -14,7 +14,7 @@ from pprint import pprint
 import argparse
 from typing import Union
 
-from alex.alex import compare, const, util, dsl_parser
+from alex.alex import compare, const, util, dsl_parser, registry
 from alex.annotators import code_gen
 
 
@@ -47,19 +47,19 @@ def ls(option):
     # components = list(map(lambda x: x.split("/")[-1].split(".")[0], paths))
 
     if option == "components":
-        pprint(list(filter(lambda x: x!="root", const.ALL_COMPONENTS)))
+        pprint(list(filter(lambda x: x!="root", registry.ALL_COMPONENTS)))
     elif option == "recipes":
-        pprint(list(filter(lambda x: x!="root", const.ALL_RECIPES)))
+        pprint(list(filter(lambda x: x!="root", registry.ALL_RECIPES)))
     elif option == "ingredients":
-        pprint(list(const.INGREDIENT_TYPES.keys()))
+        pprint(list(registry.INGREDIENT_TYPES.keys()))
     elif option == "initializers":
-        pprint(list(const.ALL_INITIALIZERS.keys()))
+        pprint(list(registry.ALL_INITIALIZERS.keys()))
     elif option == "regularizers":
-        pprint(list(const.REGULARIZERS.keys()))
+        pprint(list(registry.REGULARIZERS.keys()))
     elif option == "optimizers":
-        pprint(list(const.OPTIMIZERS.keys()))
+        pprint(list(registry.OPTIMIZERS.keys()))
     elif option == "losses":
-        pprint(list(const.LOSSES.keys()))
+        pprint(list(registry.LOSSES.keys()))
     elif option == "functions":
         print("type", "name", "inputs", "repeat", "hyperparams", "visible")
 
@@ -71,7 +71,7 @@ def inspect(component):
         hyperparam = util.read_yaml(config)
         pprint(hyperparam)
     else:
-        if component in const.ALL_COMPONENTS:
+        if component in registry.ALL_COMPONENTS:
             print("Ingredient %s has no hyperparameter! Alex loves those!" % component)
         else:
             print("Oh no ingredient %s does not exist in Alex yet!\n"

@@ -31,7 +31,7 @@ from rope.refactor.inline import create_inline
 import warnings
 import traceback
 
-from alex.alex import core, const, node_interface, checkpoint, util
+from alex.alex import core, const, node_interface, checkpoint, util, registry
 from alex.alex.checkpoint import Checkpoint
 from alex.alex.annotator_interface import Annotator
 from alex.engine import ns_alex, ns_tf, ns_pytorch
@@ -52,7 +52,7 @@ runtime_keys = ["channels", "batch_size"]
 def get_node_type(node):
     if node["value"] in ["input_shape"]:
         return IDENTIFIER # FIXME: temporary for backward compatibility
-    elif node["value"] in const.FNS + ["shape"] + const.ALL_PARAMS_LIST:
+    elif node["value"] in registry.FNS + ["shape"] + registry.ALL_PARAMS_LIST:
         return FUNCTION
     elif len(node["children"])==0:
         return VALUE
@@ -83,7 +83,7 @@ def _parse_str(value, node=None, literal=True):
         elif value == "batch_size":
             parsed = "batch_size"
             literal = False
-    if value in const.ALL_COMPONENTS:
+    if value in registry.ALL_COMPONENTS:
         parsed = "%s()" % value
     elif literal:
         parsed = "'%s'" % value
@@ -224,7 +224,7 @@ class Ingredient(param_count.Ingredient):
                 if _arg[_key]["type"] == IDENTIFIER:
                     args = {**args, **{_key: _arg[_key]}}
             if child["code"]["type"] != VALUE:
-                if child["value"] in const.ALL_PARAMS:
+                if child["value"] in registry.ALL_PARAMS:
                     _name = "%s/%s" % (core.get_parent(child["name"],
                                                        annotated,
                                                        "name"),
@@ -291,7 +291,7 @@ class Regularizer(param_count.Ingredient):
                 if _arg[_key]["type"] == IDENTIFIER:
                     args = {**args, **{_key: _arg[_key]}}
             if child["code"]["type"] != VALUE:
-                if child["value"] in const.ALL_PARAMS:
+                if child["value"] in registry.ALL_PARAMS:
                     _name = "%s/%s" % (core.get_parent(child["name"],
                                                        annotated,
                                                        "name"),
@@ -544,7 +544,7 @@ class TrainableParams(param_count.Hyperparam):
         ingredient = core.get_parent(node["name"],
                                      annotated,
                                      "value")
-        is_trainable = const.PARAMS[ingredient][node["value"]]["derivative"]
+        is_trainable = registry.PARAMS[ingredient][node["value"]]["derivative"]
         args["is_trainable"] = {"key": "is_trainable",
                                 "value": is_trainable,
                                 "ref": None,
@@ -592,15 +592,15 @@ class TrainableParams(param_count.Hyperparam):
 
 def nodes(node):
     value = node["value"]
-    if value in const.REGULARIZERS:
+    if value in registry.REGULARIZERS:
         value = "regularizer"
-    elif value in const.ALL_INITIALIZERS:
+    elif value in registry.ALL_INITIALIZERS:
         value = "initializer_fn"
-    elif node["value"] in const.ALL_PARAMS:
+    elif node["value"] in registry.ALL_PARAMS:
         value = "trainable_params"
-    elif node["value"] in const.INGREDIENT_TYPES:
+    elif node["value"] in registry.INGREDIENT_TYPES:
         value = "ingredient"
-    elif node["value"] in const.SCHEDULER_BLOCK:
+    elif node["value"] in registry.SCHEDULER_BLOCK:
         value = FUNCTION
     _nodes = {"ingredient": Ingredient,
               "recipe": Recipe,
@@ -641,35 +641,35 @@ def generate_python(output_file,
                                engine,
                                ckpt,
                                load_from_ckpt=load_from_ckpt,
-                               dirname=const.CACHE_BASE_PATH)()
+                               dirname=dirname)()
 
     component_str = ModelCodeBlock(output_file,
                                    config_path,
                                    engine,
                                    ckpt,
                                    load_from_ckpt=load_from_ckpt,
-                                   dirname=const.CACHE_BASE_PATH)()
+                                   dirname=dirname)()
 
     loss_str = LossCodeBlock(output_file,
                              config_path,
                              engine,
                              ckpt,
                              load_from_ckpt=load_from_ckpt,
-                             dirname=const.CACHE_BASE_PATH)()
+                             dirname=dirname)()
 
     optimizer_str = OptimizerCodeBlock(output_file,
                                        config_path,
                                        engine,
                                        ckpt,
                                        load_from_ckpt=load_from_ckpt,
-                                       dirname=const.CACHE_BASE_PATH)()
+                                       dirname=dirname)()
 
     scheduler_str = SchedulerCodeBlock(output_file,
                                        config_path,
                                        engine,
                                        ckpt,
                                        load_from_ckpt=load_from_ckpt,
-                                       dirname=const.CACHE_BASE_PATH)()
+                                       dirname=dirname)()
 
     boiler_str = cache_boiler_plate(engine)
 
@@ -780,7 +780,7 @@ class CodeBlock(param_count.ParamCount):
             if node["code"]["type"] == FUNCTION:
                 _param_node = self.annotated[self.annotated[node["parent"]]["parent"]]
 
-                if node["value"] in const.ALL_INITIALIZERS \
+                if node["value"] in registry.ALL_INITIALIZERS \
                    and self.load \
                    and _param_node["parent"] in self.ckpt.matched:
                     _name = "%s/%s" % (_param_node["parent"],
@@ -846,7 +846,9 @@ class ParamCodeBlock(CodeBlock):
         return "param_block"
 
     def get_code_registry(self):
-        return {**const.ALL_PARAMS, **const.ALL_INITIALIZERS, **const.AS_TENSOR}
+        return {**registry.ALL_PARAMS,
+                **registry.ALL_INITIALIZERS,
+                **registry.AS_TENSOR}
 
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="get_trainable_params",
@@ -859,10 +861,10 @@ class ParamCodeBlock(CodeBlock):
         cached = []
         for component in self.ckpt.components_list:
             _type = component["meta"]["type"]
-            if _type not in const.PARAMS or _type in cached:
+            if _type not in registry.PARAMS or _type in cached:
                 continue
-            for param in const.PARAMS[_type]:
-                shape = const.PARAMS[_type][param]["shape"]
+            for param in registry.PARAMS[_type]:
+                shape = registry.PARAMS[_type][param]["shape"]
                 src_fn = get_src_fn(shape)
                 self.inline_index_fns.append(src_fn)
 
@@ -875,7 +877,7 @@ class ParamCodeBlock(CodeBlock):
                                                  trg_fn,
                                                  trg_args_str)
                 self.translation_code.append(shape_code_str)
-                constructor = const.CONSTRUCTORS["params"]
+                constructor = registry.PARAM_CONSTRUCTORS["params"]
                 src_fn = "%s_%s" % (_type, param)
 
                 src_args_str = get_src_args_str(constructor)
@@ -901,7 +903,7 @@ class DataCodeBlock(CodeBlock):
         return "data_block"
 
     def get_code_registry(self):
-        return const.INPUT_TYPES
+        return registry.INPUT_TYPES
 
 
 class ModelCodeBlock(CodeBlock):
@@ -914,7 +916,7 @@ class ModelCodeBlock(CodeBlock):
         self._write_cache_to_file()
 
     def get_code_registry(self):
-        return {**const.MODEL_BLOCK}
+        return {**registry.MODEL_BLOCK}
 
     @staticmethod
     def get_block_name():
@@ -941,8 +943,8 @@ class LossCodeBlock(CodeBlock):
                                 manual_args=["trainable_params", "inputs"])
 
     def get_code_registry(self):
-        return {**const.LOSS_BLOCK,
-                **const.MODEL_BLOCK}
+        return {**registry.LOSS_BLOCK,
+                **registry.MODEL_BLOCK}
 
     @staticmethod
     def get_block_name():
@@ -964,11 +966,11 @@ class OptimizerCodeBlock(CodeBlock):
 
     def get_code_registry(self):
         if self.engine == "tf":
-            code_registry = {**const.MODEL_BLOCK,
-                             **const.OPTIMIZER_BLOCK,
-                             **const.SCHEDULER_BLOCK}
+            code_registry = {**registry.MODEL_BLOCK,
+                             **registry.OPTIMIZER_BLOCK,
+                             **registry.SCHEDULER_BLOCK}
         elif self.engine == "pytorch":
-            code_registry = const.OPTIMIZER_BLOCK
+            code_registry = registry.OPTIMIZER_BLOCK
         return code_registry
 
     def get_blocks(self):
@@ -1004,7 +1006,7 @@ class SchedulerCodeBlock(CodeBlock):
         if self.engine == "tf":
             code_registry = {}
         elif self.engine == "pytorch":
-            code_registry = const.SCHEDULER_BLOCK
+            code_registry = registry.SCHEDULER_BLOCK
         return code_registry
 
     def get_blocks(self):

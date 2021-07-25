@@ -15,16 +15,16 @@ from io import BytesIO
 from pprint import pprint
 import json
 
-from alex.alex import const, dsl_parser, util
+from alex.alex import const, dsl_parser, util, registry
 
 
 # FIXME: use typing
 def get_value_type(label):
-    if label in const.INGREDIENT_TYPES \
-       or label in const.INPUT_TYPES \
-       or label in const.REGULARIZERS:
+    if label in registry.INGREDIENT_TYPES \
+       or label in registry.INPUT_TYPES \
+       or label in registry.REGULARIZERS:
         node_type = "ingredient"
-    elif label in const.ALL_RECIPES:
+    elif label in registry.ALL_RECIPES:
         node_type = "recipe"
     else:
         node_type = "hyperparam"
@@ -60,7 +60,7 @@ def get_children(root, tree, field=None):
 def get_ancestor_param_node(node, tree, field=None):
     tree = deepcopy(tree)
     node = deepcopy(node)
-    if node["value"] in const.ALL_PARAMS:
+    if node["value"] in registry.ALL_PARAMS:
         parent_node = node
     elif node["name"] == "root" \
          or node["type"] == "ingredient" \
@@ -68,7 +68,7 @@ def get_ancestor_param_node(node, tree, field=None):
         parent_node = None
     else:
         parent = tree[node["parent"]]
-        while parent["value"] not in const.ALL_PARAMS:
+        while parent["value"] not in registry.ALL_PARAMS:
             _name = parent["name"]
             parent = tree[tree[_name]["parent"]]
             if parent["value"] == "root":

@@ -10,7 +10,7 @@ from math import floor, ceil
 from pprint import pprint
 import traceback
 from copy import deepcopy
-from alex.alex import core, const, node_interface
+from alex.alex import core, const, node_interface, registry
 from alex.alex.annotator_interface import Annotator
 from alex.engine import ns_alex
 
@@ -201,9 +201,9 @@ class ParamCount(Annotator):
         ancestor = node["ancestor"]["name"]
         if ancestor in self.components:
             node["dtype"] = self.components[ancestor]["meta"]["dtype"]
-            if node["value"] in const.ALL_PARAMS_LIST or node["value"] in const.ALL_INITIALIZERS or self.annotated[node["parent"]]["value"] in const.ALL_PARAMS_LIST:
+            if node["value"] in registry.ALL_PARAMS_LIST or node["value"] in registry.ALL_INITIALIZERS or self.annotated[node["parent"]]["value"] in registry.ALL_PARAMS_LIST:
                 node["meta"]["code_block"] = "param_block"
-            elif node["value"] in const.SCHEDULER_BLOCK:
+            elif node["value"] in registry.SCHEDULER_BLOCK:
                 node["meta"]["code_block"] = "scheduler_block"
             else:
                 node["meta"]["code_block"] = self.components[ancestor]["meta"]["block"]
