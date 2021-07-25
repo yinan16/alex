@@ -175,7 +175,7 @@ class ParamCount(Annotator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.anno_name = "Trainable params count"
-        self.passes = [[self.cache_shape,
+        self.passes = [[self.cache_shape_and_block,
                         self.annotate_count]]
 
     def annotate_count(self, node):
@@ -184,7 +184,7 @@ class ParamCount(Annotator):
                                                                annotated=self.annotated)
         return node
 
-    def cache_shape(self, node):
+    def cache_shape_and_block(self, node):
         """Cache the shape info in the node"""
         node = deepcopy(node)
         name = node["name"]
@@ -201,9 +201,9 @@ class ParamCount(Annotator):
         ancestor = node["ancestor"]["name"]
         if ancestor in self.components:
             node["dtype"] = self.components[ancestor]["meta"]["dtype"]
-            if node["value"] in registry.ALL_PARAMS_LIST or node["value"] in registry.ALL_INITIALIZERS or self.annotated[node["parent"]]["value"] in registry.ALL_PARAMS_LIST:
+            if node["value"] in registry.PARAM_BLOCK or self.annotated[node["parent"]]["value"] in registry.PARAM_BLOCK:
                 node["meta"]["code_block"] = "param_block"
-            elif node["value"] in registry.OPTIMIZER_SCHEDULERS:
+            elif node["value"] in registry.SCHEDULER_BLOCK:
                 node["meta"]["code_block"] = "scheduler_block"
             else:
                 node["meta"]["code_block"] = self.components[ancestor]["meta"]["block"]

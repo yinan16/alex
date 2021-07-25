@@ -13,9 +13,6 @@ os.makedirs(ALEX_CACHE_BASE_PATH, exist_ok=True)
 
 # -------------------------------- String consts ----------------------------- #
 # Network build related
-COMPONENT_LIST = 'component_list'
-LOSS_LIST = 'loss_list'
-
 YAML = ".yml"
 COMPONENT_NAMES = 'component_types'
 NAME = 'name'

@@ -18,7 +18,6 @@ import json
 from alex.alex import const, dsl_parser, util, registry
 
 
-# FIXME: use typing
 def get_value_type(label):
     if label in registry.INGREDIENT_TYPES:
         node_type = "ingredient"

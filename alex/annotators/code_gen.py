@@ -42,6 +42,7 @@ NAMESPACES = {"tf": ns_tf,
               "pytorch": ns_pytorch}
 
 
+# Tags: value, function, identifier
 VALUE = TypeVar('VALUE', str, list, int, float)
 FUNCTION = TypeVar('FUNCTION')
 IDENTIFIER = TypeVar('IDENTIFIER')
@@ -49,17 +50,18 @@ IDENTIFIER = TypeVar('IDENTIFIER')
 runtime_keys = ["channels", "batch_size"]
 
 
-def get_node_type(node):
+def get_node_tag(node):
     if node["value"] in ["input_shape"]:
-        return IDENTIFIER # FIXME: temporary for backward compatibility
-    elif node["value"] in (list(registry.ALL_FNS.keys()) + ["shape"] + registry.ALL_PARAMS_LIST):
-        return FUNCTION
-    elif len(node["children"])==0:
-        return VALUE
+        tag = IDENTIFIER # FIXME: temporary for backward compatibility
+    elif node["value"] in registry.TAG_FUNCTIONS:
+        tag = FUNCTION
+    elif len(node["children"])==0: # is leaf
+        tag = VALUE
     elif len(node["children"]) == len(node["descendants"]):
-        return IDENTIFIER
+        tag = IDENTIFIER
     else:
-        return IDENTIFIER
+        tag = IDENTIFIER
+    return tag
 
 
 def _name_strs_to_names(name_strs):
@@ -116,7 +118,7 @@ def cache_fn(node: dict,
              args: dict,
              return_symbol: str,
              name: str,
-             node_type,
+             node_tag,
              inline: bool = False,
              extra: Union[str, None]=None):
     """
@@ -130,11 +132,11 @@ def cache_fn(node: dict,
     for _arg in args:
         arg = args[_arg]
         if arg["value"] is not None:
-            if arg["type"] == VALUE:
+            if arg["tag"] == VALUE:
                 _arg_str = value_to_kwarg_str("",
                                               arg["value"])
-            elif arg["type"] == IDENTIFIER:
-                if node_type == FUNCTION:
+            elif arg["tag"] == IDENTIFIER:
+                if node_tag == FUNCTION:
                     if arg["str"] == "":
                         continue
                     _arg_str = "%s=%s" % (arg["key"], arg["str"])
@@ -145,18 +147,18 @@ def cache_fn(node: dict,
             else:
                 if arg["value"] == "":
                     continue
-                if node_type == FUNCTION:
+                if node_tag == FUNCTION:
                     _arg_str = "%s=%s" % (arg["key"], arg["value"])
                 else:
                     _arg_str = arg["value"]
 
             arg_str.append(_arg_str)
 
-    if node_type == IDENTIFIER and len(arg_str)>1:
+    if node_tag == IDENTIFIER and len(arg_str)>1:
         arg_str = "[%s]" % ", ".join(arg_str)
     else:
         arg_str = ", ".join(arg_str)
-    if node_type == FUNCTION:
+    if node_tag == FUNCTION:
         if len(arg_str) != "":
             arg_str = "(%s)" % (arg_str)
         code_str = "%s%s" % (fn,
@@ -166,7 +168,7 @@ def cache_fn(node: dict,
     node["code"] = {"fn": fn,
                     "args": args,
                     "return_symbol": return_symbol,
-                    "type": node_type,
+                    "tag": node_tag,
                     "name": name,
                     "str": code_str,
                     "inline": inline,
@@ -192,25 +194,25 @@ class Ingredient(param_count.Ingredient):
         args[const.ALEX_ARG_INPUTS] = {"key": const.ALEX_ARG_INPUTS,
                                        "value": inputs,
                                        "ref": inputs,
-                                       "type": IDENTIFIER,
+                                       "tag": IDENTIFIER,
                                        "str": value_to_kwarg_str("", inputs,
                                                                  literal=False)}
         args[const.ALEX_ARG_NAME] = {"key": const.ALEX_ARG_NAME,
                                      "value": _name_strs_to_names(node["name"]),
                                      "ref": None,
-                                     "type": IDENTIFIER,
+                                     "tag": IDENTIFIER,
                                      "str": "'%s'" % (node["name"])}
         if node["input_nodes"] is not None:
             input_nodes = annotated[node["input_nodes"][0]]
             args["shape"] = {"key": "shape",
                              "value": input_nodes,
                              "ref": None,
-                             "type": IDENTIFIER,
+                             "tag": IDENTIFIER,
                              "str": "%s" % str(input_nodes["shape"])}
         args["dtype"] = {"key": "dtype",
                          "value": node["dtype"],
                          "ref": None,
-                         "type": IDENTIFIER,
+                         "tag": IDENTIFIER,
                          "str": "'%s'" % (node["dtype"])}
         return_symbol = _name_strs_to_names(node["name"])
 
@@ -219,9 +221,9 @@ class Ingredient(param_count.Ingredient):
                 continue
             _arg = child["code"]["args"]
             for _key in _arg:
-                if _arg[_key]["type"] == IDENTIFIER:
+                if _arg[_key]["tag"] == IDENTIFIER:
                     args = {**args, **{_key: _arg[_key]}}
-            if child["code"]["type"] != VALUE:
+            if child["code"]["tag"] != VALUE:
                 if child["value"] in registry.ALL_PARAMS:
                     _name = "%s/%s" % (core.get_parent(child["name"],
                                                        annotated,
@@ -232,13 +234,13 @@ class Ingredient(param_count.Ingredient):
                             **{child["value"]: {"key": child["value"],
                                                 "value": "trainable_params['%s']" % _name,
                                                 "ref": child["name"],
-                                                "type": child["code"]["type"],
+                                                "tag": child["code"]["tag"],
                                                 "str": child["code"]["str"]}}}
                 else:
                     _child = {"key": child["value"],
                               "value": child["code"]["return_symbol"],
                               "ref": child["name"],
-                              "type": child["code"]["type"],
+                              "tag": child["code"]["tag"],
                               "str": child["code"]["str"]}
                     if child["value"]=="decay":
                         if engine == "tf":
@@ -267,28 +269,28 @@ class Regularizer(param_count.Ingredient):
         args[const.ALEX_ARG_INPUTS] = {"key": const.ALEX_ARG_INPUTS,
                                        "value": node["meta"]["position"]["inputs"],
                                        "ref": None,
-                                       "type": IDENTIFIER,
+                                       "tag": IDENTIFIER,
                                        "str": value_to_kwarg_str("",
                                                                  node["meta"]["position"]["inputs"],
                                                                  literal=True)}
         args[const.ALEX_ARG_NAME] = {"key": const.ALEX_ARG_NAME,
                                      "value": _name_strs_to_names(node["name"]),
                                      "ref": None,
-                                     "type": IDENTIFIER,
+                                     "tag": IDENTIFIER,
                                      "str": "'%s'" % (node["name"])}
         args["dtype"] = {"key": "dtype",
                          "value": node["dtype"],
                          "ref": None,
-                         "type": IDENTIFIER,
+                         "tag": IDENTIFIER,
                          "str": "'%s'" % (node["dtype"])}
         return_symbol = _name_strs_to_names(node["name"])
 
         for child in children:
             _arg = child["code"]["args"]
             for _key in _arg:
-                if _arg[_key]["type"] == IDENTIFIER:
+                if _arg[_key]["tag"] == IDENTIFIER:
                     args = {**args, **{_key: _arg[_key]}}
-            if child["code"]["type"] != VALUE:
+            if child["code"]["tag"] != VALUE:
                 if child["value"] in registry.ALL_PARAMS:
                     _name = "%s/%s" % (core.get_parent(child["name"],
                                                        annotated,
@@ -299,14 +301,14 @@ class Regularizer(param_count.Ingredient):
                             **{child["value"]: {"key": child["value"],
                                                 "value": "trainable_params['%s']" % _name,
                                                 "ref": child["name"],
-                                                "type": child["code"]["type"],
+                                                "tag": child["code"]["tag"],
                                                 "str": child["code"]["str"]}}}
                 else:
                     args = {**args,
                             **{child["value"]: {"key": child["value"],
                                                 "value": child["code"]["return_symbol"],
                                                 "ref": child["name"],
-                                                "type": child["code"]["type"],
+                                                "tag": child["code"]["tag"],
                                                 "str": child["code"]["str"]}}}
         node = cache_fn(node,
                         node["value"],
@@ -325,7 +327,7 @@ class Recipe(param_count.Recipe):
     def generate_code(self, node, annotated, engine):
         node = deepcopy(node)
         node["code"] = dict()
-        node["code"]["type"] = IDENTIFIER
+        node["code"]["tag"] = IDENTIFIER
         return node
 
 
@@ -340,18 +342,18 @@ class Function(param_count.Hyperparam):
         return_symbol = _name_strs_to_names(node["name"])
         children = core.get_children(node["name"], annotated)
         for child in children:
-            _node_type = child["code"]["type"]
-            if _node_type == VALUE:
+            _node_tag = child["code"]["tag"]
+            if _node_tag == VALUE:
                 continue
-            elif _node_type == IDENTIFIER:
+            elif _node_tag == IDENTIFIER:
                 _value = child["code"]["str"]
-            elif _node_type == FUNCTION:
+            elif _node_tag == FUNCTION:
                 _value = child["code"]["return_symbol"]
             args = {**args,
                     **{child["value"]: {"key": child["value"],
                                         "value": _value,
                                         "ref": child["name"],
-                                        "type": child["code"]["type"],
+                                        "tag": child["code"]["tag"],
                                         "str": child["code"]["str"]}}}
         node = cache_fn(node,
                         node["value"],
@@ -398,7 +400,7 @@ class Value(param_count.Hyperparam):
                         args={},
                         return_symbol=_value,
                         name="",
-                        node_type=VALUE)
+                        node_tag=VALUE)
         return node
 
 
@@ -406,8 +408,7 @@ class Shape(param_count.Hyperparam):
 
     def generate_code(self, node, annotated, engine):
         node = deepcopy(node)
-        node_type = get_node_type(node)
-        # FIXME: refactor dispatch; for now it's experimental
+        node_tag = get_node_tag(node)
         args = dict()
         fn = "%s_%s_shape" % (node["ancestor"]["value"],
                               core.get_parent(node["name"],
@@ -417,25 +418,25 @@ class Shape(param_count.Hyperparam):
 
         children = core.get_children(node["name"], annotated)
         for child in children:
-            _node_type = child["code"]["type"]
-            if _node_type == VALUE:
+            _node_tag = child["code"]["tag"]
+            if _node_tag == VALUE:
                 continue
-            elif _node_type == IDENTIFIER:
+            elif _node_tag == IDENTIFIER:
                 _value = child["code"]["str"]
-            elif _node_type == FUNCTION:
+            elif _node_tag == FUNCTION:
                 _value = child["code"]["return_symbol"]
             args = {**args,
                     **{child["value"]: {"key": child["value"],
                                         "value": _value,
                                         "ref": child["name"],
-                                        "type": child["code"]["type"],
+                                        "tag": child["code"]["tag"],
                                         "str": child["code"]["str"]}}}
         node = cache_fn(node,
                         fn,
                         args,
                         return_symbol,
                         "",
-                        node_type,
+                        node_tag,
                         True)
         return node
 
@@ -444,7 +445,7 @@ class Identifier(param_count.Hyperparam):
 
     def generate_code(self, node, annotated, engine):
         node = deepcopy(node)
-        node_type = get_node_type(node)
+        node_tag = get_node_tag(node)
 
         children = core.get_children(node["name"], annotated)
 
@@ -456,14 +457,14 @@ class Identifier(param_count.Hyperparam):
             args[child["value"]] = {"key": child["value"],
                                     "value": child["code"]["return_symbol"],
                                     "ref": child["name"],
-                                    "type": child["code"]["type"],
+                                    "tag": child["code"]["tag"],
                                     "str": child["code"]["str"]}
         node = cache_fn(node=node,
                         fn=node["value"],
                         args=args,
                         return_symbol=_name_strs_to_names(node["name"]),
                         name="",
-                        node_type=node_type)
+                        node_tag=node_tag)
         return node
 
 
@@ -474,43 +475,42 @@ class Initializer(param_count.Hyperparam):
 
     def generate_code(self, node, annotated, engine):
         node = deepcopy(node)
-        node_type = get_node_type(node)
+        node_tag = get_node_tag(node)
 
         args = dict()
 
         param_name = core.get_ancestor_param_node(node, annotated, field="value")
         shape_name = _name_strs_to_names("%s_%s_shape" % (node["ancestor"]["name"],
                                                           param_name))
-
         _name = node["name"]
         return_symbol = _name_strs_to_names(_name)
 
         args["shape"] = {"key": "shape",
                          "value": shape_name,
                          "ref": None,
-                         "type": IDENTIFIER,
+                         "tag": IDENTIFIER,
                          "str": "%s" % shape_name}
 
         args[const.ALEX_ARG_NAME] = {"key": const.ALEX_ARG_NAME,
                                      "value": _name_strs_to_names(_name),
                                      "ref": None,
-                                     "type": IDENTIFIER,
+                                     "tag": IDENTIFIER,
                                      "str": "'%s'" % (_name)}
 
         children = core.get_children(node["name"], annotated)
         for child in children:
-            _node_type = child["code"]["type"]
-            if _node_type == VALUE:
+            _node_tag = child["code"]["tag"]
+            if _node_tag == VALUE:
                 continue
-            elif _node_type == IDENTIFIER:
+            elif _node_tag == IDENTIFIER:
                 _value = child["code"]["str"]
-            elif _node_type == FUNCTION:
+            elif _node_tag == FUNCTION:
                 _value = child["code"]["return_symbol"]
             args = {**args,
                     **{child["value"]: {"key": child["value"],
                                         "value": _value,
                                         "ref": child["name"],
-                                        "type": child["code"]["type"],
+                                        "tag": child["code"]["tag"],
                                         "str": child["code"]["str"]}}}
         fn = node["value"]
         node = cache_fn(node,
@@ -518,7 +518,7 @@ class Initializer(param_count.Hyperparam):
                         args,
                         return_symbol,
                         _name,
-                        node_type)
+                        node_tag)
 
         return node
 
@@ -530,14 +530,14 @@ class TrainableParams(param_count.Hyperparam):
 
     def generate_code(self, node, annotated, engine):
         node = deepcopy(node)
-        node_type = get_node_type(node)
+        node_tag = get_node_tag(node)
         args = dict()
         _name = "%s/%s" % (core.get_parent(node["name"],
                                            annotated,
                                            "name"),
                            node["value"])
         return_symbol = _name_strs_to_names(_name)
-        node_type = FUNCTION
+        node_tag = FUNCTION
 
         ingredient = core.get_parent(node["name"],
                                      annotated,
@@ -546,7 +546,7 @@ class TrainableParams(param_count.Hyperparam):
         args["is_trainable"] = {"key": "is_trainable",
                                 "value": is_trainable,
                                 "ref": None,
-                                "type": IDENTIFIER,
+                                "tag": IDENTIFIER,
                                 "str": "%s" % str(is_trainable)}
         fn = "%s_%s" % (core.get_parent(node["name"],
                                         annotated,
@@ -556,31 +556,31 @@ class TrainableParams(param_count.Hyperparam):
         args[const.ALEX_ARG_NAME] = {"key": const.ALEX_ARG_NAME,
                                      "value": _name_strs_to_names(_name),
                                      "ref": None,
-                                     "type": IDENTIFIER,
+                                     "tag": IDENTIFIER,
                                      "str": "'%s'" % (_name)}
         children = core.get_children(node["name"], annotated)
         for child in children:
             if "code" not in child:
                 continue
-            _node_type = child["code"]["type"]
-            if _node_type == VALUE:
+            _node_tag = child["code"]["tag"]
+            if _node_tag == VALUE:
                 continue
-            elif _node_type == IDENTIFIER:
+            elif _node_tag == IDENTIFIER:
                 _value = child["code"]["str"]
-            elif _node_type == FUNCTION:
+            elif _node_tag == FUNCTION:
                 _value = child["code"]["return_symbol"]
             args = {**args,
                     **{child["value"]: {"key": child["value"],
                                         "value": _value,
                                         "ref": child["name"],
-                                        "type": child["code"]["type"],
+                                        "tag": child["code"]["tag"],
                                         "str": child["code"]["str"]}}}
         node = cache_fn(node=node,
                         fn=fn,
                         args=args,
                         return_symbol=return_symbol,
                         name=_name,
-                        node_type=node_type,
+                        node_tag=node_tag,
                         inline=False,
                         extra="%s['%s'] = %s\n" % (const.ALEX_ARG_TRAINABLE_PARAMS,
                                                    _name,
@@ -598,7 +598,7 @@ def nodes(node):
         value = "trainable_params"
     elif node["value"] in registry.INGREDIENT_TYPES:
         value = "ingredient"
-    elif node["value"] in registry.OPTIMIZER_SCHEDULERS:
+    elif node["value"] in registry.SCHEDULER_BLOCK:
         value = FUNCTION
     _nodes = {"ingredient": Ingredient,
               "recipe": Recipe,
@@ -611,7 +611,7 @@ def nodes(node):
               IDENTIFIER: Identifier}
     if value not in _nodes:
         if node["type"] == "hyperparam":
-            value = get_node_type(node)
+            value = get_node_tag(node)
         else:
             value = node["type"]
     return _nodes[value](node["value"])
@@ -715,7 +715,7 @@ class CodeBlock(param_count.ParamCount):
         self.output_file = output_file
         util.clear_file(self.cache_def_path)
 
-        self.passes = [[self.cache_shape],
+        self.passes = [[self.cache_shape_and_block],
                        [self._cache_alex_function_calls]]
 
 
@@ -775,7 +775,7 @@ class CodeBlock(param_count.ParamCount):
                 node = _node
             if not self._in_block(node):
                 return node
-            if node["code"]["type"] == FUNCTION:
+            if node["code"]["tag"] == FUNCTION:
                 _param_node = self.annotated[self.annotated[node["parent"]]["parent"]]
 
                 if node["value"] in registry.ALL_INITIALIZERS \
@@ -964,9 +964,10 @@ class OptimizerCodeBlock(CodeBlock):
 
     def get_code_registry(self):
         if self.engine == "tf":
-            code_registry = registry.OPTIMIZER_BLOCK
+            code_registry = {**registry.OPTIMIZER_BLOCK,
+                             **registry.SCHEDULER_BLOCK}
         elif self.engine == "pytorch":
-            code_registry = registry.OPTIMIZER_INGREDIENTS
+            code_registry = registry.OPTIMIZER_BLOCK
         return code_registry
 
     def get_blocks(self):
@@ -1002,7 +1003,7 @@ class SchedulerCodeBlock(CodeBlock):
         if self.engine == "tf":
             code_registry = {}
         elif self.engine == "pytorch":
-            code_registry = registry.OPTIMIZER_SCHEDULERS
+            code_registry = registry.SCHEDULER_BLOCK
         return code_registry
 
     def get_blocks(self):

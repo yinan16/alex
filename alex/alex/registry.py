@@ -145,9 +145,7 @@ for ingredient in PARAMS:
             ALL_TRAINABLE_PARAMS[param] = PARAMS[ingredient][param]
         else:
             ALL_OTHER_PARAMS[param] = PARAMS[ingredient][param]
-ALL_PARAMS_LIST = list(ALL_PARAMS.keys())
-ALL_TRAINABLE_PARAMS_LIST = list(ALL_TRAINABLE_PARAMS.keys())
-ALL_OTHER_PARAMS_LIST = list(ALL_OTHER_PARAMS.keys())
+
 
 INITIALIZERS_WITHOUT_HYPE = {"zeros_initializer": {"keras": ["",
                                                              []],
@@ -190,6 +188,7 @@ INITIALIZERS_WITH_HYPE = {"he_uniform": {"keras": ["keras.initializers.he_unifor
 
 ALL_INITIALIZERS = {**INITIALIZERS_WITHOUT_HYPE, **INITIALIZERS_WITH_HYPE}
 
+PARAM_BLOCK = {**PARAM_CONSTRUCTORS, **ALL_INITIALIZERS, **ALL_PARAMS}
 # ----------------------------- Model ---------------------------------------- #
 ## ---------------------------- Stateful layer ------------------------------ ##
 STATEFUL_INGREDIENTS = {"conv": {"tf": ["tf.nn.conv2d",
@@ -447,9 +446,8 @@ LEARNING_RATE_DECAY = {"exponential_decay": {"tf": ["tf.keras.optimizers.schedul
                                                        "staircase": True,
                                                        "optimizer": False
                                                       }]}} # FIXME
-OPTIMIZER_SCHEDULERS = {**LEARNING_RATE_DECAY}
-OPTIMIZER_BLOCK = {**OPTIMIZER_INGREDIENTS,
-                   **OPTIMIZER_SCHEDULERS}
+SCHEDULER_BLOCK = {**LEARNING_RATE_DECAY}
+OPTIMIZER_BLOCK = {**OPTIMIZER_INGREDIENTS}
 # ---------------------------------- Inference ----------------------------- #
 INFERENCES = {} # inference function
 
@@ -467,7 +465,7 @@ ALL_FNS = {**STATEFUL_INGREDIENTS,
            **OPTIMIZER_INGREDIENTS,
            **UTILITIES,
            **USER_FNS,
-           **ALL_TRAINABLE_PARAMS}
+           **ALL_PARAMS}
 
 PREDEFINED_RECIPES = {"adense",
                       "resnet_16",
@@ -498,6 +496,15 @@ INGREDIENT_TYPES = {*DATA_BLOCK,
 RECIPE_TYPES = {"root",
                 *BLOCKS,
                 *PREDEFINED_RECIPES}
+
+
+PARAM_TYPES = set(ALL_PARAMS.keys())
+TRAINABLE_PARAM_TYPES = set(ALL_TRAINABLE_PARAMS.keys())
+NONTRAINABLE_PARAM_TYPES = set(ALL_OTHER_PARAMS.keys())
+
+
+# Simple function (without composition)
+TAG_FUNCTIONS = {*set(ALL_FNS.keys()), "shape"}
 
 
 TYPES = {0: "STATELESS_INGREDIENTS_WITHOUT_HYPE",
