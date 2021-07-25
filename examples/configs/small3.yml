@@ -18,27 +18,28 @@ data_block:
 
 model_block:
   - type:
-      resnet_16
+      test_recipe
     inputs:
       - data_block/input_data
   - type:
       resnet_16
-  # - type:
-  #     relu
-  # - type:
-  #     dropout
-  # - type:
-  #     batch_normalize
+    repeat: 2
+  - type:
+      relu
+  - type:
+      dropout
+  - type:
+      batch_normalize
 
-  # - type: conv
-  #   hyperparams:
-  #     filters:
-  #       shape:
-  #         n_filters:
-  #           16
-  #     padding: SAME
-  #     strides: [1,1]
-  # - type: max_pool2d
+  - type: conv
+    hyperparams:
+      filters:
+        shape:
+          n_filters:
+            16
+      padding: SAME
+      strides: [1,1]
+  - type: max_pool2d
   - type: flatten
   - type: dense
   - type: softmax

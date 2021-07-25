@@ -656,12 +656,12 @@ def list_to_graph(components):
         _graph = graph
         for _level in range(1, levels+1):
             scope = "/".join(_dir[0:_level])
-            if scope not in _graph["subgraph"]:
-                _graph["subgraph"][scope] = _register_graph(_level,
-                                                            component["meta"]["recipes"][_level-2],
-                                                            component["meta"])
             if _level == levels: # is leaf
                 _graph["subgraph"][scope] = _register_component(component, _level)
+            elif scope not in _graph["subgraph"]:
+                _graph["subgraph"][scope] = _register_graph(_level,
+                                                            component["meta"]["recipes"][levels-_level-1],
+                                                            component["meta"])
             _graph = _graph["subgraph"][scope]
     return graph
 

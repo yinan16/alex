@@ -67,8 +67,9 @@ class TestCli(unittest.TestCase):
         command = ["alex-nn",
                    "diff",
                    "examples/configs/small1.yml",
-                   "examples/configs/small2.yml",
+                   "examples/configs/small3.yml",
                    "--mode", "diff",
+                   "--dpi", "1600",
                    "--to_png", "cache/cli_diff"]
         run(command)
         print(" ".join(command))
@@ -77,8 +78,9 @@ class TestCli(unittest.TestCase):
         command = ["alex-nn",
                    "diff",
                    "examples/configs/small1.yml",
-                   "examples/configs/small2.yml",
+                   "examples/configs/small3.yml",
                    "--mode", "dist",
+                   "--dpi", "1600",
                    "--to_png", "cache/cli_dist"]
         run(command)
 

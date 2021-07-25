@@ -468,6 +468,7 @@ ALL_FNS = {**STATEFUL_INGREDIENTS,
            **ALL_PARAMS}
 
 PREDEFINED_RECIPES = {"adense",
+                      "test_recipe",
                       "resnet_16",
                       "resnet_32", "resnet_32_short_cut",
                       "resnet_64", "resnet_64_short_cut",
