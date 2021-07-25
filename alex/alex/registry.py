@@ -488,11 +488,11 @@ DATA_BLOCK = {"data", "label"}
 # Types (sets)
 # -------------------------------------------------------------------------- #
 INGREDIENT_TYPES = {*DATA_BLOCK,
-                    *list(MODEL_INGREDIENTS.keys()),
-                    *list(LOSSES.keys()),
-                    *list(REGULARIZERS.keys()),
-                    *list(OPTIMIZER_INGREDIENTS.keys()),
-                    *list(INFERENCES.keys())}
+                    *MODEL_INGREDIENTS,
+                    *LOSSES,
+                    *REGULARIZERS,
+                    *OPTIMIZER_INGREDIENTS,
+                    *INFERENCES}
 
 RECIPE_TYPES = {"root",
                 *BLOCKS,
@@ -505,7 +505,7 @@ NONTRAINABLE_PARAM_TYPES = set(ALL_OTHER_PARAMS.keys())
 
 
 # Simple function (without composition)
-TAG_FUNCTIONS = {*set(ALL_FNS.keys()), "shape"}
+TAG_FUNCTIONS = {*ALL_FNS, "shape"}
 
 
 TYPES = {0: "STATELESS_INGREDIENTS_WITHOUT_HYPE",
