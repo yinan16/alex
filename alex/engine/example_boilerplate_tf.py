@@ -19,17 +19,17 @@ y_test = keras.utils.to_categorical(label_test, num_classes)
 class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck']
 
-plt.figure(figsize=(10,10))
-for i in range(25):
-    plt.subplot(5,5,i+1)
-    plt.xticks([])
-    plt.yticks([])
-    plt.grid(False)
-    plt.imshow(x_train[i])
-    # The CIFAR labels happen to be arrays,
-    # which is why you need the extra index
-    plt.xlabel(class_names[label_train[i][0]])
-plt.show()
+# plt.figure(figsize=(10,10))
+# for i in range(25):
+#     plt.subplot(5,5,i+1)
+#     plt.xticks([])
+#     plt.yticks([])
+#     plt.grid(False)
+#     plt.imshow(x_train[i])
+#     # The CIFAR labels happen to be arrays,
+#     # which is why you need the extra index
+#     plt.xlabel(class_names[label_train[i][0]])
+# plt.show()
 
 
 # from alex.alex.checkpoint import Checkpoint
@@ -39,8 +39,8 @@ plt.show()
 #                ["checkpoints", None])
 
 # ckpt = C.load()
-
-trainable_variables = get_trainable_params()
+ckpt = None
+trainable_variables = get_trainable_params(ckpt)
 
 from alex.alex import registry
 var_list = []

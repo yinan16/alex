@@ -44,11 +44,6 @@ model_block:
   # - type: max_pool2d
   - type: conv
     hyperparams:
-      filters:
-        shape:
-          kernel_size_w: 5
-          kernel_size_h: 5
-          n_filters: 16
       padding: SAME
       strides: [1,1]
   - type: flatten

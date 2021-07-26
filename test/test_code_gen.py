@@ -24,7 +24,7 @@ class TestCodeGen(unittest.TestCase):
 
         for engine in self.engines:
             filename = "generated_%s.py" % engine
-            self.boiler_plate = "alex/engine/example_boilerplate_%s.py" % engine
+            boiler_plate = "alex/engine/example_boilerplate_%s.py" % engine
             code_path = os.path.join(const.CACHE_BASE_PATH,
                                      filename)
 
@@ -35,7 +35,7 @@ class TestCodeGen(unittest.TestCase):
                                      # load_ckpt=["checkpoints",
                                      #            "config_1626993992750915.json"])
             util.concatenate_files([code_path,
-                                    self.boiler_plate],
+                                    boiler_plate],
                                    code_path)
             print("Saved to:", code_path)
 

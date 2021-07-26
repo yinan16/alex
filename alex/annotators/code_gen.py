@@ -373,26 +373,33 @@ class Value(param_count.Hyperparam):
         if "padding" in node["parent"] and engine=="pytorch":
             ingredient = annotated[node["meta"]["position"]["component"]]
             if ingredient["value"] in ["conv", "max_pool2d"]:
+                # FIXME:
                 if node["value"] == "SAME":
-                    _value = "same"
-                    # _value = [1, 1]
-                    # inputs = annotated[ingredient["meta"]["position"]["inputs"][0]]
-                    # input_shape = inputs["shape"]
-                    # h, w = input_shape[0], input_shape[1]
-                    strides = ingredient["meta"]["hyperparams"]["strides"]
-                    if strides[0]!=1 or strides[1]!=1:
-                        raise Exception("Pytorch does not support strided ops  for padding='same'")
-                    # if ingredient["value"] == "conv":
-                    #     k_h = ingredient["meta"]["hyperparams"]["filters"]["shape"]["kernel_size_h"]
-                    #     k_w = ingredient["meta"]["hyperparams"]["filters"]["shape"]["kernel_size_w"]
-                    # else:
-                    #     [k_h, k_w] = ingredient["meta"]["hyperparams"]["window_shape"]
-                    # padding_h_min = floor(((ingredient["shape"][0]-1)*strides[0] - h + k_h)/2)
-                    # padding_w_min = floor(((ingredient["shape"][1]-1)*strides[1] - w + k_w)/2)
-                    # _value = [padding_h_min, padding_w_min]
+                    _value = [1, 1]
+
                 elif node["value"] == "VALID":
-                    # _value = [0, 0]
-                    _value = "valid"
+                    _value = [0, 0]
+
+                # "valid" and "same" are only available for pytorch > 1.9
+                # if node["value"] == "SAME":
+                #     _value = "same"
+                #     # _value = [1, 1]
+                #     # inputs = annotated[ingredient["meta"]["position"]["inputs"][0]]
+                #     # input_shape = inputs["shape"]
+                #     # h, w = input_shape[0], input_shape[1]
+                #     strides = ingredient["meta"]["hyperparams"]["strides"]
+                #     if strides[0]!=1 or strides[1]!=1:
+                #         raise Exception("Pytorch does not support strided ops  for padding='same'")
+                #     # if ingredient["value"] == "conv":
+                #     #     k_h = ingredient["meta"]["hyperparams"]["filters"]["shape"]["kernel_size_h"]
+                #     #     k_w = ingredient["meta"]["hyperparams"]["filters"]["shape"]["kernel_size_w"]
+                #     # else:
+                #     #     [k_h, k_w] = ingredient["meta"]["hyperparams"]["window_shape"]
+                #     # padding_h_min = floor(((ingredient["shape"][0]-1)*strides[0] - h + k_h)/2)
+                #     # padding_w_min = floor(((ingredient["shape"][1]-1)*strides[1] - w + k_w)/2)
+                #     # _value = [padding_h_min, padding_w_min]
+                # elif node["value"] == "VALID":
+                #     _value = "valid"
         else:
             _value = node["value"]
         node = cache_fn(node=deepcopy(node),
@@ -851,7 +858,7 @@ class ParamCodeBlock(CodeBlock):
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="get_trainable_params",
                                 return_str="trainable_params",
-                                manual_args=["ckpt"] if self.load else [],
+                                manual_args=["ckpt"],
                                 prefix="trainable_params = dict()\n")
 
 

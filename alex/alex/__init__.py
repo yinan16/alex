@@ -6,11 +6,12 @@
 # Description:
 # ----------------------------------------------------------------------
 
-from alex.alex import checkpoint, const, dsl_parser, schema, compare, util, core
+from alex.alex import checkpoint, const, dsl_parser, schema, compare, util, core, registry
 
 
 __all__ = ["checkpoint",
            "core",
+           "registry",
            "const",
            "dsl_parser",
            "schema",

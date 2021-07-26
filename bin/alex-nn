@@ -8,11 +8,12 @@
 # Description:
 # ----------------------------------------------------------------------
 
-import os, sys, glob
+import os
+import sys
 import ast
 from pprint import pprint
 import argparse
-from typing import Union
+import subprocess
 
 from alex.alex import compare, const, util, dsl_parser, registry
 from alex.annotators import code_gen
@@ -79,7 +80,10 @@ def inspect(component):
 
 
 def codegen(engine, config, out_dir, filename,
-            ckpt_from=None, ckpt_to=None):
+            ckpt_from=None, ckpt_to=None, run_code=False, append=None,
+            docker_image=None):
+    if not docker_image:
+        docker_image = engine
     if not config:
         print("Must give a network configuration")
         sys.exit()
@@ -107,6 +111,26 @@ def codegen(engine, config, out_dir, filename,
         print("Generated code is written to file %s" % filepath)
     except Exception as err:
         print(err)
+    if append:
+        util.concatenate_files([filepath,
+                                append],
+                               filepath)
+    # TODO: add checkpoint dir
+    if run_code:
+        try:
+            command = ["docker",
+                       "run",
+                       "--shm-size=2g",
+                       "--gpus", "all",
+                       "-v", "$PWD/%s:/ws/%s" % (out_dir,
+                                                 out_dir),
+                       "-w", "/ws/",
+                       "--rm", engine, "python", filepath]
+            command = " ".join(command)
+            subprocess.run(command, shell=True, check=True)
+        except Exception as err:
+            print(command)
+            print(err)
 
 
 def render(config, type, path, level):
@@ -123,10 +147,6 @@ def render(config, type, path, level):
         dsl_parser.make_graph_from_yml(config, path, level)
 
     print("Image written to file %s" % path)
-
-
-def merge(config, ckpt):
-    pass
 
 
 def main(fn, kwargs=dict()):
@@ -210,6 +230,12 @@ if __name__=="__main__":
     codegen_parser.add_argument("--ckpt_to", metavar="Checkpoint path to save to",
                                 type=str,
                                 help="Save to checkpoint")
+
+    codegen_parser.add_argument("--run", dest="run_code", action="store_true", default=False)
+
+    codegen_parser.add_argument("--append", type=str, metavar="Append file to generated code")
+
+    codegen_parser.add_argument("--docker_image", type=str, metavar="The tag of the docker image. Set to engine (e.g. pytorch, tf, etc) if tag is not set")
 
     render_parser = subparsers.add_parser("render",
                                           help="Render ast or graph from a config")

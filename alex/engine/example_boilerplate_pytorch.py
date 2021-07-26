@@ -35,7 +35,7 @@ images, labels = dataiter.next()
 inputs = images.to(device)
 print(device)
 # show images
-imshow(torchvision.utils.make_grid(images))
+# imshow(torchvision.utils.make_grid(images))
 # print labels
 print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
