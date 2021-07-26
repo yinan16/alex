@@ -39,19 +39,19 @@ class TestCodeGen(unittest.TestCase):
                                    code_path)
             print("Saved to:", code_path)
 
-    # def test_mismatched(self):
-    #     code_path = os.path.join(const.CACHE_BASE_PATH,
-    #                              "new_mismatched_generated.py")
-    #     code_gen.generate_python(code_path,
-    #                              self.config_path_alt,
-    #                              "pytorch",
-    #                              dirname=const.CACHE_BASE_PATH,
-    #                              load_ckpt=["cache",
-    #                                         "config_1622420349826577.json"]) # "config_1622411488965296.json"
-    #     util.concatenate_files([code_path,
-    #                             "alex/engine/example_boilerplate_pytorch.py"],
-    #                            code_path)
-    #     print("Saved to:", code_path)
+    def test_mismatched(self):
+        code_path = os.path.join(const.CACHE_BASE_PATH,
+                                 "new_mismatched_generated.py")
+        code_gen.generate_python(code_path,
+                                 self.config_path_alt,
+                                 "pytorch",
+                                 dirname=const.CACHE_BASE_PATH,
+                                 load_ckpt=["checkpoints",
+                                            "test.json"])
+        util.concatenate_files([code_path,
+                                "alex/engine/example_boilerplate_pytorch.py"],
+                               code_path)
+        print("Saved to:", code_path)
 
 
 if __name__ == '__main__':
