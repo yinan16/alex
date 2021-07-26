@@ -116,11 +116,12 @@ def codegen(engine, config, out_dir, filename,
                                 append],
                                filepath)
     # TODO: add checkpoint dir
+    # TODO: expose flags
     if run_code:
         try:
             command = ["docker",
                        "run",
-                       "--shm-size=2g",
+                       "--shm-size=5g",
                        "--gpus", "all",
                        "-v", "$PWD/%s:/ws/%s" % (out_dir,
                                                  out_dir),

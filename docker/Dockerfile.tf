@@ -1,3 +1,3 @@
 From tensorflow/tensorflow:latest-gpu
 
-RUN python3 -m pip install alex-nn
+RUN pip install alex-nn==0.1.4
