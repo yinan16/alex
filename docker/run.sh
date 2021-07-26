@@ -6,9 +6,18 @@
 # Description:
 # ----------------------------------------------------------------------
 
+if [ $# -eq 0 ]
+then
+    engine="pytorch"
+else
+    engine=$1
+fi
+
 docker run \
        --shm-size=2g \
        --gpus all \
+       -it \
        -v $PWD/examples:/ws/examples/ \
        -w /ws/ \
-       --rm pytorch
+       --rm $engine
+       /bin/bash
