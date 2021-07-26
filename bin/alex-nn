@@ -115,19 +115,17 @@ def codegen(engine, config, out_dir, filename,
         util.concatenate_files([filepath,
                                 append],
                                filepath)
-    # TODO: add checkpoint dir
-    # TODO: expose flags
     if run_code:
         try:
-            command = ["docker",
-                       "run",
-                       "--shm-size=5g",
-                       "--gpus", "all",
-                       "-v", "$PWD/%s:/ws/%s" % (out_dir,
-                                                 out_dir),
-                       "-w", "/ws/",
-                       "--rm", engine, "python", filepath]
-            command = " ".join(command)
+            if load_dir is not None:
+                mount_load_dir = "-v $PWD/%s:/ws/checkpoints/" % load_dir
+            else:
+                mount_load_dir = ""
+            command = "docker run --shm-size=5g --gpus all -v $PWD/%s:/ws/%s %s -w /ws/ --rm %s python %s" % (out_dir,
+                                                                                                              out_dir,
+                                                                                                              mount_load_dir,
+                                                                                                              engine, filepath)
+
             subprocess.run(command, shell=True, check=True)
         except Exception as err:
             print(command)
