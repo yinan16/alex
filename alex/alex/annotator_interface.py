@@ -10,6 +10,10 @@ import collections
 from pprint import pprint
 from copy import deepcopy
 from alex.alex import core, dsl_parser
+from alex.alex.logger import Logger
+
+
+logger = Logger().get_logger()
 
 
 class Annotator(ABC):
@@ -66,6 +70,6 @@ class Annotator(ABC):
                     self.annotated[name] = sub_op(node)
         #     print("Annotation pass %i done" % ipass)
 
-        print("Annotation %s done" % self.anno_name)
+        logger.info("Annotation %s done" % self.anno_name)
 
         return self.annotated
