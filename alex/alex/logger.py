@@ -34,10 +34,12 @@ class Logger(logging.StreamHandler):
         return clr + msg + self.colors["eom"]
 
 
+logger = Logger().get_logger()
+
+
 if __name__=="__main__":
 
     # Example
-    logger = Logger().get_logger()
     logger.warning("warning")
     logger.error("error")
     logger.debug("debug")
