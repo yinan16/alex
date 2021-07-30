@@ -8,19 +8,19 @@
 import subprocess
 
 
-def test_codegen_and_run():
-    for engine in ["tf"]:
-        command = ["alex-nn",
-                   "codegen",
-                   "examples/configs/small1.yml",
-                   "--engine", engine,
-                   "--out_dir", "cache",
-                   "--run",
-                   "--append", "alex/engine/example_boilerplate_%s.py" % engine,
-                   "--filename", "cli_codegen_%s.py" % engine]
-        subprocess.run(" ".join(command), shell=True, check=True)
-        print(command)
+def test_codegen_and_run(engine):
+    command = ["alex-nn",
+               "codegen",
+               "examples/configs/small1.yml",
+               "--engine", engine,
+               "--out_dir", "cache",
+               "--run",
+               "--append", "alex/engine/example_data_%s.py" % engine,
+               "--filename", "cli_codegen_%s.py" % engine]
+    command = " ".join(command)
+    subprocess.run(command, shell=True, check=True)
+    print(command)
 
 
 if __name__=="__main__":
-    test_codegen_and_run()
+    test_codegen_and_run("pytorch")

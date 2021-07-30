@@ -629,7 +629,8 @@ def generate_python(output_file,
                     engine,
                     dirname=const.CACHE_BASE_PATH,
                     load_ckpt=None,
-                    save_ckpt=None):
+                    save_ckpt=None,
+                    def_only=True):
 
     if load_ckpt is None or load_ckpt[1] is None:
         load_from_ckpt = False
@@ -685,6 +686,14 @@ def generate_python(output_file,
                                             scheduler_str)
     util.write_to(boiler_str, output_file)
     util.write_to(code, output_file)
+    if not def_only:
+        src_str = ""
+        src_str += NAMESPACES[engine].instantiate(config_path,
+                                                  load_ckpt,
+                                                  save_ckpt)
+        src_str += NAMESPACES[engine].validation()
+        src_str += NAMESPACES[engine].training(save_ckpt)
+        util.write_to(src_str, output_file)
 
 
 class CodeBlock(param_count.ParamCount):

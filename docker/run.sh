@@ -17,7 +17,7 @@ docker run \
        --shm-size=2g \
        --gpus all \
        -it \
-       -v $PWD/examples:/ws/examples/ \
+       -v $PWD:/ws/ \
        -w /ws/ \
        --rm $engine
        /bin/bash

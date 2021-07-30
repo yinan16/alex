@@ -112,7 +112,8 @@ def codegen(engine, config, out_dir, filename,
                                  engine=engine,
                                  dirname=out_dir,
                                  load_ckpt=ckpt_from,
-                                 save_ckpt=ckpt_to)
+                                 save_ckpt=ckpt_to,
+                                 def_only=False)
         logger.info("Generated code is written to file %s" % filepath)
     except Exception as err:
         logger.error(err)
@@ -126,10 +127,8 @@ def codegen(engine, config, out_dir, filename,
                 mount_load_dir = "-v $PWD/%s:/ws/checkpoints/" % load_dir
             else:
                 mount_load_dir = ""
-            command = "docker run --shm-size=5g --gpus all -v $PWD/%s:/ws/%s %s -w /ws/ --rm %s python %s" % (out_dir,
-                                                                                                              out_dir,
-                                                                                                              mount_load_dir,
-                                                                                                              engine, filepath)
+            command = "docker run --shm-size=5g --gpus all -v $PWD:/ws/ %s -w /ws/ --rm %s python %s" % (mount_load_dir,
+                                                                                                         engine, filepath)
 
             subprocess.run(command, shell=True, check=True)
         except Exception as err:

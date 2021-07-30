@@ -1,3 +1,3 @@
-From tensorflow/tensorflow:latest-gpu
+FROM tensorflow/tensorflow:latest-gpu
 
-RUN pip install alex-nn==0.1.4
+RUN pip install alex-nn matplotlib
