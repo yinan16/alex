@@ -68,6 +68,77 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
     return code
 
 
+# Boilerplates:
+def instantiate(config, load_from, save_to):
+    return """
+from alex.alex.checkpoint import Checkpoint
+
+C = Checkpoint("%s",
+               %s,
+               %s)
+
+ckpt = C.load()
+
+model = Model(ckpt)
+
+model.to(device)
+
+optimizer = model.get_optimizer(model.params)
+
+learning_rate = model.get_scheduler(optimizer)
+
+""" % (config, str(load_from), str(save_to))
+
+
+def training(save_to):
+    if save_to:
+        save_str = "C.save(model.trainable_params)"
+    else:
+        save_str = ""
+    return \
+    """
+def loop(trainloader, val_inputs, val_labels):
+    for epoch in range(90):
+
+        for i, data in enumerate(trainloader, 0):
+
+            inputs, labels = data
+
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            optimizer.zero_grad()
+
+            output = model(inputs, True)
+            loss = model.get_loss(model.trainable_params, [labels, output])
+            loss.backward()
+            optimizer.step()
+
+            if i %% 500 == 499:
+                accuracy, loss_val = validation(val_inputs, val_labels)
+                print('[%%d, %%5d] accuracy: %%.3f, loss: %%.3f' %%
+                      (epoch + 1, i + 1, accuracy, loss_val))
+                %s
+        learning_rate.step()
+    print('Finished Training')
+""" % save_str
+
+
+def validation():
+    return """
+def validation(inputs, labels):
+    with torch.no_grad():
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        outputs = model(inputs, False)
+        _, predicted = torch.max(outputs.data, 1)
+        total = labels.size(0)
+        correct = (predicted == labels).sum().item()
+        loss = model.get_loss(model.trainable_params, [labels, outputs])
+    return correct / total, loss
+
+"""
+
 ## User defined layers:
 
 ### Linear regression 2D
