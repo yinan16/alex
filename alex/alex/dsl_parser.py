@@ -19,6 +19,7 @@ import traceback
 from typing import Union
 
 from alex.alex import checkpoint, const, util, validation, registry
+from alex.alex.logger import logger
 
 
 strs = list(string.ascii_lowercase)
@@ -359,8 +360,16 @@ def eval_inputs(inputs, components):
                     for _b, _base in enumerate(component[const.META][const.INPUTS]):
                         if isinstance(_base, dict):
                             continue
-                        base_name = _base.split("/")[-1]
-                        _in = prev_dir + base_name
+                        # TO_BE_TESTED
+                        current_scope = component[const.META]["scope"]
+                        if current_scope in registry.BLOCKS:
+                            if "/" not in _base:
+                                _in = "%s/%s" % (current_scope, _base)
+                            else:
+                                _in = _base
+                        else:
+                            base_name = _base.split("/")[-1]
+                            _in = prev_dir + base_name
                         component[const.META][const.INPUTS][_b] = _in
 
         if const.RPT_IDX in component[const.META]:
@@ -472,7 +481,8 @@ def connect_to(components, current_component_type, current_component_hyperparams
         return _component["meta"]["type"]
 
     if scope != "all" and (scope != "current"):
-        raise Exception("scope has to be 'current' or 'all'!")
+        logger.error("Scope has to be 'current' or 'all'!")
+        raise Exception
     if current_component_hyperparams is None:
         current_component_hyperparams = components[-1]["value"]["hyperparams"]
     current_component_name_scope = _get_name_scope(components[-1])
@@ -597,7 +607,8 @@ def draw_graph(graph_list, level=2, graph_path='example.png', show="name"):
             label = name.split("/")[-1]# .split("_")[0]
         else:
             if show not in component["meta"] or show=="type":
-                raise Exception("Lable '%s' is not available" % show)
+                logger.error("Lable '%s' is not available" % show)
+                raise Exception
             label = str(component["meta"][show])
         node.set_label(label)
         graph.add_node(node)
@@ -725,8 +736,9 @@ def draw_hyperparam_tree(graph,
                 if _is_simple(_node):
                     label = str(_node) # node is simple
                 else:
-                    print(_node)
-                    raise Exception("Unrecognized node type")
+                    pprint(_node)
+                    logger.error("Unrecognized node type")
+                    raise Exception
 
                 name = "%s/%s" % (parent_node, label)
                 if isinstance(_graph, list):
@@ -855,9 +867,8 @@ def annotate(components, lazy=True):
 
             inputs = component["meta"]["inputs"]
         except Exception:
-            print("------------- Component %s annotation failed ----------" % (name))
-            traceback.print_exc()
-            raise
+            logger.error("Component %s annotation failed" % (name))
+            raise Exception
         components[name] = component
     return list(components.values())
 
@@ -916,9 +927,9 @@ def parse(yml_file, return_dict=False, lazy=True):
         graph = annotate(graph, lazy=lazy) # json schema
         # Step 5: load graph and states from checkpoint; check if the structure matches the one defined in the DSL
     except Exception:
-        message = "-------------- Error during parsing configuration %s ----------" % yml_file
-        traceback.print_exc()
-        raise
+        message = "Error during parsing configuration %s" % yml_file
+        logger.error(message)
+        raise Exception
     if return_dict:
         graph = list_to_dict(graph)
     return graph

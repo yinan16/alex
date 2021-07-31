@@ -47,9 +47,15 @@ class Ingredient():
     def get_input_shape(self, component, components):
         if component["meta"]["inputs"] is None or component["meta"]["inputs"] == "inputs":
             return None
-
-        return list(map(lambda x: components[x]["meta"]["shape"] if x in components else None,
-                        component["meta"]["inputs"]))
+        input_shape = []
+        for _input in component["meta"]["inputs"]:
+            if _input in components:
+                input_shape.append(components[_input]["meta"]["shape"])
+            else:
+                logger.error("Component '%s' (of type %s) input '%s' seems to be invalid. Please spell check." % (component["meta"]["name"], component["meta"]["type"], _input))
+                raise Exception
+                # input_shape.append(None)
+        return input_shape
 
     def get_shape(self, component, components):
         return self.get_input_shape(component, components)[0]
@@ -81,13 +87,14 @@ class Ingredient():
                         msg = "Number of inputs mismatch %s (ingredient: %s, dim %s)" % (component["meta"]["name"],
                                                                                          component["meta"]["type"],
                                                                          str(dims))
-                        raise Exception(msg)
+                        # raise Exception(msg)
                     elif len(list(filter(lambda x: len(x[0]) != len(x[1]),
                                          zip(trans[0], dims[0]))))!=0:
                         msg = "Tensor rank mismatch %s (ingredient: %s, dim: %s)" % (component["meta"]["name"],
                                                                                     component["meta"]["type"],
                                                                                      str(dims))
-                        raise Exception(msg)
+                        # logger.error(msg)
+                        raise Exception
                     else:
                         trans_ = [i for sub in trans[0] for i in sub] + trans[1]
                         dims_ = [i for sub in dims[0] for i in sub] + dims[1]
@@ -97,16 +104,18 @@ class Ingredient():
                         for r in pattern_required:
                             if pattern_required and (not pattern_data):
                                 msg = "Tensor dimension mismatch" % component["meta"]["name"]
-                                raise Exception(msg)
+                                # logger.error(msg)
+                                raise Exception
                     valid = True
                 except:
                     pass
                     # traceback.print_exc()
                     # raise Exception(msg)
             if not valid:
-                print("*************Validation failed", component["meta"]["name"])
-                print("Dimension", dims)
-                raise Exception(msg)
+                logger.error("Validation failed", component["meta"]["name"])
+                logger.error(msg)
+                logger.error("Dimension", dims)
+                raise Exception
 
 
 # ------------------------------------------------------------------------ #
