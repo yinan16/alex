@@ -547,9 +547,11 @@ class TrainableParams(param_count.Hyperparam):
         node_tag = FUNCTION
 
         ingredient = core.get_parent(node["name"],
-                                     annotated,
-                                     "value")
-        is_trainable = registry.PARAMS[ingredient][node["value"]]["derivative"]
+                                     annotated)
+        if ingredient["meta"]["trainable"] is not None:
+            is_trainable = ingredient["meta"]["trainable"]
+        else:
+            is_trainable = registry.PARAMS[ingredient["value"]][node["value"]]["derivative"]
         args["is_trainable"] = {"key": "is_trainable",
                                 "value": is_trainable,
                                 "ref": None,

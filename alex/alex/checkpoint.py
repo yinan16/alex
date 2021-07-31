@@ -69,7 +69,7 @@ def load(graph_list,
         ckpt_components = dsl_parser.list_to_dict(ckpt["components"])
         for i, component in enumerate(graph_list):
             name_in_new_config = component["meta"]["name"]
-            if matched is None or name_in_new_config in matched:
+            if matched is not None and name_in_new_config in matched:
                 name_in_ckpt = matched[component["meta"]["name"]]
                 _params = deepcopy(ckpt_components[name_in_ckpt]["value"]["var"])
                 component["value"]["var"] = dict()

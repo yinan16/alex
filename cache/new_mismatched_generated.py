@@ -24,93 +24,93 @@ class Model(torch.nn.Module):
     @staticmethod
     def get_trainable_params(ckpt):
         trainable_params = dict()
-        model_block_conv_6gw_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_6gw/filters']), dtype=torch_types['float32'], device=device)
-        model_block_conv_6gw_filters = torch.nn.parameter.Parameter(data=model_block_conv_6gw_filters_initializer_xavier_uniform, requires_grad=True)
-        trainable_params['model_block/conv_6gw/filters'] = model_block_conv_6gw_filters
-        model_block_batch_normalize_12ms_mean_initializer_zeros_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_12ms/mean']), dtype=torch_types['float32'], device=device)
-        model_block_batch_normalize_12ms_mean = torch.nn.parameter.Parameter(data=model_block_batch_normalize_12ms_mean_initializer_zeros_initializer, requires_grad=False)
-        trainable_params['model_block/batch_normalize_12ms/mean'] = model_block_batch_normalize_12ms_mean
-        model_block_batch_normalize_12ms_offset_initializer_zeros_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_12ms/offset']), dtype=torch_types['float32'], device=device)
-        model_block_batch_normalize_12ms_offset = torch.nn.parameter.Parameter(data=model_block_batch_normalize_12ms_offset_initializer_zeros_initializer, requires_grad=True)
-        trainable_params['model_block/batch_normalize_12ms/offset'] = model_block_batch_normalize_12ms_offset
-        model_block_batch_normalize_12ms_scale_initializer_ones_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_12ms/scale']), dtype=torch_types['float32'], device=device)
-        model_block_batch_normalize_12ms_scale = torch.nn.parameter.Parameter(data=model_block_batch_normalize_12ms_scale_initializer_ones_initializer, requires_grad=True)
-        trainable_params['model_block/batch_normalize_12ms/scale'] = model_block_batch_normalize_12ms_scale
-        model_block_batch_normalize_12ms_variance_initializer_ones_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_12ms/variance']), dtype=torch_types['float32'], device=device)
-        model_block_batch_normalize_12ms_variance = torch.nn.parameter.Parameter(data=model_block_batch_normalize_12ms_variance_initializer_ones_initializer, requires_grad=False)
-        trainable_params['model_block/batch_normalize_12ms/variance'] = model_block_batch_normalize_12ms_variance
-        model_block_resnet_16_27bi_conv_14oi_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/resnet_16_27bi/conv_14oi/filters']), dtype=torch_types['float32'], device=device)
-        model_block_resnet_16_27bi_conv_14oi_filters = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_conv_14oi_filters_initializer_xavier_uniform, requires_grad=True)
-        trainable_params['model_block/resnet_16_27bi/conv_14oi/filters'] = model_block_resnet_16_27bi_conv_14oi_filters
-        model_block_resnet_16_27bi_batch_normalize_16qy_mean_initializer_zeros_initializer = torch.nn.init.zeros_(tensor=torch.empty(*[16, ]))
-        model_block_resnet_16_27bi_batch_normalize_16qy_mean = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_batch_normalize_16qy_mean_initializer_zeros_initializer, requires_grad=False)
-        trainable_params['model_block/resnet_16_27bi/batch_normalize_16qy/mean'] = model_block_resnet_16_27bi_batch_normalize_16qy_mean
-        model_block_resnet_16_27bi_batch_normalize_16qy_offset_initializer_zeros_initializer = torch.nn.init.zeros_(tensor=torch.empty(*[16, ]))
-        model_block_resnet_16_27bi_batch_normalize_16qy_offset = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_batch_normalize_16qy_offset_initializer_zeros_initializer, requires_grad=True)
-        trainable_params['model_block/resnet_16_27bi/batch_normalize_16qy/offset'] = model_block_resnet_16_27bi_batch_normalize_16qy_offset
-        model_block_resnet_16_27bi_batch_normalize_16qy_scale_initializer_ones_initializer = torch.nn.init.ones_(tensor=torch.empty(*[16, ]))
-        model_block_resnet_16_27bi_batch_normalize_16qy_scale = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_batch_normalize_16qy_scale_initializer_ones_initializer, requires_grad=True)
-        trainable_params['model_block/resnet_16_27bi/batch_normalize_16qy/scale'] = model_block_resnet_16_27bi_batch_normalize_16qy_scale
-        model_block_resnet_16_27bi_batch_normalize_16qy_variance_initializer_ones_initializer = torch.nn.init.ones_(tensor=torch.empty(*[16, ]))
-        model_block_resnet_16_27bi_batch_normalize_16qy_variance = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_batch_normalize_16qy_variance_initializer_ones_initializer, requires_grad=False)
-        trainable_params['model_block/resnet_16_27bi/batch_normalize_16qy/variance'] = model_block_resnet_16_27bi_batch_normalize_16qy_variance
-        model_block_resnet_16_27bi_conv_20ue_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 16, 3, 3]))
-        model_block_resnet_16_27bi_conv_20ue_filters = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_conv_20ue_filters_initializer_xavier_uniform, requires_grad=True)
-        trainable_params['model_block/resnet_16_27bi/conv_20ue/filters'] = model_block_resnet_16_27bi_conv_20ue_filters
-        model_block_resnet_16_27bi_conv_mean_initializer_zeros_initializer = torch.nn.init.zeros_(tensor=torch.empty(*[16, ]))
-        model_block_resnet_16_27bi_conv_mean = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_conv_mean_initializer_zeros_initializer, requires_grad=False)
-        trainable_params['model_block/resnet_16_27bi/conv/mean'] = model_block_resnet_16_27bi_conv_mean
-        model_block_resnet_16_27bi_conv_offset_initializer_zeros_initializer = torch.nn.init.zeros_(tensor=torch.empty(*[16, ]))
-        model_block_resnet_16_27bi_conv_offset = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_conv_offset_initializer_zeros_initializer, requires_grad=True)
-        trainable_params['model_block/resnet_16_27bi/conv/offset'] = model_block_resnet_16_27bi_conv_offset
-        model_block_resnet_16_27bi_conv_scale_initializer_ones_initializer = torch.nn.init.ones_(tensor=torch.empty(*[16, ]))
-        model_block_resnet_16_27bi_conv_scale = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_conv_scale_initializer_ones_initializer, requires_grad=True)
-        trainable_params['model_block/resnet_16_27bi/conv/scale'] = model_block_resnet_16_27bi_conv_scale
-        model_block_resnet_16_27bi_conv_variance_initializer_ones_initializer = torch.nn.init.ones_(tensor=torch.empty(*[16, ]))
-        model_block_resnet_16_27bi_conv_variance = torch.nn.parameter.Parameter(data=model_block_resnet_16_27bi_conv_variance_initializer_ones_initializer, requires_grad=False)
-        trainable_params['model_block/resnet_16_27bi/conv/variance'] = model_block_resnet_16_27bi_conv_variance
-        model_block_dense_31fo_bias_initializer_zeros_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/dense_31fo/bias']), dtype=torch_types['float32'], device=device)
-        model_block_dense_31fo_bias = torch.nn.parameter.Parameter(data=model_block_dense_31fo_bias_initializer_zeros_initializer, requires_grad=True)
-        trainable_params['model_block/dense_31fo/bias'] = model_block_dense_31fo_bias
-        model_block_dense_31fo_weights_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/dense_31fo/weights']), dtype=torch_types['float32'], device=device)
-        model_block_dense_31fo_weights = torch.nn.parameter.Parameter(data=model_block_dense_31fo_weights_initializer_xavier_uniform, requires_grad=True)
-        trainable_params['model_block/dense_31fo/weights'] = model_block_dense_31fo_weights
+        model_block_conv_4eg_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_4eg/filters']), dtype=torch_types['float32'], device=device)
+        model_block_conv_4eg_filters = torch.nn.parameter.Parameter(data=model_block_conv_4eg_filters_initializer_xavier_uniform, requires_grad=False)
+        trainable_params['model_block/conv_4eg/filters'] = model_block_conv_4eg_filters
+        model_block_batch_normalize_10kc_mean_initializer_zeros_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_10kc/mean']), dtype=torch_types['float32'], device=device)
+        model_block_batch_normalize_10kc_mean = torch.nn.parameter.Parameter(data=model_block_batch_normalize_10kc_mean_initializer_zeros_initializer, requires_grad=False)
+        trainable_params['model_block/batch_normalize_10kc/mean'] = model_block_batch_normalize_10kc_mean
+        model_block_batch_normalize_10kc_offset_initializer_zeros_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_10kc/offset']), dtype=torch_types['float32'], device=device)
+        model_block_batch_normalize_10kc_offset = torch.nn.parameter.Parameter(data=model_block_batch_normalize_10kc_offset_initializer_zeros_initializer, requires_grad=True)
+        trainable_params['model_block/batch_normalize_10kc/offset'] = model_block_batch_normalize_10kc_offset
+        model_block_batch_normalize_10kc_scale_initializer_ones_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_10kc/scale']), dtype=torch_types['float32'], device=device)
+        model_block_batch_normalize_10kc_scale = torch.nn.parameter.Parameter(data=model_block_batch_normalize_10kc_scale_initializer_ones_initializer, requires_grad=True)
+        trainable_params['model_block/batch_normalize_10kc/scale'] = model_block_batch_normalize_10kc_scale
+        model_block_batch_normalize_10kc_variance_initializer_ones_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_10kc/variance']), dtype=torch_types['float32'], device=device)
+        model_block_batch_normalize_10kc_variance = torch.nn.parameter.Parameter(data=model_block_batch_normalize_10kc_variance_initializer_ones_initializer, requires_grad=False)
+        trainable_params['model_block/batch_normalize_10kc/variance'] = model_block_batch_normalize_10kc_variance
+        model_block_conv_12ms_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_12ms/filters']), dtype=torch_types['float32'], device=device)
+        model_block_conv_12ms_filters = torch.nn.parameter.Parameter(data=model_block_conv_12ms_filters_initializer_xavier_uniform, requires_grad=False)
+        trainable_params['model_block/conv_12ms/filters'] = model_block_conv_12ms_filters
+        model_block_feature_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/feature/filters']), dtype=torch_types['float32'], device=device)
+        model_block_feature_filters = torch.nn.parameter.Parameter(data=model_block_feature_filters_initializer_xavier_uniform, requires_grad=False)
+        trainable_params['model_block/feature/filters'] = model_block_feature_filters
         return trainable_params
     
     @staticmethod
     def model(data_block_input_data, trainable_params, training):
-        model_block_conv_6gw = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/conv_6gw/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
-        model_block_relu_8im = torch.nn.functional.relu(input=model_block_conv_6gw, inplace=False)
-        model_block_dropout_10kc = torch.nn.functional.dropout(input=model_block_relu_8im, p=0.2, training=training, inplace=False)
-        model_block_batch_normalize_12ms = torch.nn.functional.batch_norm(input=model_block_dropout_10kc, running_mean=trainable_params['model_block/batch_normalize_12ms/mean'], running_var=trainable_params['model_block/batch_normalize_12ms/variance'], weight=trainable_params['model_block/batch_normalize_12ms/scale'], bias=trainable_params['model_block/batch_normalize_12ms/offset'], training=training, momentum=0.1, eps=0.001)
-        model_block_resnet_16_27bi_conv_14oi = torch.nn.functional.conv2d(input=model_block_batch_normalize_12ms, weight=trainable_params['model_block/resnet_16_27bi/conv_14oi/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
-        model_block_resnet_16_27bi_batch_normalize_16qy = torch.nn.functional.batch_norm(input=model_block_resnet_16_27bi_conv_14oi, running_mean=trainable_params['model_block/resnet_16_27bi/batch_normalize_16qy/mean'], running_var=trainable_params['model_block/resnet_16_27bi/batch_normalize_16qy/variance'], weight=trainable_params['model_block/resnet_16_27bi/batch_normalize_16qy/scale'], bias=trainable_params['model_block/resnet_16_27bi/batch_normalize_16qy/offset'], training=training, momentum=0.1, eps=0.001)
-        model_block_resnet_16_27bi_relu_18so = torch.nn.functional.relu(input=model_block_resnet_16_27bi_batch_normalize_16qy, inplace=False)
-        model_block_resnet_16_27bi_conv_20ue = torch.nn.functional.conv2d(input=model_block_resnet_16_27bi_relu_18so, weight=trainable_params['model_block/resnet_16_27bi/conv_20ue/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
-        model_block_resnet_16_27bi_conv = torch.nn.functional.batch_norm(input=model_block_resnet_16_27bi_conv_20ue, running_mean=trainable_params['model_block/resnet_16_27bi/conv/mean'], running_var=trainable_params['model_block/resnet_16_27bi/conv/variance'], weight=trainable_params['model_block/resnet_16_27bi/conv/scale'], bias=trainable_params['model_block/resnet_16_27bi/conv/offset'], training=training, momentum=0.1, eps=0.001)
-        model_block_resnet_16_27bi_add_24yk = torch.add(input=[model_block_batch_normalize_12ms, model_block_resnet_16_27bi_conv][0], other=[model_block_batch_normalize_12ms, model_block_resnet_16_27bi_conv][1])
-        model_block_resnet_16_27bi_relu_26aa = torch.nn.functional.relu(input=model_block_resnet_16_27bi_add_24yk, inplace=False)
-        model_block_flatten_29dy = torch.flatten(input=model_block_resnet_16_27bi_relu_26aa, start_dim=1, end_dim=-1)
-        model_block_dense_31fo = torch.nn.functional.linear(weight=trainable_params['model_block/dense_31fo/weights'], bias=trainable_params['model_block/dense_31fo/bias'], input=model_block_flatten_29dy)
-        model_block_softmax_33he = torch.nn.functional.softmax(input=model_block_dense_31fo, dim=None)
-        model_block_d_1 = torch.sigmoid(input=model_block_softmax_33he)
-        return model_block_d_1 
+        model_block_conv_4eg = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/conv_4eg/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
+        model_block_reluu = torch.nn.functional.relu(input=model_block_conv_4eg, inplace=False)
+        model_block_dropout_8im = torch.nn.functional.dropout(input=model_block_reluu, p=0.2, training=training, inplace=False)
+        model_block_batch_normalize_10kc = torch.nn.functional.batch_norm(input=model_block_dropout_8im, running_mean=trainable_params['model_block/batch_normalize_10kc/mean'], running_var=trainable_params['model_block/batch_normalize_10kc/variance'], weight=trainable_params['model_block/batch_normalize_10kc/scale'], bias=trainable_params['model_block/batch_normalize_10kc/offset'], training=training, momentum=0.1, eps=0.001)
+        model_block_conv_12ms = torch.nn.functional.conv2d(input=model_block_batch_normalize_10kc, weight=trainable_params['model_block/conv_12ms/filters'], bias=None, stride=1, padding=[0, 0], dilation=1, groups=1)
+        model_block_feature = torch.nn.functional.conv2d(input=model_block_conv_12ms, weight=trainable_params['model_block/feature/filters'], bias=None, stride=1, padding=[0, 0], dilation=1, groups=1)
+        return model_block_feature 
     
-    @staticmethod
-    def get_loss(trainable_params, inputs):
-        loss_block_losses = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=inputs[0], input=inputs[1])
-        return loss_block_losses 
-    
-    @staticmethod
-    def get_optimizer(trainable_params):
-        optimizer_block_solver = torch.optim.Adam(params=trainable_params, lr=0.0001, betas=(0.9, 0.999), eps=1e-08)
-        return optimizer_block_solver 
-    
-    @staticmethod
-    def get_scheduler(optimizer):
-        optimizer_block_solver_decay_exponential_decay = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.96, last_epoch=-1, verbose=False)
-        return optimizer_block_solver_decay_exponential_decay 
-    
+from alex.alex.checkpoint import Checkpoint
+
+C = Checkpoint("examples/configs/small1_linear.yml",
+               ['checkpoints', 'test_code_gen_ckpt.json'],
+               None)
+
+ckpt = C.load()
+
+model = Model(ckpt)
+
+model.to(device)
+
+optimizer = model.get_optimizer(model.params)
+
+learning_rate = model.get_scheduler(optimizer)
+
+
+def validation(inputs, labels):
+    with torch.no_grad():
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        outputs = model(inputs, False)
+        _, predicted = torch.max(outputs.data, 1)
+        total = labels.size(0)
+        correct = (predicted == labels).sum().item()
+        loss = model.get_loss(model.trainable_params, [labels, outputs])
+    return correct / total, loss
+
+
+def loop(trainloader, val_inputs, val_labels):
+    for epoch in range(90):
+
+        for i, data in enumerate(trainloader, 0):
+
+            inputs, labels = data
+
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            optimizer.zero_grad()
+
+            output = model(inputs, True)
+            loss = model.get_loss(model.trainable_params, [labels, output])
+            loss.backward()
+            optimizer.step()
+
+            if i % 500 == 499:
+                accuracy, loss_val = validation(val_inputs, val_labels)
+                print('[%d, %5d] accuracy: %.3f, loss: %.3f' %
+                      (epoch + 1, i + 1, accuracy, loss_val))
+                
+        learning_rate.step()
+    print('Finished Training')
+
 
 import torchvision
 import torchvision.transforms as transforms

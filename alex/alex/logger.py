@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------
 import logging
 
+
 class Logger(logging.StreamHandler):
 
     def __init__(self, stream=None):
@@ -24,6 +25,9 @@ class Logger(logging.StreamHandler):
     def get_logger(self):
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
+        logging.getLogger("matplotlib").setLevel(logging.ERROR)
+        logging.getLogger("pydot").setLevel(logging.ERROR)
+        logging.getLogger("PIL").setLevel(logging.ERROR)
         logger.addHandler(self)
         return logger
 

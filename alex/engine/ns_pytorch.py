@@ -36,6 +36,12 @@ def add_global_configs():
     return deterministic + device + dtypes + space
 
 
+def add_code_block(code, block):
+    if block != "":
+        code.append(ns_alex.indent("@staticmethod", levels=1))
+        code.append(ns_alex.indent(block.replace("\n", "\n\t"), levels=1))
+
+
 def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_code, scheduler_code=""):
     code = []
     code.append("class Model(torch.nn.Module):")
@@ -53,17 +59,11 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
                                levels=2))
     code.append(ns_alex.indent("return x", levels=2))
     code.append("")
-    code.append(ns_alex.indent("@staticmethod", levels=1))
-    code.append(ns_alex.indent(trainable_params_code.replace("\n", "\n\t"), levels=1))
-    code.append(ns_alex.indent("@staticmethod", levels=1))
-    code.append(ns_alex.indent(component_code.replace("\n", "\n\t"), levels=1))
-    code.append(ns_alex.indent("@staticmethod", levels=1))
-    code.append(ns_alex.indent(loss_code.replace("\n", "\n\t"), levels=1))
-    code.append(ns_alex.indent("@staticmethod", levels=1))
-    code.append(ns_alex.indent(optimizer_code.replace("\n", "\n\t"), levels=1))
-    if scheduler_code != "":
-        code.append(ns_alex.indent("@staticmethod", levels=1))
-        code.append(ns_alex.indent(scheduler_code.replace("\n", "\n\t"), levels=1))
+    add_code_block(code, trainable_params_code)
+    add_code_block(code, component_code)
+    add_code_block(code, loss_code)
+    add_code_block(code, optimizer_code)
+    add_code_block(code, scheduler_code)
     code = "\n".join(code)
     return code
 

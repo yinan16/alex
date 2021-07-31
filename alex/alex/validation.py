@@ -12,6 +12,7 @@ import traceback
 from copy import deepcopy
 from jsonschema import validate
 from alex.alex import const, util
+from alex.alex.logger import logger
 import os
 
 
@@ -33,10 +34,15 @@ class Ingredient():
 
     def eval_input_channels(self, component, components):
         inputs = self.get_input_shape(component, components)
-        if inputs is not None:
-            util.replace_key(component["value"]["hyperparams"],
-                             "input_shape",
-                             inputs[0][-1])
+        try:
+            if inputs is not None:
+                util.replace_key(component["value"]["hyperparams"],
+                                "input_shape",
+                                 inputs[0][-1])
+        except Exception as err:
+            logger.error(err)
+            logger.error("Ingredient %s (type: %s) invalid inputs" % (component["meta"]["name"],
+                                                                      component["meta"]["type"]))
 
     def get_input_shape(self, component, components):
         if component["meta"]["inputs"] is None or component["meta"]["inputs"] == "inputs":
