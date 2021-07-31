@@ -282,21 +282,21 @@
         {
             "value": {
                 "hyperparams": {
+                    "padding": "VALID",
                     "filters": {
+                        "dtype": "float32",
                         "shape": {
-                            "n_filters": 16,
                             "kernel_size_w": 3,
                             "kernel_size_h": 3,
-                            "input_shape": 16
+                            "input_shape": 16,
+                            "n_filters": 64
                         },
-                        "dtype": "float32",
                         "initializer": {
                             "xavier_uniform": {
                                 "seed": 1
                             }
                         }
                     },
-                    "padding": "SAME",
                     "strides": [
                         1,
                         1
@@ -331,26 +331,22 @@
                     ]
                 ],
                 "shape": [
-                    32,
-                    32,
-                    16
+                    30,
+                    30,
+                    64
                 ]
             }
         },
         {
             "value": {
                 "hyperparams": {
-                    "padding": "SAME",
-                    "strides": [
-                        1,
-                        1
-                    ],
+                    "padding": "VALID",
                     "filters": {
                         "dtype": "float32",
                         "shape": {
                             "kernel_size_w": 3,
                             "kernel_size_h": 3,
-                            "input_shape": 16,
+                            "input_shape": 64,
                             "n_filters": 64
                         },
                         "initializer": {
@@ -359,6 +355,10 @@
                             }
                         }
                     },
+                    "strides": [
+                        1,
+                        1
+                    ],
                     "dilation": 1
                 },
                 "var": {},
@@ -383,14 +383,14 @@
                 ],
                 "input_shape": [
                     [
-                        32,
-                        32,
-                        16
+                        30,
+                        30,
+                        64
                     ]
                 ],
                 "shape": [
-                    32,
-                    32,
+                    28,
+                    28,
                     64
                 ]
             }
@@ -420,13 +420,13 @@
                 ],
                 "input_shape": [
                     [
-                        32,
-                        32,
+                        28,
+                        28,
                         64
                     ]
                 ],
                 "shape": [
-                    65536
+                    50176
                 ]
             }
         },
@@ -441,7 +441,7 @@
                             }
                         },
                         "shape": {
-                            "input_shape": 65536,
+                            "input_shape": 50176,
                             "n_units": 10
                         }
                     },
@@ -477,7 +477,7 @@
                 ],
                 "input_shape": [
                     [
-                        65536
+                        50176
                     ]
                 ],
                 "shape": [

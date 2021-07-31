@@ -77,6 +77,7 @@ def alex_reader(user_defined):
               const.INPUTS: _read_inputs,
               const.HYPERPARAMS: _read_hyperparams,
               "visible": lambda x: {**{"visible": True}, **x} if "visible" not in x else clone(x),
+              "trainable": lambda x: {**{"trainable": None}, **x} if "trainable" not in x else clone(x),
               "dtype": lambda x: {**{"dtype": default["dtype"]}, **x} if "dtype" not in x else clone(x)}
     return reader
 
@@ -196,6 +197,7 @@ def _get_node(component):
             graph[const.META][m] = component[m]
     graph[const.META][const.NAME] = None
     graph[const.META]["visible"] = component["visible"]
+    graph[const.META]["trainable"] = component["trainable"]
     graph[const.META]["block"] = component["block"]
     graph[const.META]["dtype"] = component["dtype"]
     graph[const.META][const.SCOPE] = component[const.SCOPE] if const.SCOPE in component else component[const.TYPE]
@@ -357,11 +359,8 @@ def eval_inputs(inputs, components):
                     for _b, _base in enumerate(component[const.META][const.INPUTS]):
                         if isinstance(_base, dict):
                             continue
-                        if prev_dir in _base:
-                            _in = name_map[_base]
-                        else:
-                            base_name = _base.split("/")[-1]
-                            _in = prev_dir + base_name
+                        base_name = _base.split("/")[-1]
+                        _in = prev_dir + base_name
                         component[const.META][const.INPUTS][_b] = _in
 
         if const.RPT_IDX in component[const.META]:

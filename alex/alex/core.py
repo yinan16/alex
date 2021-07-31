@@ -14,8 +14,10 @@ import matplotlib.image as mpimg
 from io import BytesIO
 from pprint import pprint
 import json
+import warnings
 
 from alex.alex import const, dsl_parser, util, registry
+from alex.alex.logger import logger
 
 
 def get_value_type(label):
@@ -229,6 +231,8 @@ def alex_graph_to_json(graph,
                              "label": label,
                              "name": root_name,
                              "meta": {"hyperparams": graph["hyperparams"],
+                                      "trainable": graph["meta"]["trainable"],
+                                      "visible": graph["meta"]["visible"],
                                       "position": _position,
                                       "label_path": label_path,
                                       "block": graph["meta"]["block"]}}
@@ -260,6 +264,8 @@ def alex_graph_to_json(graph,
                              "label": graph["type"],
                              "name": root_name,
                              "meta": {"hyperparams": {},
+                                      "trainable": graph["meta"]["trainable"],
+                                      "visible": graph["meta"]["visible"],
                                       "position": _position,
                                       "label_path": label_path,
                                       "block": graph["meta"]["block"]}}
@@ -459,7 +465,6 @@ def draw(tree, graph_path='example.png', annotation=dict(), dpi=800, size=5, lab
 
             edge = pydot.Edge(component, child)
             graph.add_edge(edge)
-
     if graph_path is None:
         png = graph.create_png(prog="dot")
         bio = BytesIO()

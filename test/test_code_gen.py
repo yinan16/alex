@@ -8,7 +8,7 @@
 import unittest
 import os
 from pprint import pprint
-from alex.alex import core, const, dsl_parser, util
+from alex.alex import core, const, dsl_parser, util, checkpoint
 from alex.annotators import code_gen
 
 
@@ -31,9 +31,8 @@ class TestCodeGen(unittest.TestCase):
             code_gen.generate_python(code_path,
                                      self.config_path,
                                      engine,
-                                     dirname=const.CACHE_BASE_PATH, def_only=False)
-                                     # load_ckpt=["checkpoints",
-                                     #            "config_1626993992750915.json"])
+                                     dirname=const.CACHE_BASE_PATH,
+                                     def_only=False)
             util.concatenate_files([code_path,
                                     boiler_plate],
                                    code_path)
@@ -42,12 +41,20 @@ class TestCodeGen(unittest.TestCase):
     def test_mismatched(self):
         code_path = os.path.join(const.CACHE_BASE_PATH,
                                  "new_mismatched_generated.py")
+        ckpt_name = "test_code_gen_ckpt.json"
+
+        ckpt = checkpoint.Checkpoint("examples/configs/small1_orig.yml",
+                                     ["checkpoints",
+                                      None],
+                                     ["checkpoints", ckpt_name])
+        ckpt.save()
         code_gen.generate_python(code_path,
-                                 self.config_path_alt,
+                                 "examples/configs/small1_linear.yml",
                                  "pytorch",
                                  dirname=const.CACHE_BASE_PATH,
                                  load_ckpt=["checkpoints",
-                                            "test.json"])
+                                            ckpt_name],
+                                 def_only=False)
         util.concatenate_files([code_path,
                                 "alex/engine/example_data_pytorch.py"],
                                code_path)
