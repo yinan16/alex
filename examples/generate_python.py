@@ -22,9 +22,10 @@ def main(network_config,
         code_gen.generate_python(filepath,
                                  network_config,
                                  engine=engine,
-                                 dirname=code_dir)
+                                 dirname=code_dir,
+                                 def_only=False)
         boilerplate_file = os.path.join(const.ENGINE_PATH,
-                                        "example_boilerplate_%s.py" % engine)
+                                        "example_data_%s.py" % engine)
         util.concatenate_files([filepath,
                                 boilerplate_file],
                                filepath)
