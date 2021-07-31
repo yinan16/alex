@@ -41,13 +41,26 @@ class TestCodeGen(unittest.TestCase):
     def test_mismatched(self):
         code_path = os.path.join(const.CACHE_BASE_PATH,
                                  "new_mismatched_generated.py")
-        ckpt_name = "test_code_gen_ckpt.json"
+        code_path_orig = os.path.join(const.CACHE_BASE_PATH,
+                                      "small1_orig.py")
+        ckpt_name = "test_code_gen_ckpt_trained.json"
 
-        ckpt = checkpoint.Checkpoint("examples/configs/small1_orig.yml",
-                                     ["checkpoints",
-                                      None],
-                                     ["checkpoints", ckpt_name])
-        ckpt.save()
+        code_gen.generate_python(code_path_orig,
+                                 "examples/configs/small1_orig.yml",
+                                 "pytorch",
+                                 dirname=const.CACHE_BASE_PATH,
+                                 save_ckpt=["checkpoints",
+                                            ckpt_name],
+                                 def_only=False)
+        util.concatenate_files([code_path_orig,
+                                "alex/engine/example_data_pytorch.py"],
+                               code_path_orig)
+
+        # ckpt = checkpoint.Checkpoint("examples/configs/small1_orig.yml",
+        #                              ["checkpoints",
+        #                               None],
+        #                              ["checkpoints", ckpt_name])
+        # ckpt.save()
         code_gen.generate_python(code_path,
                                  "examples/configs/small1_linear.yml",
                                  "pytorch",

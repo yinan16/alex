@@ -115,8 +115,8 @@ def loop(trainloader, val_inputs, val_labels):
 
             if i %% 500 == 499:
                 accuracy, loss_val = validation(val_inputs, val_labels)
-                print('[%%d, %%5d] accuracy: %%.3f, loss: %%.3f' %%
-                      (epoch + 1, i + 1, accuracy, loss_val))
+                print('[%%d, %%d, 500] accuracy: %%.3f, loss: %%.3f' %%
+                      (epoch, i, accuracy, loss_val))
                 %s
         learning_rate.step()
     print('Finished Training')

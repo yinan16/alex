@@ -86,7 +86,7 @@ def loop(trainloader, val_inputs, val_labels):
             if i %% 500 == 499:
                 accuracy, loss = validation(val_inputs, val_labels)
                 %s
-                tf.print("[", epoch, "500]", "accuracy: ", accuracy, ", loss: ", loss)
+                tf.print("[", epoch, i, "500]", "accuracy: ", accuracy, ", loss: ", loss)
     print('Finished Training')
 
 """ % save_str

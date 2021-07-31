@@ -97,7 +97,6 @@ def codegen(engine, config, out_dir, filename,
             load_dir = "/".join(ckpt_from.split("/")[:-1])
             load_ckpt = ckpt_from.split("/")[-1]
             ckpt_from = [load_dir, load_ckpt]
-
         if ckpt_to is not None:
             save_dir = "/".join(ckpt_to.split("/")[:-1])
             save_ckpt = ckpt_to.split("/")[-1]
@@ -120,8 +119,8 @@ def codegen(engine, config, out_dir, filename,
                                filepath)
     if run_code:
         try:
-            if load_dir is not None:
-                mount_load_dir = "-v $PWD/%s:/ws/checkpoints/" % load_dir
+            if ckpt_from is not None:
+                mount_load_dir = "-v $PWD/%s:/ws/" % load_dir
             else:
                 mount_load_dir = ""
             command = "docker run --shm-size=5g --gpus all -v $PWD:/ws/ %s -w /ws/ --rm %s python %s" % (mount_load_dir,
