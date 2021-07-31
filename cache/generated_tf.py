@@ -62,6 +62,50 @@ def get_optimizer(trainable_params):
     optimizer_block_solver = tf.optimizers.Adam(learning_rate=optimizer_block_solver_decay_exponential_decay, beta_1=0.9, beta_2=0.999, epsilon=1e-08, name='optimizer_block/solver')
     return optimizer_block_solver 
 
+from alex.alex.checkpoint import Checkpoint
+
+C = Checkpoint("examples/configs/small1.yml",
+               None,
+               None)
+
+ckpt = C.load()
+
+trainable_variables = get_trainable_params(ckpt)
+
+from alex.alex import registry
+var_list = []
+for tv in trainable_variables:
+    if tv.split('/')[-1] in registry.ALL_TRAINABLE_PARAMS:
+        var_list.append(trainable_variables[tv])
+
+optimizer = get_optimizer(trainable_variables)
+
+
+def validation(inputs, labels):
+    preds = model(inputs, trainable_variables, training=False)
+    matches  = tf.equal(tf.math.argmax(preds,1), tf.math.argmax(labels,1))
+    accuracy = tf.reduce_mean(tf.cast(matches,tf.float32))
+    loss = tf.reduce_mean(get_loss(trainable_variables, [preds, labels]))
+    return accuracy, loss
+
+
+def train(x, gt, trainable_variables, var_list, optimizer):
+    with tf.GradientTape() as tape:
+        prediction = model(x, trainable_variables, training=True)
+        gradients = tape.gradient(get_loss(trainable_variables, [gt, prediction]), var_list)
+        optimizer.apply_gradients(zip(gradients, var_list))
+
+def loop(trainloader, val_inputs, val_labels):
+    for epoch in range(90):
+        for i, (inputs, labels) in enumerate(trainloader):
+            train(inputs, labels, trainable_variables, var_list, optimizer)
+            if i % 500 == 499:
+                accuracy, loss = validation(val_inputs, val_labels)
+                
+                tf.print("[", epoch, "500]", "accuracy: ", accuracy, ", loss: ", loss)
+    print('Finished Training')
+
+
 
 from tensorflow import keras
 from tensorflow.keras import datasets
@@ -97,63 +141,18 @@ class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
 # plt.show()
 
 
-# from alex.alex.checkpoint import Checkpoint
-
-# C = Checkpoint("examples/configs/small1.yml",
-#                ["cache",  "config_1622420349826577.json"],
-#                ["checkpoints", None])
-
-# ckpt = C.load()
-ckpt = None
-trainable_variables = get_trainable_params(ckpt)
-
-from alex.alex import registry
-var_list = []
-for tv in trainable_variables:
-    if tv.split("/")[-1] in registry.ALL_TRAINABLE_PARAMS:
-        var_list.append(trainable_variables[tv])
-
-
-optimizer = get_optimizer(trainable_variables)
-
-
-def train(x, gt, trainable_variables, var_list, optimizer):
-    with tf.GradientTape() as tape:
-        prediction = model(x, trainable_variables, training=True)
-        gradients = tape.gradient(get_loss(trainable_variables, [gt, prediction]), var_list)
-        optimizer.apply_gradients(zip(gradients, var_list))
-
-
-
-
-num_epochs = 90
 batch_size = 100
 
 train_loss_results = []
 train_accuracy_results = []
 
-train_ds = tf.data.Dataset.from_tensor_slices(
+trainloader = tf.data.Dataset.from_tensor_slices(
     (x_train, y_train)).shuffle(50000).batch(batch_size)
 
-test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(10000)
-for x_test, y_test in test_ds:
+testloader = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(10000)
+for test_inputs, test_labels in testloader:
     break
 
-
-for epoch in range(num_epochs):
-    for i, (batch_x, batch_y) in enumerate(train_ds):
-      train(batch_x, batch_y, trainable_variables, var_list, optimizer)
-
-    preds = model(x_test, trainable_variables, training=False)
-
-    matches_test  = tf.equal(tf.math.argmax(preds,1), tf.math.argmax(y_test,1))
-
-    epoch_accuracy = tf.reduce_mean(tf.cast(matches_test,tf.float32))
-    current_loss = get_loss(trainable_variables, [preds, y_test])
-    epoch_loss_avg = tf.reduce_mean(current_loss)
-    train_loss_results.append(epoch_loss_avg)
-    train_accuracy_results.append(epoch_accuracy)
-
-    tf.print("[", epoch, "500]", "accuracy: ", epoch_accuracy, ", loss: ",epoch_loss_avg)
+loop(trainloader, test_inputs, test_labels)
 
 

@@ -83,17 +83,70 @@ class Model(torch.nn.Module):
         optimizer_block_solver_decay_exponential_decay = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.96, last_epoch=-1, verbose=False)
         return optimizer_block_solver_decay_exponential_decay 
     
+from alex.alex.checkpoint import Checkpoint
 
-import torch
+C = Checkpoint("examples/configs/small1.yml",
+               None,
+               None)
+
+ckpt = C.load()
+
+model = Model(ckpt)
+
+model.to(device)
+
+optimizer = model.get_optimizer(model.params)
+
+learning_rate = model.get_scheduler(optimizer)
+
+
+def validation(inputs, labels):
+    with torch.no_grad():
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        outputs = model(inputs, False)
+        _, predicted = torch.max(outputs.data, 1)
+        total = labels.size(0)
+        correct = (predicted == labels).sum().item()
+        loss = model.get_loss(model.trainable_params, [labels, outputs])
+    return correct / total, loss
+
+
+def loop(trainloader, val_inputs, val_labels):
+    for epoch in range(90):
+
+        for i, data in enumerate(trainloader, 0):
+
+            inputs, labels = data
+
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            optimizer.zero_grad()
+
+            output = model(inputs, True)
+            loss = model.get_loss(model.trainable_params, [labels, output])
+            loss.backward()
+            optimizer.step()
+
+            if i % 500 == 499:
+                accuracy, loss_val = validation(val_inputs, val_labels)
+                print('[%d, %5d] accuracy: %.3f, loss: %.3f' %
+                      (epoch + 1, i + 1, accuracy, loss_val))
+                
+        learning_rate.step()
+    print('Finished Training')
+
+
 import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    [transforms.ToTensor()])
+# ,
+#      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform)
@@ -123,73 +176,10 @@ print(device)
 # show images
 # imshow(torchvision.utils.make_grid(images))
 # print labels
-print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
+# print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-test_images, test_labels = iter(testloader).next()
+test_inputs, test_labels = iter(testloader).next()
 
-def test(images, labels):
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        images = images.to(device)
-        labels = labels.to(device)
-
-        outputs = model(images, False)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-        # print('Accuracy of the network on the 10000 test images: %d %%' % (
-        #     100 * correct / total))
-    return correct / total
-
-
-# from alex.alex.checkpoint import Checkpoint
-
-# C = Checkpoint("examples/configs/small1.yml",
-#                ["cache",  "config_1622420349826577.json"],
-#                ["checkpoints", None])
-
-# ckpt = C.load()
-
-model = Model()
-
-model.to(device)
-
-optimizer = model.get_optimizer(model.params)
-
-learning_rate = model.get_scheduler(optimizer)
-
-
-for epoch in range(90):  # loop over the dataset multiple times
-
-    running_loss = 0.0
-    for i, data in enumerate(trainloader, 0):
-        # get the inputs; data is a list of [inputs, labels]
-
-        inputs, labels = data
-
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-        # zero the parameter gradients
-        optimizer.zero_grad()
-
-        # forward + backward + optimize
-        output = model(inputs, True)
-        loss = model.get_loss(model.trainable_params, [labels, output])
-        loss.backward()
-        optimizer.step()
-
-
-        # print statistics
-        running_loss += loss.item()
-        if i % 500 == 499:    # print every 2000 mini-batches
-            accuracy = test(test_images, test_labels)
-            print('[%d, %5d] accuracy: %.3f, loss: %.3f' %
-                  (epoch + 1, i + 1, accuracy, running_loss / 500))
-            # C.save(model.trainable_params)
-            running_loss = 0.0
-    learning_rate.step()
-print('Finished Training')
+loop(trainloader, test_inputs, test_labels)
 
 

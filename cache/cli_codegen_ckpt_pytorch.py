@@ -83,3 +83,56 @@ class Model(torch.nn.Module):
         optimizer_block_solver_decay_exponential_decay = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.96, last_epoch=-1, verbose=False)
         return optimizer_block_solver_decay_exponential_decay 
     
+from alex.alex.checkpoint import Checkpoint
+
+C = Checkpoint("examples/configs/small1.yml",
+               ['checkpoints', 'test.json'],
+               None)
+
+ckpt = C.load()
+
+model = Model(ckpt)
+
+model.to(device)
+
+optimizer = model.get_optimizer(model.params)
+
+learning_rate = model.get_scheduler(optimizer)
+
+
+def validation(inputs, labels):
+    with torch.no_grad():
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        outputs = model(inputs, False)
+        _, predicted = torch.max(outputs.data, 1)
+        total = labels.size(0)
+        correct = (predicted == labels).sum().item()
+        loss = model.get_loss(model.trainable_params, [labels, outputs])
+    return correct / total, loss
+
+
+def loop(trainloader, val_inputs, val_labels):
+    for epoch in range(90):
+
+        for i, data in enumerate(trainloader, 0):
+
+            inputs, labels = data
+
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            optimizer.zero_grad()
+
+            output = model(inputs, True)
+            loss = model.get_loss(model.trainable_params, [labels, output])
+            loss.backward()
+            optimizer.step()
+
+            if i % 500 == 499:
+                accuracy, loss_val = validation(val_inputs, val_labels)
+                print('[%d, %5d] accuracy: %.3f, loss: %.3f' %
+                      (epoch + 1, i + 1, accuracy, loss_val))
+                
+        learning_rate.step()
+    print('Finished Training')

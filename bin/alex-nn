@@ -16,11 +16,8 @@ import argparse
 import subprocess
 
 from alex.alex import compare, const, util, dsl_parser, registry
-from alex.alex.logger import Logger
+from alex.alex.logger import logger
 from alex.annotators import code_gen
-
-
-logger = Logger().get_logger()
 
 
 def diff(configs, to_png, verbose, dpi, mode):

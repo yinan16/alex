@@ -61,3 +61,47 @@ def get_optimizer(trainable_params):
     optimizer_block_solver_decay_exponential_decay = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate=0.0001, decay_steps=100000, decay_rate=0.96, staircase=True)
     optimizer_block_solver = tf.optimizers.Adam(learning_rate=optimizer_block_solver_decay_exponential_decay, beta_1=0.9, beta_2=0.999, epsilon=1e-08, name='optimizer_block/solver')
     return optimizer_block_solver 
+
+from alex.alex.checkpoint import Checkpoint
+
+C = Checkpoint("examples/configs/small1.yml",
+               ['checkpoints', 'test.json'],
+               None)
+
+ckpt = C.load()
+
+trainable_variables = get_trainable_params(ckpt)
+
+from alex.alex import registry
+var_list = []
+for tv in trainable_variables:
+    if tv.split('/')[-1] in registry.ALL_TRAINABLE_PARAMS:
+        var_list.append(trainable_variables[tv])
+
+optimizer = get_optimizer(trainable_variables)
+
+
+def validation(inputs, labels):
+    preds = model(inputs, trainable_variables, training=False)
+    matches  = tf.equal(tf.math.argmax(preds,1), tf.math.argmax(labels,1))
+    accuracy = tf.reduce_mean(tf.cast(matches,tf.float32))
+    loss = tf.reduce_mean(get_loss(trainable_variables, [preds, labels]))
+    return accuracy, loss
+
+
+def train(x, gt, trainable_variables, var_list, optimizer):
+    with tf.GradientTape() as tape:
+        prediction = model(x, trainable_variables, training=True)
+        gradients = tape.gradient(get_loss(trainable_variables, [gt, prediction]), var_list)
+        optimizer.apply_gradients(zip(gradients, var_list))
+
+def loop(trainloader, val_inputs, val_labels):
+    for epoch in range(90):
+        for i, (inputs, labels) in enumerate(trainloader):
+            train(inputs, labels, trainable_variables, var_list, optimizer)
+            if i % 500 == 499:
+                accuracy, loss = validation(val_inputs, val_labels)
+                
+                tf.print("[", epoch, "500]", "accuracy: ", accuracy, ", loss: ", loss)
+    print('Finished Training')
+

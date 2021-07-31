@@ -10,10 +10,7 @@ import collections
 from pprint import pprint
 from copy import deepcopy
 from alex.alex import core, dsl_parser
-from alex.alex.logger import Logger
-
-
-logger = Logger().get_logger()
+from alex.alex.logger import logger
 
 
 class Annotator(ABC):
