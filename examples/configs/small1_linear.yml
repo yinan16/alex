@@ -36,38 +36,49 @@ model_block:
     trainable: False
     hyperparams:
       padding: VALID
+  - type: flatten
     name: feature
 
+  - type: conv
+    trainable: False
+    hyperparams:
+      strides:
+        - 6
+        - 6
+    inputs:
+      - data_block/input_data
+  - type: flatten
+    name: output
 
-# loss_block:
-#   - type:
-#       cross_entropy
-#     inputs:
-#       - data_block/labels
-#       - model_block/d_1
-#     name: cross_0
+loss_block:
+  - type:
+      cross_entropy
+    inputs:
+      - model_block/feature
+      - model_block/output
+    name: cross_0
 
-#   - type:
-#       regularizer_l2
-#     inputs:
-#       - connect_to:
-#           range: :-1
-#           types:
-#             dense: weights
-#             conv: filters
-#           scope: all # default: all
-#     name: regularizer
+  - type:
+      regularizer_l2
+    inputs:
+      - connect_to:
+          range: :-1
+          types:
+            dense: weights
+            conv: filters
+          scope: all # default: all
+    name: regularizer
 
-#   - type: add
-#     inputs:
-#       - cross_0
-#       - regularizer
-#     name: losses
+  - type: add
+    inputs:
+      - cross_0
+      - regularizer
+    name: losses
 
-# optimizer_block:
-#   - type: adam
-#     inputs: loss_block/losses
-#     name: solver
-#     hyperparams:
-#       learning_rate:
-#         0.0001
+optimizer_block:
+  - type: adam
+    inputs: loss_block/losses
+    name: solver
+    hyperparams:
+      learning_rate:
+        0.0001

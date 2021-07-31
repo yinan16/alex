@@ -42,9 +42,12 @@ class Model(torch.nn.Module):
         model_block_conv_12ms_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_12ms/filters']), dtype=torch_types['float32'], device=device)
         model_block_conv_12ms_filters = torch.nn.parameter.Parameter(data=model_block_conv_12ms_filters_initializer_xavier_uniform, requires_grad=False)
         trainable_params['model_block/conv_12ms/filters'] = model_block_conv_12ms_filters
-        model_block_feature_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/feature/filters']), dtype=torch_types['float32'], device=device)
-        model_block_feature_filters = torch.nn.parameter.Parameter(data=model_block_feature_filters_initializer_xavier_uniform, requires_grad=False)
-        trainable_params['model_block/feature/filters'] = model_block_feature_filters
+        model_block_conv_14oi_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_14oi/filters']), dtype=torch_types['float32'], device=device)
+        model_block_conv_14oi_filters = torch.nn.parameter.Parameter(data=model_block_conv_14oi_filters_initializer_xavier_uniform, requires_grad=False)
+        trainable_params['model_block/conv_14oi/filters'] = model_block_conv_14oi_filters
+        model_block_conv_18so_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[64, 3, 3, 3]))
+        model_block_conv_18so_filters = torch.nn.parameter.Parameter(data=model_block_conv_18so_filters_initializer_xavier_uniform, requires_grad=False)
+        trainable_params['model_block/conv_18so/filters'] = model_block_conv_18so_filters
         return trainable_params
     
     @staticmethod
@@ -54,8 +57,28 @@ class Model(torch.nn.Module):
         model_block_dropout_8im = torch.nn.functional.dropout(input=model_block_reluu, p=0.2, training=training, inplace=False)
         model_block_batch_normalize_10kc = torch.nn.functional.batch_norm(input=model_block_dropout_8im, running_mean=trainable_params['model_block/batch_normalize_10kc/mean'], running_var=trainable_params['model_block/batch_normalize_10kc/variance'], weight=trainable_params['model_block/batch_normalize_10kc/scale'], bias=trainable_params['model_block/batch_normalize_10kc/offset'], training=training, momentum=0.1, eps=0.001)
         model_block_conv_12ms = torch.nn.functional.conv2d(input=model_block_batch_normalize_10kc, weight=trainable_params['model_block/conv_12ms/filters'], bias=None, stride=1, padding=[0, 0], dilation=1, groups=1)
-        model_block_feature = torch.nn.functional.conv2d(input=model_block_conv_12ms, weight=trainable_params['model_block/feature/filters'], bias=None, stride=1, padding=[0, 0], dilation=1, groups=1)
-        return model_block_feature 
+        model_block_conv_14oi = torch.nn.functional.conv2d(input=model_block_conv_12ms, weight=trainable_params['model_block/conv_14oi/filters'], bias=None, stride=1, padding=[0, 0], dilation=1, groups=1)
+        model_block_feature = torch.flatten(input=model_block_conv_14oi, start_dim=1, end_dim=-1)
+        model_block_conv_18so = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/conv_18so/filters'], bias=None, stride=6, padding=[1, 1], dilation=1, groups=1)
+        model_block_output = torch.flatten(input=model_block_conv_18so, start_dim=1, end_dim=-1)
+        return model_block_output 
+    
+    @staticmethod
+    def get_loss(trainable_params, inputs):
+        loss_block_cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=inputs[0], input=inputs[1])
+        loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/conv_4eg/filters', 'model_block/conv_12ms/filters', 'model_block/conv_14oi/filters', 'model_block/conv_18so/filters'])))
+        loss_block_losses = torch.add(input=[loss_block_cross_0, loss_block_regularizer][0], other=[loss_block_cross_0, loss_block_regularizer][1])
+        return loss_block_losses 
+    
+    @staticmethod
+    def get_optimizer(trainable_params):
+        optimizer_block_solver = torch.optim.Adam(params=trainable_params, lr=0.0001, betas=(0.9, 0.999), eps=1e-08)
+        return optimizer_block_solver 
+    
+    @staticmethod
+    def get_scheduler(optimizer):
+        optimizer_block_solver_decay_exponential_decay = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.96, last_epoch=-1, verbose=False)
+        return optimizer_block_solver_decay_exponential_decay 
     
 from alex.alex.checkpoint import Checkpoint
 
