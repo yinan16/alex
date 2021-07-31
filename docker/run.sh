@@ -19,5 +19,5 @@ docker run \
        -it \
        -v $PWD:/ws/ \
        -w /ws/ \
-       --rm $engine
+       --rm $engine \
        /bin/bash
