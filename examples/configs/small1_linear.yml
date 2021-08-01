@@ -11,6 +11,15 @@ data_block:
 model_block:
 
   - type: conv
+    inputs:
+      - data_block/input_data
+  - type: max_pool2d
+  - type: max_pool2d
+  - type: flatten
+    name: output
+
+loss_block:
+  - type: conv
     trainable: False
     hyperparams:
       filters:
@@ -38,21 +47,10 @@ model_block:
       padding: VALID
   - type: flatten
     name: feature
-
-  - type: conv
-    trainable: False
-    inputs:
-      - data_block/input_data
-  - type: max_pool2d
-  - type: max_pool2d
-  - type: flatten
-    name: output
-
-loss_block:
   - type:
       cross_entropy
     inputs:
-      - model_block/feature
+      - feature
       - model_block/output
     name: cross_0
 

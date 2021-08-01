@@ -25,13 +25,13 @@ def get_trainable_params(ckpt):
     model_block_conv_14oi_filters_initializer_xavier_uniform = tf.convert_to_tensor(value=np.asarray(ckpt['model_block/conv_14oi/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
     model_block_conv_14oi_filters = tf.Variable(initial_value=model_block_conv_14oi_filters_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/conv_14oi/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['model_block/conv_14oi/filters'] = model_block_conv_14oi_filters
-    model_block_conv_16qy_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(3, 3, 16, 64))
+    model_block_conv_16qy_filters_initializer_xavier_uniform = tf.convert_to_tensor(value=np.asarray(ckpt['model_block/conv_16qy/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
     model_block_conv_16qy_filters = tf.Variable(initial_value=model_block_conv_16qy_filters_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/conv_16qy/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['model_block/conv_16qy/filters'] = model_block_conv_16qy_filters
-    model_block_dense_20ue_bias_initializer_zeros_initializer = tf.zeros_initializer()(shape=[1, ])
+    model_block_dense_20ue_bias_initializer_zeros_initializer = tf.convert_to_tensor(value=np.asarray(ckpt['model_block/dense_20ue/bias']), dtype=tf_dtypes['dtype'], dtype_hint=None)
     model_block_dense_20ue_bias = tf.Variable(initial_value=model_block_dense_20ue_bias_initializer_zeros_initializer, trainable=True, caching_device=None, name='model_block/dense_20ue/bias', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['model_block/dense_20ue/bias'] = model_block_dense_20ue_bias
-    model_block_dense_20ue_weights_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=2)(shape=[65536, 10])
+    model_block_dense_20ue_weights_initializer_xavier_uniform = tf.convert_to_tensor(value=np.asarray(ckpt['model_block/dense_20ue/weights']), dtype=tf_dtypes['dtype'], dtype_hint=None)
     model_block_dense_20ue_weights = tf.Variable(initial_value=model_block_dense_20ue_weights_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/dense_20ue/weights', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['model_block/dense_20ue/weights'] = model_block_dense_20ue_weights
     return trainable_params
@@ -102,6 +102,6 @@ def loop(trainloader, val_inputs, val_labels):
             if i % 500 == 499:
                 accuracy, loss = validation(val_inputs, val_labels)
                 
-                tf.print("[", epoch, "500]", "accuracy: ", accuracy, ", loss: ", loss)
+                tf.print("[", epoch, i, "500]", "accuracy: ", accuracy, ", loss: ", loss)
     print('Finished Training')
 

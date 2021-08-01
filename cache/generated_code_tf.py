@@ -64,7 +64,7 @@ def get_optimizer(trainable_params):
 
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small1.yml",
+C = Checkpoint("./examples/configs/small1.yml",
                None,
                None)
 
@@ -102,7 +102,7 @@ def loop(trainloader, val_inputs, val_labels):
             if i % 500 == 499:
                 accuracy, loss = validation(val_inputs, val_labels)
                 
-                tf.print("[", epoch, "500]", "accuracy: ", accuracy, ", loss: ", loss)
+                tf.print("[", epoch, i, "500]", "accuracy: ", accuracy, ", loss: ", loss)
     print('Finished Training')
 
 

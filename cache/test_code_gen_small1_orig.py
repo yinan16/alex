@@ -24,31 +24,31 @@ class Model(torch.nn.Module):
     @staticmethod
     def get_trainable_params(ckpt):
         trainable_params = dict()
-        model_block_conv_6gw_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_6gw/filters']), dtype=torch_types['float32'], device=device)
+        model_block_conv_6gw_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 3, 3, 3]))
         model_block_conv_6gw_filters = torch.nn.parameter.Parameter(data=model_block_conv_6gw_filters_initializer_xavier_uniform, requires_grad=True)
         trainable_params['model_block/conv_6gw/filters'] = model_block_conv_6gw_filters
-        model_block_batch_normalize_12ms_mean_initializer_zeros_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_12ms/mean']), dtype=torch_types['float32'], device=device)
+        model_block_batch_normalize_12ms_mean_initializer_zeros_initializer = torch.nn.init.zeros_(tensor=torch.empty(*[16, ]))
         model_block_batch_normalize_12ms_mean = torch.nn.parameter.Parameter(data=model_block_batch_normalize_12ms_mean_initializer_zeros_initializer, requires_grad=False)
         trainable_params['model_block/batch_normalize_12ms/mean'] = model_block_batch_normalize_12ms_mean
-        model_block_batch_normalize_12ms_offset_initializer_zeros_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_12ms/offset']), dtype=torch_types['float32'], device=device)
+        model_block_batch_normalize_12ms_offset_initializer_zeros_initializer = torch.nn.init.zeros_(tensor=torch.empty(*[16, ]))
         model_block_batch_normalize_12ms_offset = torch.nn.parameter.Parameter(data=model_block_batch_normalize_12ms_offset_initializer_zeros_initializer, requires_grad=True)
         trainable_params['model_block/batch_normalize_12ms/offset'] = model_block_batch_normalize_12ms_offset
-        model_block_batch_normalize_12ms_scale_initializer_ones_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_12ms/scale']), dtype=torch_types['float32'], device=device)
+        model_block_batch_normalize_12ms_scale_initializer_ones_initializer = torch.nn.init.ones_(tensor=torch.empty(*[16, ]))
         model_block_batch_normalize_12ms_scale = torch.nn.parameter.Parameter(data=model_block_batch_normalize_12ms_scale_initializer_ones_initializer, requires_grad=True)
         trainable_params['model_block/batch_normalize_12ms/scale'] = model_block_batch_normalize_12ms_scale
-        model_block_batch_normalize_12ms_variance_initializer_ones_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/batch_normalize_12ms/variance']), dtype=torch_types['float32'], device=device)
+        model_block_batch_normalize_12ms_variance_initializer_ones_initializer = torch.nn.init.ones_(tensor=torch.empty(*[16, ]))
         model_block_batch_normalize_12ms_variance = torch.nn.parameter.Parameter(data=model_block_batch_normalize_12ms_variance_initializer_ones_initializer, requires_grad=False)
         trainable_params['model_block/batch_normalize_12ms/variance'] = model_block_batch_normalize_12ms_variance
-        model_block_conv_14oi_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_14oi/filters']), dtype=torch_types['float32'], device=device)
+        model_block_conv_14oi_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[64, 16, 3, 3]))
         model_block_conv_14oi_filters = torch.nn.parameter.Parameter(data=model_block_conv_14oi_filters_initializer_xavier_uniform, requires_grad=True)
         trainable_params['model_block/conv_14oi/filters'] = model_block_conv_14oi_filters
-        model_block_conv_16qy_filters_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/conv_16qy/filters']), dtype=torch_types['float32'], device=device)
+        model_block_conv_16qy_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[64, 64, 3, 3]))
         model_block_conv_16qy_filters = torch.nn.parameter.Parameter(data=model_block_conv_16qy_filters_initializer_xavier_uniform, requires_grad=True)
         trainable_params['model_block/conv_16qy/filters'] = model_block_conv_16qy_filters
-        model_block_dense_20ue_bias_initializer_zeros_initializer = torch.as_tensor(data=np.asarray(ckpt['model_block/dense_20ue/bias']), dtype=torch_types['float32'], device=device)
+        model_block_dense_20ue_bias_initializer_zeros_initializer = torch.nn.init.zeros_(tensor=torch.empty(*[1, ]))
         model_block_dense_20ue_bias = torch.nn.parameter.Parameter(data=model_block_dense_20ue_bias_initializer_zeros_initializer, requires_grad=True)
         trainable_params['model_block/dense_20ue/bias'] = model_block_dense_20ue_bias
-        model_block_dense_20ue_weights_initializer_xavier_uniform = torch.as_tensor(data=np.asarray(ckpt['model_block/dense_20ue/weights']), dtype=torch_types['float32'], device=device)
+        model_block_dense_20ue_weights_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[10, 50176]))
         model_block_dense_20ue_weights = torch.nn.parameter.Parameter(data=model_block_dense_20ue_weights_initializer_xavier_uniform, requires_grad=True)
         trainable_params['model_block/dense_20ue/weights'] = model_block_dense_20ue_weights
         return trainable_params
@@ -59,8 +59,8 @@ class Model(torch.nn.Module):
         model_block_reluu = torch.nn.functional.relu(input=model_block_conv_6gw, inplace=False)
         model_block_dropout_10kc = torch.nn.functional.dropout(input=model_block_reluu, p=0.2, training=training, inplace=False)
         model_block_batch_normalize_12ms = torch.nn.functional.batch_norm(input=model_block_dropout_10kc, running_mean=trainable_params['model_block/batch_normalize_12ms/mean'], running_var=trainable_params['model_block/batch_normalize_12ms/variance'], weight=trainable_params['model_block/batch_normalize_12ms/scale'], bias=trainable_params['model_block/batch_normalize_12ms/offset'], training=training, momentum=0.1, eps=0.001)
-        model_block_conv_14oi = torch.nn.functional.conv2d(input=model_block_batch_normalize_12ms, weight=trainable_params['model_block/conv_14oi/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
-        model_block_conv_16qy = torch.nn.functional.conv2d(input=model_block_conv_14oi, weight=trainable_params['model_block/conv_16qy/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
+        model_block_conv_14oi = torch.nn.functional.conv2d(input=model_block_batch_normalize_12ms, weight=trainable_params['model_block/conv_14oi/filters'], bias=None, stride=1, padding=[0, 0], dilation=1, groups=1)
+        model_block_conv_16qy = torch.nn.functional.conv2d(input=model_block_conv_14oi, weight=trainable_params['model_block/conv_16qy/filters'], bias=None, stride=1, padding=[0, 0], dilation=1, groups=1)
         model_block_flatten_18so = torch.flatten(input=model_block_conv_16qy, start_dim=1, end_dim=-1)
         model_block_dense_20ue = torch.nn.functional.linear(weight=trainable_params['model_block/dense_20ue/weights'], bias=trainable_params['model_block/dense_20ue/bias'], input=model_block_flatten_18so)
         model_block_d_1 = torch.nn.functional.softmax(input=model_block_dense_20ue, dim=None)
@@ -85,9 +85,9 @@ class Model(torch.nn.Module):
     
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small1.yml",
-               ['checkpoints', 'test.json'],
-               None)
+C = Checkpoint("examples/configs/small1_orig.yml",
+               None,
+               ['checkpoints', 'test_code_gen_ckpt.json'])
 
 ckpt = C.load()
 
@@ -133,6 +133,53 @@ def loop(trainloader, val_inputs, val_labels):
                 accuracy, loss_val = validation(val_inputs, val_labels)
                 print('[%d, %d, 500] accuracy: %.3f, loss: %.3f' %
                       (epoch, i, accuracy, loss_val))
-                
+                C.save(model.trainable_params)
         learning_rate.step()
     print('Finished Training')
+
+
+import torchvision
+import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+
+
+transform = transforms.Compose(
+    [transforms.ToTensor()])
+# ,
+#      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                        download=True, transform=transform)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=100,
+                                          shuffle=True, num_workers=2)
+
+testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                       download=True, transform=transform)
+testloader = torch.utils.data.DataLoader(testset, batch_size=10000,
+                                         shuffle=False, num_workers=2)
+
+classes = ('plane', 'car', 'bird', 'cat',
+           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+
+def imshow(img):
+    img = img / 2 + 0.5     # unnormalize
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.show()
+
+# get some random training images
+dataiter = iter(trainloader)
+images, labels = dataiter.next()
+inputs = images.to(device)
+print(device)
+# show images
+# imshow(torchvision.utils.make_grid(images))
+# print labels
+# print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
+
+test_inputs, test_labels = iter(testloader).next()
+
+loop(trainloader, test_inputs, test_labels)
+
+
