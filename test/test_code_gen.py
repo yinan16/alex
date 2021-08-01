@@ -17,19 +17,19 @@ class TestCodeGen(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config_path = "examples/configs/small1.yml"
-        self.config_path_alt = "examples/configs/small2.yml"
+        self.config_path_alt = "examples/configs/small3.yml"
         self.engines = ["pytorch", "tf"]
 
     def test_code_genenration(self):
 
         for engine in self.engines:
-            filename = "generated_%s.py" % engine
+            filename = "test_code_gen_%s_small3.py" % engine
             boiler_plate = "alex/engine/example_data_%s.py" % engine
             code_path = os.path.join(const.CACHE_BASE_PATH,
                                      filename)
 
             code_gen.generate_python(code_path,
-                                     self.config_path,
+                                     self.config_path_alt,
                                      engine,
                                      dirname=const.CACHE_BASE_PATH,
                                      def_only=False)
@@ -40,10 +40,10 @@ class TestCodeGen(unittest.TestCase):
 
     def test_mismatched(self):
         code_path = os.path.join(const.CACHE_BASE_PATH,
-                                 "new_mismatched_generated.py")
+                                 "test_code_gen_new_mismatched_generated.py")
         code_path_orig = os.path.join(const.CACHE_BASE_PATH,
-                                      "small1_orig.py")
-        ckpt_name = "test_code_gen_ckpt_trained.json"
+                                      "test_code_gen_small1_orig.py")
+        ckpt_name = "test_code_gen_ckpt.json"
 
         code_gen.generate_python(code_path_orig,
                                  "examples/configs/small1_orig.yml",

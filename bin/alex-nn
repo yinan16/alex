@@ -37,9 +37,9 @@ def diff(configs, to_png, verbose, dpi, mode):
     else:
         raise Exception("Mode %s not recgonized" % mode)
     if verbose:
+        logger.info("Diffs are printed below")
         for operation in operations:
             if operation[1][0] != "MATCH":
-                logger.info("Diffs are printed below")
                 pprint(operation)
     if verbose:
         logger.info("Set --verbose False to avoid output")

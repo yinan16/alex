@@ -71,10 +71,10 @@ class TestCompare(unittest.TestCase):
         annotation = compare.annotate_ops(operations)
         self.assertEqual(costs, 8)
         core.draw(toy_tree, os.path.join(const.CACHE_BASE_PATH,
-                                         "toytree1.png"),
+                                         "test_compare_toytree1.png"),
                   annotation[1])
         core.draw(toy_tree2, os.path.join(const.CACHE_BASE_PATH,
-                                          "toytree2.png"),
+                                          "test_compare_toytree2.png"),
                   annotation[2])
 
     def test_ted_on_conv(self):
@@ -85,17 +85,17 @@ class TestCompare(unittest.TestCase):
         annotation = compare.annotate_ops(operations)
         core.draw(conv_tree1,
                   os.path.join(const.CACHE_BASE_PATH,
-                               "conv1.png"),
+                               "test_compare_conv1.png"),
                   annotation[1])
         core.draw(conv_tree2,
                   os.path.join(const.CACHE_BASE_PATH,
-                               "conv2.png"),
+                               "test_compare_conv2.png"),
                   annotation[2])
 
     def test_dist(self):
         matched = compare.matched_ingredients("examples/configs/small1.yml",
                                               "examples/configs/small2.yml",
-                                              render_to="./cache/subtree.png")
+                                              render_to="./cache/test_compare_subtree.png")
         print("Matched ingredients")
         pprint(matched)
 

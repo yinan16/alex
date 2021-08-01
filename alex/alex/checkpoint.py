@@ -59,7 +59,7 @@ def load_json(checkpoint_dir, json_file=None):
 def load(graph_list,
          checkpoint_dir,
          ckpt_name=None,
-         matched=None):
+         matched={}):
     graph_list = deepcopy(graph_list)
     states = init_states()
     ckpt = load_json(checkpoint_dir, ckpt_name)
@@ -69,7 +69,7 @@ def load(graph_list,
         ckpt_components = dsl_parser.list_to_dict(ckpt["components"])
         for i, component in enumerate(graph_list):
             name_in_new_config = component["meta"]["name"]
-            if matched is not None and name_in_new_config in matched:
+            if matched is not None and matched != {} and name_in_new_config in matched:
                 name_in_ckpt = matched[component["meta"]["name"]]
                 _params = deepcopy(ckpt_components[name_in_ckpt]["value"]["var"])
                 component["value"]["var"] = dict()
@@ -160,7 +160,7 @@ class Checkpoint():
                                                        os.path.join(self.load_dir,
                                                                     "ckpt_diff.png"))
         else:
-            self.matched = None
+            self.matched = {}
 
     def load(self):
         if self.load_path is None:

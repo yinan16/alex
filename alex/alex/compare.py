@@ -337,7 +337,6 @@ def matched_ingredients(network_config_1,
     tree2 = param_count.ParamCount(network_config_2,
                                    naive=False).annotate_tree()
     _, operations = ted(tree1, tree2)
-    # pprint(operations)
     if render_to is not None:
         print("Done computing diff. Rendering image")
         annotation = annotate_ops(operations)

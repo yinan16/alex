@@ -36,9 +36,10 @@ class Ingredient():
         inputs = self.get_input_shape(component, components)
         try:
             if inputs is not None:
-                util.replace_key(component["value"]["hyperparams"],
-                                "input_shape",
-                                 inputs[0][-1])
+                if inputs[0] is not None:
+                    util.replace_key(component["value"]["hyperparams"],
+                                     "input_shape",
+                                     inputs[0][-1])
         except Exception as err:
             logger.error(err)
             logger.error("Ingredient %s (type: %s) invalid inputs" % (component["meta"]["name"],
@@ -52,9 +53,9 @@ class Ingredient():
             if _input in components:
                 input_shape.append(components[_input]["meta"]["shape"])
             else:
-                logger.error("Component '%s' (of type %s) input '%s' seems to be invalid. Please spell check." % (component["meta"]["name"], component["meta"]["type"], _input))
-                raise Exception
-                # input_shape.append(None)
+                # logger.error("Component '%s' (of type %s) input '%s' seems to be invalid. Please spell check." % (component["meta"]["name"], component["meta"]["type"], _input))
+                # raise Exception
+                input_shape.append(None)
         return input_shape
 
     def get_shape(self, component, components):
@@ -112,9 +113,9 @@ class Ingredient():
                     # traceback.print_exc()
                     # raise Exception(msg)
             if not valid:
-                logger.error("Validation failed", component["meta"]["name"])
+                logger.error("Validation failed %s" % component["meta"]["name"])
                 logger.error(msg)
-                logger.error("Dimension", dims)
+                logger.error("Dimension %s" % dims)
                 raise Exception
 
 

@@ -41,12 +41,10 @@ model_block:
 
   - type: conv
     trainable: False
-    hyperparams:
-      strides:
-        - 6
-        - 6
     inputs:
       - data_block/input_data
+  - type: max_pool2d
+  - type: max_pool2d
   - type: flatten
     name: output
 

@@ -117,8 +117,8 @@ def _parse_ingredient_hyperparams(hyperparams):
     return hyperparams
 
 
-def _config_to_inter_graph(user_defined, reader, block, parent_type="root", config=None, recipe=None):
-    if config is None:
+def _config_to_inter_graph(user_defined, reader, block, parent_type="root", config=None, recipe=None, inputs=None):
+    if config is None and "params_network" not in user_defined:
         config = user_defined
         recipe = const.ROOT
         component = dict()
@@ -136,12 +136,15 @@ def _config_to_inter_graph(user_defined, reader, block, parent_type="root", conf
                                                                        recipe=block))
 
     else:
+        if config is None:
+            config = deepcopy(user_defined)
         # If configuration is not an ingredient
         if const.PARAMS_NETWORK in config:
             component = dict()
             component[const.TYPE] = recipe
             if const.PARAMS_NETWORK not in user_defined:
                 component = fill_mandatory(clone(user_defined), reader)
+
             component[const.HYPERPARAMS] = []
             component["block"] = block
             component[const.SCOPE] = parent_type
@@ -151,12 +154,19 @@ def _config_to_inter_graph(user_defined, reader, block, parent_type="root", conf
                                                                 subconfig[const.TYPE] + const.YAML))
                 else:
                     subconfig_def = {}
+
+                if "inputs" in subconfig:
+                    _inputs = subconfig["inputs"]
+                else:
+                    _inputs = None
                 component[const.HYPERPARAMS].append(_config_to_inter_graph(subconfig,
                                                                            reader,
                                                                            block,
                                                                            recipe,
                                                                            subconfig_def,
-                                                                           subconfig[const.TYPE]))
+                                                                           subconfig[const.TYPE], _inputs))
+            if inputs is not None:
+                component[const.HYPERPARAMS][0]["inputs"] = inputs
         else:
             component = fill_mandatory(clone(user_defined), reader)
             hyperparams = clone(config)
@@ -361,12 +371,12 @@ def eval_inputs(inputs, components):
                         if isinstance(_base, dict):
                             continue
                         # TO_BE_TESTED
-                        current_scope = component[const.META]["scope"]
-                        if current_scope in registry.BLOCKS:
-                            if "/" not in _base:
-                                _in = "%s/%s" % (current_scope, _base)
-                            else:
-                                _in = _base
+                        # current_scope = component[const.META]["scope"]
+                        # if current_scope in registry.BLOCKS:
+                        #     if "/" not in _base:
+                        #         _in = "%s/%s" % (current_scope, _base)
+                        if _base.split("/")[0] in registry.BLOCKS:
+                            _in = _base
                         else:
                             base_name = _base.split("/")[-1]
                             _in = prev_dir + base_name
