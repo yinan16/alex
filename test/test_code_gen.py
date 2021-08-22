@@ -10,6 +10,7 @@ import os
 from pprint import pprint
 from alex.alex import core, const, dsl_parser, util, checkpoint
 from alex.annotators import code_gen
+import ast
 
 
 class TestCodeGen(unittest.TestCase):
@@ -20,8 +21,12 @@ class TestCodeGen(unittest.TestCase):
         self.config_path_alt = "examples/configs/small3.yml"
         self.engines = ["pytorch", "tf"]
 
-    def test_code_genenration(self):
+    def test_get_symbols_from_func_def_literal(self):
+        x = "def add():  \n\t loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/conv_6gw/filters', 'model_block/conv_14oi/filters', 'model_block/conv_16qy/filters', 'model_block/dense_20ue/weights'])))"
 
+        print(code_gen.get_symbols_from_func_def_literal(x))
+
+    def test_code_genenration(self):
         for engine in self.engines:
             filename = "test_code_gen_%s_small3.py" % engine
             boiler_plate = "alex/engine/example_data_%s.py" % engine
