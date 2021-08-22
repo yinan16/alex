@@ -12,6 +12,7 @@ from alex.engine import ns_alex
 ENGINE = "pytorch"
 DIM_ORDER = ["batch_size", "channel", "height", "width"]
 
+DEFINED = {"torch", "np", "torch_types", "device"}
 
 def add_imports(additional_modules=[]):
     default_modules = [["torch"],
@@ -73,9 +74,7 @@ def instantiate(config, load_from, save_to):
     return """
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("%s",
-               %s,
-               %s)
+C = Checkpoint("%s", %s, %s)
 
 ckpt = C.load()
 

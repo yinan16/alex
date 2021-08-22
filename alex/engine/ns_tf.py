@@ -13,6 +13,9 @@ ENGINE = "tf"
 DIM_ORDER = ["batch_size", "height", "width", "channel"]
 
 
+DEFINED = {"tf", "np", "tf_dtypes"}
+
+
 def add_imports(additional_modules=[]):
     default_modules = [["tensorflow", "tf"],
                        ["numpy", "np"]]

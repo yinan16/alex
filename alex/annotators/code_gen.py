@@ -831,7 +831,7 @@ class CodeBlock(param_count.ParamCount):
             traceback.print_exc()
         return node
 
-    def get_dl_code(self, fn_name, manual_args=[], return_str=None, prefix=None):
+    def get_dl_code(self, fn_name, exclude_args={}, return_str=None, prefix=None):
 
         util.concatenate_files([self.cache_def_path],
                                self.cache_code_path)
@@ -851,9 +851,10 @@ class CodeBlock(param_count.ParamCount):
             __src_code = f.readlines()
         # TODO: automatically detect args
         if len(__src_code) != 0:
-            _src_code = ns_alex.wrap_in_function(__src_code, fn_name, manual_args, return_str)
+            _src_code = ns_alex.wrap_in_function(__src_code, fn_name, [], return_str)
             local_symbols, defined_symbols = get_symbols_from_func_def_literal(_src_code)
-            args = list(set(local_symbols).difference(set(defined_symbols)))
+            args = set(local_symbols).difference(set(defined_symbols))
+            args = list(args.difference(exclude_args))
             src_code = ns_alex.wrap_in_function(__src_code, fn_name, args, return_str)
 
         else:
@@ -883,6 +884,7 @@ class ParamCodeBlock(CodeBlock):
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="get_trainable_params",
                                 return_str="trainable_params",
+                                exclude_args=NAMESPACES[self.engine].DEFINED,
                                 prefix="trainable_params = dict()\n")
 
 
@@ -952,7 +954,8 @@ class ModelCodeBlock(CodeBlock):
         return "model_block"
 
     def generate_dl_code(self):
-        return self.get_dl_code(fn_name="model")
+        return self.get_dl_code(fn_name="model",
+                                exclude_args=NAMESPACES[self.engine].DEFINED)
 
 
 class LossCodeBlock(CodeBlock):
@@ -965,7 +968,8 @@ class LossCodeBlock(CodeBlock):
         self._write_cache_to_file()
 
     def generate_dl_code(self):
-        return self.get_dl_code(fn_name="get_loss")
+        return self.get_dl_code(fn_name="get_loss",
+                                exclude_args=NAMESPACES[self.engine].DEFINED)
 
     def get_code_registry(self):
         return {**registry.LOSS_BLOCK,
@@ -986,7 +990,8 @@ class OptimizerCodeBlock(CodeBlock):
         self._write_cache_to_file()
 
     def generate_dl_code(self):
-        return self.get_dl_code(fn_name="get_optimizer")
+        return self.get_dl_code(fn_name="get_optimizer",
+                                exclude_args=NAMESPACES[self.engine].DEFINED)
 
     def get_code_registry(self):
         if self.engine == "tf":
@@ -1019,7 +1024,8 @@ class SchedulerCodeBlock(CodeBlock):
 
     def generate_dl_code(self):
         if len(self.code_registry) != 0:
-            scheduler_str = self.get_dl_code(fn_name="get_scheduler")
+            scheduler_str = self.get_dl_code(fn_name="get_scheduler",
+                                             exclude_args=NAMESPACES[self.engine].DEFINED)
         else:
             scheduler_str = ""
         return scheduler_str
