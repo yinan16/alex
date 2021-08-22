@@ -22,7 +22,7 @@ class TestCodeGen(unittest.TestCase):
         self.engines = ["pytorch", "tf"]
 
     def test_get_symbols_from_func_def_literal(self):
-        x = "def add():  \n\t loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/conv_6gw/filters', 'model_block/conv_14oi/filters', 'model_block/conv_16qy/filters', 'model_block/dense_20ue/weights'])))"
+        x = "def add():  \n\t a=b(c) \n\t loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/conv_6gw/filters', 'model_block/conv_14oi/filters', 'model_block/conv_16qy/filters', 'model_block/dense_20ue/weights'])))"
 
         print(code_gen.get_symbols_from_func_def_literal(x))
 

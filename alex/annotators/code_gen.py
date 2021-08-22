@@ -1098,7 +1098,9 @@ def get_symbols_from_func_def_literal(code_str):
     else:
         parsed = code_str
     for i, line in enumerate(parsed):
-        if isinstance(line, (ast.Tuple, ast.List, ast.Call)):
+        if isinstance(line, ast.Name):
+            local_symbols.append(line.id)
+        elif isinstance(line, (ast.Tuple, ast.List, ast.Call)):
             _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(line)
             local_symbols += _local_symbols
             defined_symbols += _defined_symbols
@@ -1127,14 +1129,17 @@ def get_symbols_from_func_def_literal(code_str):
                 _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(value)
                 local_symbols += _local_symbols
                 defined_symbols += _defined_symbols
-        elif not isinstance(line, ast.UnaryOp):
-            if isinstance(line, ast.BinOp):
-                literal = [line.left, line.right]
-                _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(literal)
-                local_symbols += _local_symbols
-                defined_symbols += _defined_symbols
-
-            elif isinstance(line.value, ast.Call):
+        elif isinstance(line, ast.UnaryOp):
+            _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(line.operand)
+            local_symbols += _local_symbols
+            defined_symbols += _defined_symbols
+        elif isinstance(line, ast.BinOp):
+            literal = [line.left, line.right]
+            _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(literal)
+            local_symbols += _local_symbols
+            defined_symbols += _defined_symbols
+        else:
+            if isinstance(line.value, ast.Call):
                 _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(line.value)
                 local_symbols += _local_symbols
                 defined_symbols += _defined_symbols
