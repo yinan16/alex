@@ -51,7 +51,7 @@ class Model(torch.nn.Module):
         return trainable_params
     
     @staticmethod
-    def model(data_block_input_data, trainable_params, training):
+    def model(data_block_input_data, trainable_params):
         model_block_conv_4eg = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/conv_4eg/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
         model_block_max_pool2d_6gw = torch.nn.functional.max_pool2d(input=model_block_conv_4eg, kernel_size=3, stride=2, padding=[0, 0])
         model_block_max_pool2d_8im = torch.nn.functional.max_pool2d(input=model_block_max_pool2d_6gw, kernel_size=3, stride=2, padding=[0, 0])
@@ -59,7 +59,7 @@ class Model(torch.nn.Module):
         return model_block_output 
     
     @staticmethod
-    def get_loss(trainable_params, inputs):
+    def get_loss(trainable_params, data_block_input_data, inputs, training):
         loss_block_conv_13na = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['loss_block/conv_13na/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
         loss_block_reluu = torch.nn.functional.relu(input=loss_block_conv_13na, inplace=False)
         loss_block_dropout_17rg = torch.nn.functional.dropout(input=loss_block_reluu, p=0.2, training=training, inplace=False)
@@ -84,9 +84,7 @@ class Model(torch.nn.Module):
     
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small1_linear.yml",
-               ['checkpoints', 'test_code_gen_ckpt.json'],
-               None)
+C = Checkpoint("examples/configs/small1_linear.yml", ['checkpoints', 'test_code_gen_ckpt.json'], None)
 
 ckpt = C.load()
 

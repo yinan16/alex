@@ -22,7 +22,7 @@ class Model(torch.nn.Module):
         return x
 
     @staticmethod
-    def get_trainable_params(ckpt):
+    def get_trainable_params():
         trainable_params = dict()
         model_block_test_recipe_34im_conv_6gw_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 3, 3, 3]))
         model_block_test_recipe_34im_conv_6gw_filters = torch.nn.parameter.Parameter(data=model_block_test_recipe_34im_conv_6gw_filters_initializer_xavier_uniform, requires_grad=True)
@@ -208,7 +208,7 @@ class Model(torch.nn.Module):
         return model_block_d_1 
     
     @staticmethod
-    def get_loss(trainable_params, inputs):
+    def get_loss(inputs, trainable_params):
         loss_block_cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=inputs[0], input=inputs[1])
         loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/test_recipe_34im/conv_6gw/filters', 'model_block/test_recipe_34im/conv_12ms/filters', 'model_block/test_recipe_34im/resnet_16_33he/conv_20ue/filters', 'model_block/test_recipe_34im/resnet_16_33he/conv_26aa/filters', 'model_block/resnet_16_49xc_0/conv_36kc/filters', 'model_block/resnet_16_49xc_0/conv_42qy/filters', 'model_block/resnet_16_49xc/conv_36kc/filters', 'model_block/resnet_16_49xc/conv_42qy/filters', 'model_block/conv_57fo/filters', 'model_block/dense_63lk/weights'])))
         loss_block_losses = torch.add(input=[loss_block_cross_0, loss_block_regularizer][0], other=[loss_block_cross_0, loss_block_regularizer][1])
@@ -226,9 +226,7 @@ class Model(torch.nn.Module):
     
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small3.yml",
-               None,
-               None)
+C = Checkpoint("examples/configs/small3.yml", None, None)
 
 ckpt = C.load()
 

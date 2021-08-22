@@ -22,7 +22,7 @@ class Model(torch.nn.Module):
         return x
 
     @staticmethod
-    def get_trainable_params(ckpt):
+    def get_trainable_params():
         trainable_params = dict()
         model_block_conv_6gw_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 3, 3, 3]))
         model_block_conv_6gw_filters = torch.nn.parameter.Parameter(data=model_block_conv_6gw_filters_initializer_xavier_uniform, requires_grad=True)
@@ -67,7 +67,7 @@ class Model(torch.nn.Module):
         return model_block_d_1 
     
     @staticmethod
-    def get_loss(trainable_params, inputs):
+    def get_loss(inputs, trainable_params):
         loss_block_cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=inputs[0], input=inputs[1])
         loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/conv_6gw/filters', 'model_block/conv_14oi/filters', 'model_block/conv_16qy/filters', 'model_block/dense_20ue/weights'])))
         loss_block_losses = torch.add(input=[loss_block_cross_0, loss_block_regularizer][0], other=[loss_block_cross_0, loss_block_regularizer][1])
@@ -85,9 +85,7 @@ class Model(torch.nn.Module):
     
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small1_orig.yml",
-               None,
-               ['checkpoints', 'test_code_gen_ckpt.json'])
+C = Checkpoint("examples/configs/small1_orig.yml", None, ['checkpoints', 'test_code_gen_ckpt.json'])
 
 ckpt = C.load()
 
