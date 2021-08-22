@@ -30,6 +30,8 @@ from rope.base.project import Project
 from rope.refactor.inline import create_inline
 import warnings
 import traceback
+import ast, typing
+from collections.abc import Iterable
 
 from alex.alex import core, const, node_interface, checkpoint, util, registry
 from alex.alex.checkpoint import Checkpoint
@@ -137,19 +139,26 @@ def cache_fn(node: dict,
                                               arg["value"])
             elif arg["tag"] == IDENTIFIER:
                 if node_tag == FUNCTION:
+                    # node is function and arg is identifier
                     if arg["str"] == "":
                         continue
+                    # FIXME: arg["value"] is dict
                     _arg_str = "%s=%s" % (arg["key"], arg["str"])
-                else:
+
+                elif node_tag == IDENTIFIER:
+                    # node is identifier and arg is identifier
                     if arg["value"] == "":
                         continue
                     _arg_str = arg["value"]
-            else:
+            elif arg["tag"] == FUNCTION:
                 if arg["value"] == "":
                     continue
                 if node_tag == FUNCTION:
+                    # node is function and arg is function
                     _arg_str = "%s=%s" % (arg["key"], arg["value"])
-                else:
+
+                elif node_tag == IDENTIFIER:
+                    # node is identifier and arg is function
                     _arg_str = arg["value"]
 
             arg_str.append(_arg_str)
@@ -165,6 +174,7 @@ def cache_fn(node: dict,
                              arg_str)
     else:
         code_str = arg_str
+
     node["code"] = {"fn": fn,
                     "args": args,
                     "return_symbol": return_symbol,
@@ -205,7 +215,7 @@ class Ingredient(param_count.Ingredient):
         if node["input_nodes"] is not None:
             input_nodes = annotated[node["input_nodes"][0]]
             args["shape"] = {"key": "shape",
-                             "value": input_nodes,
+                             "value": "%s" % str(input_nodes["shape"]), # input_nodes,
                              "ref": None,
                              "tag": IDENTIFIER,
                              "str": "%s" % str(input_nodes["shape"])}
@@ -736,7 +746,6 @@ class CodeBlock(param_count.ParamCount):
         self.passes = [[self.cache_shape_and_block],
                        [self._cache_alex_function_calls]]
 
-
     def __call__(self):
         return self.generate_dl_code()
 
@@ -793,6 +802,7 @@ class CodeBlock(param_count.ParamCount):
                 node = _node
             if not self._in_block(node):
                 return node
+
             if node["code"]["tag"] == FUNCTION:
                 _param_node = self.annotated[self.annotated[node["parent"]]["parent"]]
 
@@ -838,10 +848,14 @@ class CodeBlock(param_count.ParamCount):
             inline(self.inline_index_fns, dirname, filename)
             inline(self.inline_index_python, dirname, filename)
         with open(self.cache_code_path, "r") as f:
-            src_code = f.readlines()
+            __src_code = f.readlines()
         # TODO: automatically detect args
-        if len(src_code) != 0:
-            src_code = ns_alex.wrap_in_function(src_code, fn_name, manual_args, return_str)
+        if len(__src_code) != 0:
+            _src_code = ns_alex.wrap_in_function(__src_code, fn_name, manual_args, return_str)
+            local_symbols, defined_symbols = get_symbols_from_func_def_literal(_src_code)
+            args = list(set(local_symbols).difference(set(defined_symbols)))
+            src_code = ns_alex.wrap_in_function(__src_code, fn_name, args, return_str)
+
         else:
             src_code = ""
         return src_code
@@ -869,7 +883,6 @@ class ParamCodeBlock(CodeBlock):
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="get_trainable_params",
                                 return_str="trainable_params",
-                                manual_args=["ckpt"],
                                 prefix="trainable_params = dict()\n")
 
 
@@ -939,10 +952,7 @@ class ModelCodeBlock(CodeBlock):
         return "model_block"
 
     def generate_dl_code(self):
-        return self.get_dl_code(fn_name="model",
-                                manual_args=["data_block_input_data", # FIXME:
-                                             "trainable_params",
-                                             "training"])
+        return self.get_dl_code(fn_name="model")
 
 
 class LossCodeBlock(CodeBlock):
@@ -955,8 +965,7 @@ class LossCodeBlock(CodeBlock):
         self._write_cache_to_file()
 
     def generate_dl_code(self):
-        return self.get_dl_code(fn_name="get_loss",
-                                manual_args=["trainable_params", "inputs"])
+        return self.get_dl_code(fn_name="get_loss")
 
     def get_code_registry(self):
         return {**registry.LOSS_BLOCK,
@@ -977,8 +986,7 @@ class OptimizerCodeBlock(CodeBlock):
         self._write_cache_to_file()
 
     def generate_dl_code(self):
-        return self.get_dl_code(fn_name="get_optimizer",
-                                manual_args=["trainable_params", ])
+        return self.get_dl_code(fn_name="get_optimizer")
 
     def get_code_registry(self):
         if self.engine == "tf":
@@ -1011,8 +1019,7 @@ class SchedulerCodeBlock(CodeBlock):
 
     def generate_dl_code(self):
         if len(self.code_registry) != 0:
-            scheduler_str = self.get_dl_code(fn_name="get_scheduler",
-                                             manual_args=["optimizer"])
+            scheduler_str = self.get_dl_code(fn_name="get_scheduler")
         else:
             scheduler_str = ""
         return scheduler_str
@@ -1067,6 +1074,82 @@ def cache_boiler_plate(engine):
     imports = NAMESPACES[engine].add_imports()
     configs = NAMESPACES[engine].add_global_configs()
     return imports + configs
+
+
+def get_symbols_from_func_def_literal(code_str):
+
+    local_symbols = []
+    defined_symbols = []
+
+    if isinstance(code_str, str):
+        parsed = ast.parse(code_str).body[0].body
+    elif isinstance(code_str, ast.Call):
+        parsed = code_str.keywords + code_str.args
+    elif isinstance(code_str, (ast.Tuple, ast.List)):
+        parsed = code_str.elts
+    elif not isinstance(code_str, Iterable):
+        parsed = [code_str]
+    else:
+        parsed = code_str
+    for i, line in enumerate(parsed):
+        if isinstance(line, (ast.Tuple, ast.List, ast.Call)):
+            _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(line)
+            local_symbols += _local_symbols
+            defined_symbols += _defined_symbols
+        elif isinstance(line, ast.Lambda):
+            _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(line.body)
+            local_symbols += _local_symbols
+            defined_symbols += _defined_symbols
+
+        elif isinstance(line, ast.Assign):
+            # left hand side:
+            targets = line.targets
+            if isinstance(targets, list):
+                for var in targets:
+                    if isinstance(var, ast.Name):
+                        defined_symbols.append(var.id)
+                    else:
+                        defined_symbols.append(var.value.id)
+
+            else:
+                defined_symbols.append(targets.value.id)
+
+            value = line.value
+            if isinstance(value, ast.Name):
+                local_symbols.append(value.id)
+            else:
+                _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(value)
+                local_symbols += _local_symbols
+                defined_symbols += _defined_symbols
+        elif not isinstance(line, ast.UnaryOp):
+            if isinstance(line, ast.BinOp):
+                literal = [line.left, line.right]
+                _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(literal)
+                local_symbols += _local_symbols
+                defined_symbols += _defined_symbols
+
+            elif isinstance(line.value, ast.Call):
+                _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(line.value)
+                local_symbols += _local_symbols
+                defined_symbols += _defined_symbols
+            elif isinstance(line.value, ast.Name):
+                local_symbols.append(line.value.id)
+            else:
+                if isinstance(line.value, (int, float, bool, str, ast.UnaryOp, ast.Constant)):
+                    pass
+                elif isinstance(line.value, ast.BinOp):
+                    literal = [line.value.left, line.value.right]
+                    _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(literal)
+                    local_symbols += _local_symbols
+                    defined_symbols += _defined_symbols
+
+                elif isinstance(line.value, (ast.Tuple, ast.List)):
+                    _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(line.value)
+                    local_symbols += _local_symbols
+                    defined_symbols += _defined_symbols
+                elif isinstance(line.value.value, ast.Name):
+                    local_symbols.append(line.value.value.id)
+    return local_symbols, defined_symbols
 
 
 # -------------------------- Inline -------------------------------
