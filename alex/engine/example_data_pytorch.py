@@ -13,9 +13,9 @@ trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=100,
                                           shuffle=True, num_workers=2)
 
-testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+valset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
-testloader = torch.utils.data.DataLoader(testset, batch_size=10000,
+valloader = torch.utils.data.DataLoader(valset, batch_size=10000,
                                          shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat',
@@ -38,6 +38,6 @@ print(device)
 # print labels
 # print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-test_inputs, test_labels = iter(testloader).next()
+val_inputs, val_labels = iter(valloader).next()
 
-loop(trainloader, test_inputs, test_labels)
+loop(trainloader, val_inputs, val_labels)
