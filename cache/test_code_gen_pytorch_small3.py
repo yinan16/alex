@@ -168,7 +168,7 @@ class Model(torch.nn.Module):
         return trainable_params
     
     @staticmethod
-    def model(data_block_input_data, trainable_params, training):
+    def model(trainable_params, training, data_block_input_data):
         model_block_test_recipe_34im_conv_6gw = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/test_recipe_34im/conv_6gw/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
         model_block_test_recipe_34im_batch_normalize_8im = torch.nn.functional.batch_norm(input=model_block_test_recipe_34im_conv_6gw, running_mean=trainable_params['model_block/test_recipe_34im/batch_normalize_8im/mean'], running_var=trainable_params['model_block/test_recipe_34im/batch_normalize_8im/variance'], weight=trainable_params['model_block/test_recipe_34im/batch_normalize_8im/scale'], bias=trainable_params['model_block/test_recipe_34im/batch_normalize_8im/offset'], training=training, momentum=0.1, eps=0.001)
         model_block_test_recipe_34im_relu_10kc = torch.nn.functional.relu(input=model_block_test_recipe_34im_batch_normalize_8im, inplace=False)
@@ -208,7 +208,7 @@ class Model(torch.nn.Module):
         return model_block_d_1 
     
     @staticmethod
-    def get_loss(inputs, trainable_params):
+    def get_loss(trainable_params, inputs):
         loss_block_cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=inputs[0], input=inputs[1])
         loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/test_recipe_34im/conv_6gw/filters', 'model_block/test_recipe_34im/conv_12ms/filters', 'model_block/test_recipe_34im/resnet_16_33he/conv_20ue/filters', 'model_block/test_recipe_34im/resnet_16_33he/conv_26aa/filters', 'model_block/resnet_16_49xc_0/conv_36kc/filters', 'model_block/resnet_16_49xc_0/conv_42qy/filters', 'model_block/resnet_16_49xc/conv_36kc/filters', 'model_block/resnet_16_49xc/conv_42qy/filters', 'model_block/conv_57fo/filters', 'model_block/dense_63lk/weights'])))
         loss_block_losses = torch.add(input=[loss_block_cross_0, loss_block_regularizer][0], other=[loss_block_cross_0, loss_block_regularizer][1])
@@ -234,48 +234,59 @@ model = Model(ckpt)
 
 model.to(device)
 
-optimizer = model.get_optimizer(model.params)
+trainable_params = model.trainable_params
+optimizer = model.get_optimizer(trainable_params)
 
 learning_rate = model.get_scheduler(optimizer)
 
 
-def validation(inputs, labels):
-    with torch.no_grad():
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-
-        outputs = model(inputs, False)
-        _, predicted = torch.max(outputs.data, 1)
-        total = labels.size(0)
-        correct = (predicted == labels).sum().item()
-        loss = model.get_loss(model.trainable_params, [labels, outputs])
-    return correct / total, loss
-
-
-def loop(trainloader, val_inputs, val_labels):
+def inference(trainable_params, training, data_block_input_data):
+    
+    preds = torch.max(model(trainable_params, training, data_block_input_data), 1)
+    preds = preds[1]
+    return preds
+    
+def evaluation(trainable_params, training, labels, data_block_input_data):
+    
+    preds = inference(trainable_params, training, data_block_input_data)
+    
+    total = labels.size(0)
+    matches = (preds == labels).sum().item()
+    perf = matches / total
+    
+    loss = model.get_loss(trainable_params, [labels, preds])
+    return perf, loss
+    
+    
+def train(trainable_params, labels, data_block_input_data):
+    
+    optimizer.zero_grad()
+    preds = model(trainable_params, True, data_block_input_data)
+    loss = model.get_loss(trainable_params, [labels, preds])
+    loss.backward()
+    
+    
+def loop(trainloader, test_inputs, test_labels):
+    
     for epoch in range(90):
-
+    
         for i, data in enumerate(trainloader, 0):
-
+    
             inputs, labels = data
-
+    
             inputs = inputs.to(device)
             labels = labels.to(device)
-            optimizer.zero_grad()
-
-            output = model(inputs, True)
-            loss = model.get_loss(model.trainable_params, [labels, output])
-            loss.backward()
+            train(trainable_params, labels, data_block_input_data)
             optimizer.step()
-
+    
             if i % 500 == 499:
-                accuracy, loss_val = validation(val_inputs, val_labels)
-                print('[%d, %d, 500] accuracy: %.3f, loss: %.3f' %
-                      (epoch, i, accuracy, loss_val))
+                results = evaluation(trainable_params, training, labels, data_block_input_data)
+                print(results)
                 
         learning_rate.step()
     print('Finished Training')
-
+    
+    
 
 import torchvision
 import torchvision.transforms as transforms
@@ -292,9 +303,9 @@ trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=100,
                                           shuffle=True, num_workers=2)
 
-testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+valset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
-testloader = torch.utils.data.DataLoader(testset, batch_size=10000,
+valloader = torch.utils.data.DataLoader(valset, batch_size=10000,
                                          shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat',
@@ -317,8 +328,8 @@ print(device)
 # print labels
 # print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-test_inputs, test_labels = iter(testloader).next()
+val_inputs, val_labels = iter(valloader).next()
 
-loop(trainloader, test_inputs, test_labels)
+loop(trainloader, val_inputs, val_labels)
 
 
