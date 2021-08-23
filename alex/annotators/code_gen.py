@@ -654,57 +654,85 @@ def generate_python(output_file,
                                  save_ckpt)
     util.clear_file(output_file)
 
-    param_str = ParamCodeBlock(output_file,
-                               config_path,
-                               engine,
-                               ckpt,
-                               load_from_ckpt=load_from_ckpt,
-                               dirname=dirname)()
+    param_str, params_args = ParamCodeBlock(output_file,
+                                            config_path,
+                                            engine,
+                                            ckpt,
+                                            load_from_ckpt=load_from_ckpt,
+                                            dirname=dirname)()
 
-    component_str = ModelCodeBlock(output_file,
-                                   config_path,
-                                   engine,
-                                   ckpt,
-                                   load_from_ckpt=load_from_ckpt,
-                                   dirname=dirname)()
+    model_str, model_args = ModelCodeBlock(output_file,
+                                           config_path,
+                                           engine,
+                                           ckpt,
+                                           load_from_ckpt=load_from_ckpt,
+                                           dirname=dirname)()
+    loss_str, loss_args = LossCodeBlock(output_file,
+                                        config_path,
+                                        engine,
+                                        ckpt,
+                                        load_from_ckpt=load_from_ckpt,
+                                        dirname=dirname)()
 
-    loss_str = LossCodeBlock(output_file,
-                             config_path,
-                             engine,
-                             ckpt,
-                             load_from_ckpt=load_from_ckpt,
-                             dirname=dirname)()
+    optimizer_str, optimizer_args = OptimizerCodeBlock(output_file,
+                                                       config_path,
+                                                       engine,
+                                                       ckpt,
+                                                       load_from_ckpt=load_from_ckpt,
+                                                       dirname=dirname)()
 
-    optimizer_str = OptimizerCodeBlock(output_file,
-                                       config_path,
-                                       engine,
-                                       ckpt,
-                                       load_from_ckpt=load_from_ckpt,
-                                       dirname=dirname)()
-
-    scheduler_str = SchedulerCodeBlock(output_file,
-                                       config_path,
-                                       engine,
-                                       ckpt,
-                                       load_from_ckpt=load_from_ckpt,
-                                       dirname=dirname)()
+    scheduler_str, scheduler_args = SchedulerCodeBlock(output_file,
+                                                       config_path,
+                                                       engine,
+                                                       ckpt,
+                                                       load_from_ckpt=load_from_ckpt,
+                                                       dirname=dirname)()
 
     boiler_str = cache_boiler_plate(engine)
 
     code = NAMESPACES[engine].wrap_in_class(param_str,
-                                            component_str,
+                                            model_str,
                                             loss_str,
                                             optimizer_str,
                                             scheduler_str)
     util.write_to(boiler_str, output_file)
     util.write_to(code, output_file)
     if not def_only:
-        src_str = ""
-        src_str += NAMESPACES[engine].instantiate(config_path,
-                                                  load_ckpt,
-                                                  save_ckpt)
-        src_str += NAMESPACES[engine].validation()
-        src_str += NAMESPACES[engine].training(save_ckpt)
+        # FIXME: workaround
+        mode = "classification"
+        instanstiate_str = NAMESPACES[engine].instantiate(config=config_path,
+                                                          load_from=load_ckpt,
+                                                          save_to=save_ckpt,
+                                                          params_args=params_args,
+                                                          optimizer_args=optimizer_args)
+
+        inference_func_name, inference_str = NAMESPACES[engine].inference(model_args,
+                                                                          mode)
+        inference_str, inference_args = assemble_func_src_code(inference_str,
+                                                               inference_func_name,
+                                                               "",
+                                                               exclude_args=NAMESPACES[engine].DEFINED)
+        evaluation_func_name, evaluation_str = NAMESPACES[engine].evaluation(inference_args,
+                                                                             loss_args,
+                                                                             mode)
+        evaluation_str, evaluation_args = assemble_func_src_code(evaluation_str,
+                                                                 evaluation_func_name,
+                                                                 "",
+                                                                 exclude_args=NAMESPACES[engine].DEFINED)
+
+        train_func_name, train_str = NAMESPACES[engine].train(model_args, loss_args)
+        train_str, train_args = assemble_func_src_code(train_str,
+                                                       train_func_name,
+                                                       "", exclude_args=NAMESPACES[engine].DEFINED)
+
+        loop_func_name, loop_str = NAMESPACES[engine].loop(save_ckpt,
+                                                           train_args,
+                                                           evaluation_args)
+        loop_args = NAMESPACES[engine].LOOP_ARGS
+        loop_str = ns_alex.wrap_in_function(loop_str,
+                                            loop_func_name, loop_args, "")
+        src = [instanstiate_str, inference_str, evaluation_str, train_str, loop_str]
+        src_str = "\n".join(src)
         util.write_to(src_str, output_file)
 
 
@@ -851,15 +879,12 @@ class CodeBlock(param_count.ParamCount):
             __src_code = f.readlines()
         # TODO: automatically detect args
         if len(__src_code) != 0:
-            _src_code = ns_alex.wrap_in_function(__src_code, fn_name, [], return_str)
-            local_symbols, defined_symbols = get_symbols_from_func_def_literal(_src_code)
-            args = set(local_symbols).difference(set(defined_symbols))
-            args = list(args.difference(exclude_args))
-            src_code = ns_alex.wrap_in_function(__src_code, fn_name, args, return_str)
 
+            src_code, args = assemble_func_src_code(__src_code, fn_name, return_str, exclude_args=[])
         else:
             src_code = ""
-        return src_code
+            args = []
+        return src_code, args
 
 
 class ParamCodeBlock(CodeBlock):
@@ -1024,11 +1049,12 @@ class SchedulerCodeBlock(CodeBlock):
 
     def generate_dl_code(self):
         if len(self.code_registry) != 0:
-            scheduler_str = self.get_dl_code(fn_name="get_scheduler",
-                                             exclude_args=NAMESPACES[self.engine].DEFINED)
+            scheduler_str, args = self.get_dl_code(fn_name="get_scheduler",
+                                                   exclude_args=NAMESPACES[self.engine].DEFINED)
         else:
             scheduler_str = ""
-        return scheduler_str
+            args = []
+        return scheduler_str, args
 
     def get_code_registry(self):
         if self.engine == "tf":
@@ -1082,6 +1108,18 @@ def cache_boiler_plate(engine):
     return imports + configs
 
 
+def assemble_func_src_code(code_body, fn_name, return_str, exclude_args=[]):
+    src_code = ns_alex.wrap_in_function(code_body,
+                                        fn_name,
+                                        args=[],
+                                        return_val_str=return_str)
+    local_symbols, defined_symbols = get_symbols_from_func_def_literal(src_code)
+    args = set(local_symbols).difference(set(defined_symbols))
+    args = list(args.difference(exclude_args))
+    src_code = ns_alex.wrap_in_function(code_body, fn_name, args, return_str)
+    return src_code, args
+
+
 def get_symbols_from_func_def_literal(code_str):
 
     local_symbols = []
@@ -1122,7 +1160,9 @@ def get_symbols_from_func_def_literal(code_str):
                 local_symbols += _local_symbols
                 defined_symbols += _defined_symbols
         else:
-            if isinstance(line, ast.Lambda):
+            if isinstance(line, (ast.With, ast.For, ast.If)):
+                obj = line.body
+            elif isinstance(line, ast.Lambda):
                 obj = line.body
             elif isinstance(line, (ast.Tuple, ast.List, ast.Call)):
                 obj = line

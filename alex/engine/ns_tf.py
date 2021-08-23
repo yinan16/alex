@@ -15,6 +15,7 @@ DIM_ORDER = ["batch_size", "height", "width", "channel"]
 
 DEFINED = {"tf", "np", "tf_dtypes"}
 
+LOOP_ARGS = ["trainloader", "test_inputs", "test_labels", "var_list"]
 
 def add_imports(additional_modules=[]):
     default_modules = [["tensorflow", "tf"],
@@ -47,7 +48,7 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
     return code
 
 
-def instantiate(config, load_from, save_to):
+def instantiate(config, load_from, save_to, params_args, optimizer_args):
     return """
 from alex.alex.checkpoint import Checkpoint
 
@@ -57,51 +58,85 @@ C = Checkpoint("%s",
 
 ckpt = C.load()
 
-trainable_variables = get_trainable_params(ckpt)
+trainable_params = get_trainable_params(%s)
 
 from alex.alex import registry
-var_list = []
-for tv in trainable_variables:
-    if tv.split('/')[-1] in registry.ALL_TRAINABLE_PARAMS:
-        var_list.append(trainable_variables[tv])
+var_list = registry.get_trainable_params_list(trainable_params)
 
-optimizer = get_optimizer(trainable_variables)
+optimizer = get_optimizer(%s)
 
-""" % (config, str(load_from), str(save_to))
+""" % (config,
+       str(load_from),
+       str(save_to),
+       ", ".join(params_args),
+       ", ".join(optimizer_args))
 
 
-def training(save_to):
+def train(model_args, loss_args):
+    func_name = "train"
+    return func_name, """
+with tf.GradientTape() as tape:
+    preds = model(%s)
+    gradients = tape.gradient(get_loss(%s), var_list)
+    optimizer.apply_gradients(zip(gradients, var_list))
+""" % (", ".join(model_args),
+       ", ".join(loss_args).replace("inputs", "[labels, preds]"))
+
+
+def loop(save_to, train_args, evaluation_args):
     if save_to:
         save_str = "C.save(model.trainable_params)"
     else:
         save_str = ""
-    return """
-def train(x, gt, trainable_variables, var_list, optimizer):
-    with tf.GradientTape() as tape:
-        prediction = model(x, trainable_variables, training=True)
-        gradients = tape.gradient(get_loss(trainable_variables, [gt, prediction]), var_list)
-        optimizer.apply_gradients(zip(gradients, var_list))
+    func_name = "loop"
+    return func_name, """
+for epoch in range(90):
+    for i, (inputs, labels) in enumerate(trainloader):
+        train(%s)
+        if i %% 500 == 499:
+            results = evaluation(%s)
+            %s
+            tf.print(results)
+print('Finished Training')
 
-def loop(trainloader, val_inputs, val_labels):
-    for epoch in range(90):
-        for i, (inputs, labels) in enumerate(trainloader):
-            train(inputs, labels, trainable_variables, var_list, optimizer)
-            if i %% 500 == 499:
-                accuracy, loss = validation(val_inputs, val_labels)
-                %s
-                tf.print("[", epoch, i, "500]", "accuracy: ", accuracy, ", loss: ", loss)
-    print('Finished Training')
+""" % (", ".join(train_args).replace("data_block_input_data", "inputs"), ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("labels", "val_labels"), save_str)
 
-""" % save_str
 
-def validation():
-    return \
-    """
-def validation(inputs, labels):
-    preds = model(inputs, trainable_variables, training=False)
-    matches  = tf.equal(tf.math.argmax(preds,1), tf.math.argmax(labels,1))
-    accuracy = tf.reduce_mean(tf.cast(matches,tf.float32))
-    loss = tf.reduce_mean(get_loss(trainable_variables, [preds, labels]))
-    return accuracy, loss
+def inference(model_args, mode):
+    if mode == "classification":
+        code_str = """
+preds = tf.math.argmax(model(%s), 1)
+""" % (", ".join(model_args))
+    elif mode == "regression":
+        code_str = """
+preds = model(%s)\n
+""" % (", ".join(model_args))
+    code_str += "return preds"
+    func_name = "inference"
 
+    return func_name, code_str
+
+
+def evaluation(inference_args, loss_args, mode="classification"):
+    if mode == "classification":
+        evaluation_str = """
+matches = tf.equal(preds, tf.math.argmax(labels, 1))
+perf = tf.reduce_mean(tf.cast(matches, tf.float32))
 """
+        return_str = "return perf, loss"
+    else:
+        evaluation_str = ""
+        return_str = "return loss"
+
+    func_name = "evaluation"
+    code_str = """
+preds = inference(%s)
+%s
+loss = tf.reduce_mean(get_loss(%s))
+%s
+""" % (", ".join(inference_args),
+       evaluation_str,
+       ", ".join(loss_args).replace("inputs", "[labels, preds]"),
+       return_str)
+
+    return func_name, code_str
