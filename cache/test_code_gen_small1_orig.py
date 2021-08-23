@@ -5,7 +5,7 @@ import numpy as np
 tf_dtypes = {'float32': tf.float32, 'int8': tf.int8}
 
 
-def get_trainable_params(tf_dtypes, tf):
+def get_trainable_params():
     trainable_params = dict()
     model_block_conv_6gw_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(3, 3, 3, 16))
     model_block_conv_6gw_filters = tf.Variable(initial_value=model_block_conv_6gw_filters_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/conv_6gw/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
@@ -70,7 +70,7 @@ C = Checkpoint("examples/configs/small1_orig.yml",
 
 ckpt = C.load()
 
-trainable_params = get_trainable_params(tf_dtypes, tf)
+trainable_params = get_trainable_params()
 
 from alex.alex import registry
 var_list = registry.get_trainable_params_list(trainable_params)
@@ -94,7 +94,7 @@ def evaluation(trainable_params, labels, data_block_input_data):
     return perf, loss
     
     
-def train(trainable_params, labels, var_list, data_block_input_data):
+def train(trainable_params, var_list, labels, data_block_input_data):
     
     with tf.GradientTape() as tape:
         preds = model(trainable_params, data_block_input_data)
@@ -106,7 +106,7 @@ def loop(trainloader, test_inputs, test_labels, var_list):
     
     for epoch in range(90):
         for i, (inputs, labels) in enumerate(trainloader):
-            train(trainable_params, labels, var_list, inputs)
+            train(trainable_params, var_list, labels, inputs)
             if i % 500 == 499:
                 results = evaluation(trainable_params, val_labels, val_inputs)
                 C.save(model.trainable_params)

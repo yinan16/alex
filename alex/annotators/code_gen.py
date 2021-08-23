@@ -859,7 +859,7 @@ class CodeBlock(param_count.ParamCount):
             traceback.print_exc()
         return node
 
-    def get_dl_code(self, fn_name, exclude_args={}, return_str=None, prefix=None):
+    def get_dl_code(self, fn_name, exclude_args=[], return_str=None, prefix=None):
 
         util.concatenate_files([self.cache_def_path],
                                self.cache_code_path)
@@ -880,7 +880,7 @@ class CodeBlock(param_count.ParamCount):
         # TODO: automatically detect args
         if len(__src_code) != 0:
 
-            src_code, args = assemble_func_src_code(__src_code, fn_name, return_str, exclude_args=[])
+            src_code, args = assemble_func_src_code(__src_code, fn_name, return_str, exclude_args=exclude_args)
         else:
             src_code = ""
             args = []

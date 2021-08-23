@@ -258,7 +258,7 @@ def evaluation(trainable_params, training, labels, data_block_input_data):
     return perf, loss
     
     
-def train(trainable_params, labels, data_block_input_data):
+def train(trainable_params, data_block_input_data, labels):
     
     optimizer.zero_grad()
     preds = model(trainable_params, True, data_block_input_data)
@@ -276,7 +276,7 @@ def loop(trainloader, test_inputs, test_labels):
     
             inputs = inputs.to(device)
             labels = labels.to(device)
-            train(trainable_params, labels, data_block_input_data)
+            train(trainable_params, data_block_input_data, labels)
             optimizer.step()
     
             if i % 500 == 499:
