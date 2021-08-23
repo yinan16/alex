@@ -520,6 +520,12 @@ TYPES = {0: "STATELESS_INGREDIENTS_WITHOUT_HYPE",
          2: "STATEFUL_INGREDIENTS"}
 
 
+def get_trainable_params_list(params):
+    trainable_params_list = []
+    for tv in params:
+        if tv.split('/')[-1] in ALL_TRAINABLE_PARAMS:
+            trainable_params_list.append(params[tv])
+    return trainable_params_list
 # -------------------------------------------------------------------------- #
 # Summary
 # -------------------------------------------------------------------------- #

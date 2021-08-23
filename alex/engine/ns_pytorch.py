@@ -12,6 +12,9 @@ from alex.engine import ns_alex
 ENGINE = "pytorch"
 DIM_ORDER = ["batch_size", "channel", "height", "width"]
 
+DEFINED = {"torch", "np", "torch_types", "device"}
+
+LOOP_ARGS = ["trainloader", "test_inputs", "test_labels"]
 
 def add_imports(additional_modules=[]):
     default_modules = [["torch"],
@@ -69,13 +72,11 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
 
 
 # Boilerplates:
-def instantiate(config, load_from, save_to):
+def instantiate(config, load_from, save_to, optimizer_args, **kwargs):
     return """
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("%s",
-               %s,
-               %s)
+C = Checkpoint("%s", %s, %s)
 
 ckpt = C.load()
 
@@ -83,61 +84,94 @@ model = Model(ckpt)
 
 model.to(device)
 
-optimizer = model.get_optimizer(model.params)
+trainable_params = model.trainable_params
+optimizer = model.get_optimizer(%s)
 
 learning_rate = model.get_scheduler(optimizer)
 
-""" % (config, str(load_from), str(save_to))
+""" % (config, str(load_from), str(save_to), ", ".join(optimizer_args))
 
 
-def training(save_to):
+def loop(save_to, train_args, evaluation_args):
     if save_to:
         save_str = "C.save(model.trainable_params)"
     else:
         save_str = ""
+    func_name = "loop"
     return \
-    """
-def loop(trainloader, val_inputs, val_labels):
-    for epoch in range(90):
+    func_name, """
+for epoch in range(90):
 
-        for i, data in enumerate(trainloader, 0):
+    for i, data in enumerate(trainloader, 0):
 
-            inputs, labels = data
+        inputs, labels = data
 
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-            optimizer.zero_grad()
-
-            output = model(inputs, True)
-            loss = model.get_loss(model.trainable_params, [labels, output])
-            loss.backward()
-            optimizer.step()
-
-            if i %% 500 == 499:
-                accuracy, loss_val = validation(val_inputs, val_labels)
-                print('[%%d, %%d, 500] accuracy: %%.3f, loss: %%.3f' %%
-                      (epoch, i, accuracy, loss_val))
-                %s
-        learning_rate.step()
-    print('Finished Training')
-""" % save_str
-
-
-def validation():
-    return """
-def validation(inputs, labels):
-    with torch.no_grad():
         inputs = inputs.to(device)
         labels = labels.to(device)
+        train(%s)
+        optimizer.step()
 
-        outputs = model(inputs, False)
-        _, predicted = torch.max(outputs.data, 1)
-        total = labels.size(0)
-        correct = (predicted == labels).sum().item()
-        loss = model.get_loss(model.trainable_params, [labels, outputs])
-    return correct / total, loss
+        if i %% 500 == 499:
+            results = evaluation(%s)
+            print(results)
+            %s
+    learning_rate.step()
+print('Finished Training')
+""" % (", ".join(train_args), ", ".join(evaluation_args), save_str)
 
+
+def train(model_args, loss_args):
+    func_name = "train"
+    return \
+    func_name, """
+optimizer.zero_grad()
+preds = model(%s)
+loss = model.get_loss(%s)
+loss.backward()
+""" % (", ".join(model_args).replace("training", "True"),
+       ", ".join(loss_args).replace("inputs", "[labels, preds]"))
+
+
+def inference(model_args, mode):
+    if mode == "classification":
+        code_str = """
+preds = torch.max(model(%s), 1)
+preds = preds[1]
+""" % (", ".join(model_args))
+    elif mode == "regression":
+        code_str = """
+preds = model(%s)\n
+""" % (", ".join(model_args).replace("training", "False"))
+    code_str += "return preds"
+    func_name = "inference"
+    return func_name, code_str
+
+
+def evaluation(inference_args, loss_args, mode="classification"):
+    if mode == "classification":
+        evaluation_str = """
+total = labels.size(0)
+matches = (preds == labels).sum().item()
+perf = matches / total
 """
+        return_str = "return perf, loss"
+    else:
+        evaluation_str = ""
+        return_str = "return loss"
+
+    func_name = "evaluation"
+    code_str = """
+preds = inference(%s)
+%s
+loss = model.get_loss(%s)
+%s
+""" % (", ".join(inference_args),
+       evaluation_str,
+       ", ".join(loss_args).replace("inputs", "[labels, preds]"),
+       return_str)
+
+    return func_name, code_str
+
 
 ## User defined layers:
 

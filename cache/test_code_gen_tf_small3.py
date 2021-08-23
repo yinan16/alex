@@ -5,7 +5,7 @@ import numpy as np
 tf_dtypes = {'float32': tf.float32, 'int8': tf.int8}
 
 
-def get_trainable_params(ckpt):
+def get_trainable_params():
     trainable_params = dict()
     model_block_test_recipe_34im_conv_6gw_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(3, 3, 3, 16))
     model_block_test_recipe_34im_conv_6gw_filters = tf.Variable(initial_value=model_block_test_recipe_34im_conv_6gw_filters_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/test_recipe_34im/conv_6gw/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
@@ -151,7 +151,7 @@ def get_trainable_params(ckpt):
     return trainable_params
 
 
-def model(data_block_input_data, trainable_params, training):
+def model(trainable_params, data_block_input_data):
     model_block_test_recipe_34im_conv_6gw = tf.nn.conv2d(input=data_block_input_data, filters=trainable_params['model_block/test_recipe_34im/conv_6gw/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/test_recipe_34im/conv_6gw/filters')
     model_block_test_recipe_34im_batch_normalize_8im = tf.nn.batch_normalization(x=model_block_test_recipe_34im_conv_6gw, mean=trainable_params['model_block/test_recipe_34im/batch_normalize_8im/mean'], variance=trainable_params['model_block/test_recipe_34im/batch_normalize_8im/variance'], offset=trainable_params['model_block/test_recipe_34im/batch_normalize_8im/offset'], scale=trainable_params['model_block/test_recipe_34im/batch_normalize_8im/scale'], variance_epsilon=0.001, name='model_block/test_recipe_34im/batch_normalize_8im/variance')
     model_block_test_recipe_34im_relu_10kc = tf.nn.relu(name='model_block/test_recipe_34im/relu_10kc', features=model_block_test_recipe_34im_batch_normalize_8im)
@@ -198,7 +198,7 @@ def get_loss(trainable_params, inputs):
     return loss_block_losses 
 
 
-def get_optimizer(trainable_params):
+def get_optimizer():
     optimizer_block_solver_decay_exponential_decay = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate=0.0001, decay_steps=100000, decay_rate=0.96, staircase=True)
     optimizer_block_solver = tf.optimizers.Adam(learning_rate=optimizer_block_solver_decay_exponential_decay, beta_1=0.9, beta_2=0.999, epsilon=1e-08, name='optimizer_block/solver')
     return optimizer_block_solver 
@@ -211,42 +211,51 @@ C = Checkpoint("examples/configs/small3.yml",
 
 ckpt = C.load()
 
-trainable_variables = get_trainable_params(ckpt)
+trainable_params = get_trainable_params()
 
 from alex.alex import registry
-var_list = []
-for tv in trainable_variables:
-    if tv.split('/')[-1] in registry.ALL_TRAINABLE_PARAMS:
-        var_list.append(trainable_variables[tv])
+var_list = registry.get_trainable_params_list(trainable_params)
 
-optimizer = get_optimizer(trainable_variables)
+optimizer = get_optimizer()
 
 
-def validation(inputs, labels):
-    preds = model(inputs, trainable_variables, training=False)
-    matches  = tf.equal(tf.math.argmax(preds,1), tf.math.argmax(labels,1))
-    accuracy = tf.reduce_mean(tf.cast(matches,tf.float32))
-    loss = tf.reduce_mean(get_loss(trainable_variables, [preds, labels]))
-    return accuracy, loss
-
-
-def train(x, gt, trainable_variables, var_list, optimizer):
+def inference(trainable_params, data_block_input_data):
+    
+    preds = tf.math.argmax(model(trainable_params, data_block_input_data), 1)
+    return preds
+    
+def evaluation(trainable_params, labels, data_block_input_data):
+    
+    preds = inference(trainable_params, data_block_input_data)
+    
+    matches = tf.equal(preds, tf.math.argmax(labels, 1))
+    perf = tf.reduce_mean(tf.cast(matches, tf.float32))
+    
+    loss = tf.reduce_mean(get_loss(trainable_params, [labels, preds]))
+    return perf, loss
+    
+    
+def train(trainable_params, var_list, labels, data_block_input_data):
+    
     with tf.GradientTape() as tape:
-        prediction = model(x, trainable_variables, training=True)
-        gradients = tape.gradient(get_loss(trainable_variables, [gt, prediction]), var_list)
+        preds = model(trainable_params, data_block_input_data)
+        gradients = tape.gradient(get_loss(trainable_params, [labels, preds]), var_list)
         optimizer.apply_gradients(zip(gradients, var_list))
-
-def loop(trainloader, val_inputs, val_labels):
+    
+    
+def loop(trainloader, test_inputs, test_labels, var_list):
+    
     for epoch in range(90):
         for i, (inputs, labels) in enumerate(trainloader):
-            train(inputs, labels, trainable_variables, var_list, optimizer)
+            train(trainable_params, var_list, labels, inputs)
             if i % 500 == 499:
-                accuracy, loss = validation(val_inputs, val_labels)
+                results = evaluation(trainable_params, val_labels, val_inputs)
                 
-                tf.print("[", epoch, i, "500]", "accuracy: ", accuracy, ", loss: ", loss)
+                tf.print(results)
     print('Finished Training')
-
-
+    
+    
+    
 
 from tensorflow import keras
 from tensorflow.keras import datasets
@@ -254,33 +263,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 num_classes = 10
-(x_train, label_train), (x_test, label_test) = datasets.cifar10.load_data()
+(x_train, label_train), (x_val, label_val) = datasets.cifar10.load_data()
 
-# Normalize pixel values to be between 0 and 1
-# Scale images to the [0, 1] range
 x_train = x_train.astype("float32") / 255
-x_test = x_test.astype("float32") / 255
+x_val = x_val.astype("float32") / 255
 
-# convert class vectors to binary class matrices
 y_train = keras.utils.to_categorical(label_train, num_classes)
-y_test = keras.utils.to_categorical(label_test, num_classes)
+y_val = keras.utils.to_categorical(label_val, num_classes)
 
 
 class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck']
-
-# plt.figure(figsize=(10,10))
-# for i in range(25):
-#     plt.subplot(5,5,i+1)
-#     plt.xticks([])
-#     plt.yticks([])
-#     plt.grid(False)
-#     plt.imshow(x_train[i])
-#     # The CIFAR labels happen to be arrays,
-#     # which is why you need the extra index
-#     plt.xlabel(class_names[label_train[i][0]])
-# plt.show()
-
 
 batch_size = 100
 
@@ -290,10 +283,10 @@ train_accuracy_results = []
 trainloader = tf.data.Dataset.from_tensor_slices(
     (x_train, y_train)).shuffle(50000).batch(batch_size)
 
-testloader = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(10000)
-for test_inputs, test_labels in testloader:
+valloader = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(10000)
+for val_inputs, val_labels in valloader:
     break
 
-loop(trainloader, test_inputs, test_labels)
+loop(trainloader, val_inputs, val_labels, var_list)
 
 

@@ -27,10 +27,15 @@ def wrap_in_function(src, fn, args, return_val_str=None):
     if isinstance(src, str):
         src = src.split("\n")
     for line in src:
-        fn_src += indent(line)
-        if "\n" not in fn_src:
-            fn_src += "\n"
-    if return_val_str is None:
-        return_val_str = line.split("=")[0]
-    fn_src += indent("return %s\n" % return_val_str)
+        _line = indent(line)
+        if "\n" not in _line:
+            _line += "\n"
+        fn_src += _line
+    if return_val_str == "":
+        return_str = ""
+    else:
+        if return_val_str is None:
+            return_val_str = line.split("=")[0]
+        return_str = "return %s\n" % return_val_str
+    fn_src += indent(return_str)
     return fn_src

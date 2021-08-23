@@ -30,6 +30,8 @@ from rope.base.project import Project
 from rope.refactor.inline import create_inline
 import warnings
 import traceback
+import ast, typing
+from collections.abc import Iterable
 
 from alex.alex import core, const, node_interface, checkpoint, util, registry
 from alex.alex.checkpoint import Checkpoint
@@ -137,19 +139,26 @@ def cache_fn(node: dict,
                                               arg["value"])
             elif arg["tag"] == IDENTIFIER:
                 if node_tag == FUNCTION:
+                    # node is function and arg is identifier
                     if arg["str"] == "":
                         continue
+                    # FIXME: arg["value"] is dict
                     _arg_str = "%s=%s" % (arg["key"], arg["str"])
-                else:
+
+                elif node_tag == IDENTIFIER:
+                    # node is identifier and arg is identifier
                     if arg["value"] == "":
                         continue
                     _arg_str = arg["value"]
-            else:
+            elif arg["tag"] == FUNCTION:
                 if arg["value"] == "":
                     continue
                 if node_tag == FUNCTION:
+                    # node is function and arg is function
                     _arg_str = "%s=%s" % (arg["key"], arg["value"])
-                else:
+
+                elif node_tag == IDENTIFIER:
+                    # node is identifier and arg is function
                     _arg_str = arg["value"]
 
             arg_str.append(_arg_str)
@@ -165,6 +174,7 @@ def cache_fn(node: dict,
                              arg_str)
     else:
         code_str = arg_str
+
     node["code"] = {"fn": fn,
                     "args": args,
                     "return_symbol": return_symbol,
@@ -205,7 +215,7 @@ class Ingredient(param_count.Ingredient):
         if node["input_nodes"] is not None:
             input_nodes = annotated[node["input_nodes"][0]]
             args["shape"] = {"key": "shape",
-                             "value": input_nodes,
+                             "value": "%s" % str(input_nodes["shape"]), # input_nodes,
                              "ref": None,
                              "tag": IDENTIFIER,
                              "str": "%s" % str(input_nodes["shape"])}
@@ -644,57 +654,85 @@ def generate_python(output_file,
                                  save_ckpt)
     util.clear_file(output_file)
 
-    param_str = ParamCodeBlock(output_file,
-                               config_path,
-                               engine,
-                               ckpt,
-                               load_from_ckpt=load_from_ckpt,
-                               dirname=dirname)()
+    param_str, params_args = ParamCodeBlock(output_file,
+                                            config_path,
+                                            engine,
+                                            ckpt,
+                                            load_from_ckpt=load_from_ckpt,
+                                            dirname=dirname)()
 
-    component_str = ModelCodeBlock(output_file,
-                                   config_path,
-                                   engine,
-                                   ckpt,
-                                   load_from_ckpt=load_from_ckpt,
-                                   dirname=dirname)()
+    model_str, model_args = ModelCodeBlock(output_file,
+                                           config_path,
+                                           engine,
+                                           ckpt,
+                                           load_from_ckpt=load_from_ckpt,
+                                           dirname=dirname)()
+    loss_str, loss_args = LossCodeBlock(output_file,
+                                        config_path,
+                                        engine,
+                                        ckpt,
+                                        load_from_ckpt=load_from_ckpt,
+                                        dirname=dirname)()
 
-    loss_str = LossCodeBlock(output_file,
-                             config_path,
-                             engine,
-                             ckpt,
-                             load_from_ckpt=load_from_ckpt,
-                             dirname=dirname)()
+    optimizer_str, optimizer_args = OptimizerCodeBlock(output_file,
+                                                       config_path,
+                                                       engine,
+                                                       ckpt,
+                                                       load_from_ckpt=load_from_ckpt,
+                                                       dirname=dirname)()
 
-    optimizer_str = OptimizerCodeBlock(output_file,
-                                       config_path,
-                                       engine,
-                                       ckpt,
-                                       load_from_ckpt=load_from_ckpt,
-                                       dirname=dirname)()
-
-    scheduler_str = SchedulerCodeBlock(output_file,
-                                       config_path,
-                                       engine,
-                                       ckpt,
-                                       load_from_ckpt=load_from_ckpt,
-                                       dirname=dirname)()
+    scheduler_str, scheduler_args = SchedulerCodeBlock(output_file,
+                                                       config_path,
+                                                       engine,
+                                                       ckpt,
+                                                       load_from_ckpt=load_from_ckpt,
+                                                       dirname=dirname)()
 
     boiler_str = cache_boiler_plate(engine)
 
     code = NAMESPACES[engine].wrap_in_class(param_str,
-                                            component_str,
+                                            model_str,
                                             loss_str,
                                             optimizer_str,
                                             scheduler_str)
     util.write_to(boiler_str, output_file)
     util.write_to(code, output_file)
     if not def_only:
-        src_str = ""
-        src_str += NAMESPACES[engine].instantiate(config_path,
-                                                  load_ckpt,
-                                                  save_ckpt)
-        src_str += NAMESPACES[engine].validation()
-        src_str += NAMESPACES[engine].training(save_ckpt)
+        # FIXME: workaround
+        mode = "classification"
+        instanstiate_str = NAMESPACES[engine].instantiate(config=config_path,
+                                                          load_from=load_ckpt,
+                                                          save_to=save_ckpt,
+                                                          params_args=params_args,
+                                                          optimizer_args=optimizer_args)
+
+        inference_func_name, inference_str = NAMESPACES[engine].inference(model_args,
+                                                                          mode)
+        inference_str, inference_args = assemble_func_src_code(inference_str,
+                                                               inference_func_name,
+                                                               "",
+                                                               exclude_args=NAMESPACES[engine].DEFINED)
+        evaluation_func_name, evaluation_str = NAMESPACES[engine].evaluation(inference_args,
+                                                                             loss_args,
+                                                                             mode)
+        evaluation_str, evaluation_args = assemble_func_src_code(evaluation_str,
+                                                                 evaluation_func_name,
+                                                                 "",
+                                                                 exclude_args=NAMESPACES[engine].DEFINED)
+
+        train_func_name, train_str = NAMESPACES[engine].train(model_args, loss_args)
+        train_str, train_args = assemble_func_src_code(train_str,
+                                                       train_func_name,
+                                                       "", exclude_args=NAMESPACES[engine].DEFINED)
+
+        loop_func_name, loop_str = NAMESPACES[engine].loop(save_ckpt,
+                                                           train_args,
+                                                           evaluation_args)
+        loop_args = NAMESPACES[engine].LOOP_ARGS
+        loop_str = ns_alex.wrap_in_function(loop_str,
+                                            loop_func_name, loop_args, "")
+        src = [instanstiate_str, inference_str, evaluation_str, train_str, loop_str]
+        src_str = "\n".join(src)
         util.write_to(src_str, output_file)
 
 
@@ -735,7 +773,6 @@ class CodeBlock(param_count.ParamCount):
 
         self.passes = [[self.cache_shape_and_block],
                        [self._cache_alex_function_calls]]
-
 
     def __call__(self):
         return self.generate_dl_code()
@@ -793,6 +830,7 @@ class CodeBlock(param_count.ParamCount):
                 node = _node
             if not self._in_block(node):
                 return node
+
             if node["code"]["tag"] == FUNCTION:
                 _param_node = self.annotated[self.annotated[node["parent"]]["parent"]]
 
@@ -821,7 +859,7 @@ class CodeBlock(param_count.ParamCount):
             traceback.print_exc()
         return node
 
-    def get_dl_code(self, fn_name, manual_args=[], return_str=None, prefix=None):
+    def get_dl_code(self, fn_name, exclude_args=[], return_str=None, prefix=None):
 
         util.concatenate_files([self.cache_def_path],
                                self.cache_code_path)
@@ -838,13 +876,15 @@ class CodeBlock(param_count.ParamCount):
             inline(self.inline_index_fns, dirname, filename)
             inline(self.inline_index_python, dirname, filename)
         with open(self.cache_code_path, "r") as f:
-            src_code = f.readlines()
+            __src_code = f.readlines()
         # TODO: automatically detect args
-        if len(src_code) != 0:
-            src_code = ns_alex.wrap_in_function(src_code, fn_name, manual_args, return_str)
+        if len(__src_code) != 0:
+
+            src_code, args = assemble_func_src_code(__src_code, fn_name, return_str, exclude_args=exclude_args)
         else:
             src_code = ""
-        return src_code
+            args = []
+        return src_code, args
 
 
 class ParamCodeBlock(CodeBlock):
@@ -869,7 +909,7 @@ class ParamCodeBlock(CodeBlock):
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="get_trainable_params",
                                 return_str="trainable_params",
-                                manual_args=["ckpt"],
+                                exclude_args=NAMESPACES[self.engine].DEFINED,
                                 prefix="trainable_params = dict()\n")
 
 
@@ -940,9 +980,7 @@ class ModelCodeBlock(CodeBlock):
 
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="model",
-                                manual_args=["data_block_input_data", # FIXME:
-                                             "trainable_params",
-                                             "training"])
+                                exclude_args=NAMESPACES[self.engine].DEFINED)
 
 
 class LossCodeBlock(CodeBlock):
@@ -956,7 +994,7 @@ class LossCodeBlock(CodeBlock):
 
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="get_loss",
-                                manual_args=["trainable_params", "inputs"])
+                                exclude_args=NAMESPACES[self.engine].DEFINED)
 
     def get_code_registry(self):
         return {**registry.LOSS_BLOCK,
@@ -978,7 +1016,7 @@ class OptimizerCodeBlock(CodeBlock):
 
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="get_optimizer",
-                                manual_args=["trainable_params", ])
+                                exclude_args=NAMESPACES[self.engine].DEFINED)
 
     def get_code_registry(self):
         if self.engine == "tf":
@@ -1011,11 +1049,12 @@ class SchedulerCodeBlock(CodeBlock):
 
     def generate_dl_code(self):
         if len(self.code_registry) != 0:
-            scheduler_str = self.get_dl_code(fn_name="get_scheduler",
-                                             manual_args=["optimizer"])
+            scheduler_str, args = self.get_dl_code(fn_name="get_scheduler",
+                                                   exclude_args=NAMESPACES[self.engine].DEFINED)
         else:
             scheduler_str = ""
-        return scheduler_str
+            args = []
+        return scheduler_str, args
 
     def get_code_registry(self):
         if self.engine == "tf":
@@ -1067,6 +1106,77 @@ def cache_boiler_plate(engine):
     imports = NAMESPACES[engine].add_imports()
     configs = NAMESPACES[engine].add_global_configs()
     return imports + configs
+
+
+def assemble_func_src_code(code_body, fn_name, return_str, exclude_args=[]):
+    src_code = ns_alex.wrap_in_function(code_body,
+                                        fn_name,
+                                        args=[],
+                                        return_val_str=return_str)
+    local_symbols, defined_symbols = get_symbols_from_func_def_literal(src_code)
+    args = set(local_symbols).difference(set(defined_symbols))
+    args = list(args.difference(exclude_args))
+    src_code = ns_alex.wrap_in_function(code_body, fn_name, args, return_str)
+    return src_code, args
+
+
+def get_symbols_from_func_def_literal(code_str):
+
+    local_symbols = []
+    defined_symbols = []
+
+    if isinstance(code_str, str):
+        parsed = ast.parse(code_str).body[0].body
+    elif isinstance(code_str, ast.Call):
+        parsed = code_str.keywords + code_str.args
+    elif isinstance(code_str, (ast.Tuple, ast.List)):
+        parsed = code_str.elts
+    elif not isinstance(code_str, Iterable):
+        parsed = [code_str]
+    else:
+        parsed = code_str
+    for i, line in enumerate(parsed):
+        if isinstance(line, (int, float, bool, str, ast.UnaryOp, ast.Constant)):
+            pass
+        elif isinstance(line, ast.Name):
+            local_symbols.append(line.id)
+        elif isinstance(line, ast.Assign):
+            # left hand side:
+            targets = line.targets
+            if isinstance(targets, list):
+                for var in targets:
+                    if isinstance(var, ast.Name):
+                        defined_symbols.append(var.id)
+                    else:
+                        defined_symbols.append(var.value.id)
+            else:
+                defined_symbols.append(targets.value.id)
+
+            value = line.value
+            if isinstance(value, ast.Name):
+                local_symbols.append(value.id)
+            else:
+                _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(value)
+                local_symbols += _local_symbols
+                defined_symbols += _defined_symbols
+        else:
+            if isinstance(line, (ast.With, ast.For, ast.If)):
+                obj = line.body
+            elif isinstance(line, ast.Lambda):
+                obj = line.body
+            elif isinstance(line, (ast.Tuple, ast.List, ast.Call)):
+                obj = line
+            elif isinstance(line, ast.UnaryOp):
+                obj = line.operand
+            elif isinstance(line, ast.BinOp):
+                obj = [line.left, line.right]
+            else:
+                obj = line.value
+            _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(obj)
+            local_symbols += _local_symbols
+            defined_symbols += _defined_symbols
+
+    return local_symbols, defined_symbols
 
 
 # -------------------------- Inline -------------------------------
