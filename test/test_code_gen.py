@@ -44,39 +44,41 @@ class TestCodeGen(unittest.TestCase):
             print("Saved to:", code_path)
 
     def test_mismatched(self):
-        code_path = os.path.join(const.CACHE_BASE_PATH,
-                                 "test_code_gen_new_mismatched_generated.py")
-        code_path_orig = os.path.join(const.CACHE_BASE_PATH,
-                                      "test_code_gen_small1_orig.py")
-        ckpt_name = "test_code_gen_ckpt.json"
 
-        code_gen.generate_python(code_path_orig,
-                                 "examples/configs/small1_orig.yml",
-                                 "pytorch",
-                                 dirname=const.CACHE_BASE_PATH,
-                                 save_ckpt=["checkpoints",
-                                            ckpt_name],
-                                 def_only=False)
-        util.concatenate_files([code_path_orig,
-                                "alex/engine/example_data_pytorch.py"],
-                               code_path_orig)
+        for engine in self.engines:
+            code_path = os.path.join(const.CACHE_BASE_PATH,
+                                     "test_code_gen_new_mismatched_generated_%s.py" % engine)
+            code_path_orig = os.path.join(const.CACHE_BASE_PATH,
+                                          "test_code_gen_small1_orig.py")
+            ckpt_name = "test_code_gen_ckpt.json"
 
-        # ckpt = checkpoint.Checkpoint("examples/configs/small1_orig.yml",
-        #                              ["checkpoints",
-        #                               None],
-        #                              ["checkpoints", ckpt_name])
-        # ckpt.save()
-        code_gen.generate_python(code_path,
-                                 "examples/configs/small1_linear.yml",
-                                 "pytorch",
-                                 dirname=const.CACHE_BASE_PATH,
-                                 load_ckpt=["checkpoints",
-                                            ckpt_name],
-                                 def_only=False)
-        util.concatenate_files([code_path,
-                                "alex/engine/example_data_pytorch.py"],
-                               code_path)
-        print("Saved to:", code_path)
+            code_gen.generate_python(code_path_orig,
+                                     "examples/configs/small1_orig.yml",
+                                     engine,
+                                     dirname=const.CACHE_BASE_PATH,
+                                     save_ckpt=["checkpoints",
+                                                ckpt_name],
+                                     def_only=False)
+            util.concatenate_files([code_path_orig,
+                                    "alex/engine/example_data_%s.py" % engine],
+                                   code_path_orig)
+
+            # ckpt = checkpoint.Checkpoint("examples/configs/small1_orig.yml",
+            #                              ["checkpoints",
+            #                               None],
+            #                              ["checkpoints", ckpt_name])
+            # ckpt.save()
+            code_gen.generate_python(code_path,
+                                     "examples/configs/small1_linear.yml",
+                                     engine,
+                                     dirname=const.CACHE_BASE_PATH,
+                                     load_ckpt=["checkpoints",
+                                                ckpt_name],
+                                     def_only=False)
+            util.concatenate_files([code_path,
+                                    "alex/engine/example_data_%s.py" % engine],
+                                   code_path)
+            print("Saved to:", code_path)
 
 
 if __name__ == '__main__':
