@@ -53,7 +53,7 @@ loss_block:
   - type: flatten
     name: feature
   - type:
-      cross_entropy
+      mse
     inputs:
       - feature
       - model_block/output

@@ -13,7 +13,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="alex-nn", # Replace with your own username
-    version="0.1.8.dev",
+    version="0.1.8.dev1",
     author="Yinan Yu",
     author_email="yu.yinan16@gmail.com",
     description="Network analysis",

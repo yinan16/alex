@@ -14,7 +14,7 @@ DIM_ORDER = ["batch_size", "channel", "height", "width"]
 
 DEFINED = {"torch", "np", "torch_types", "device"}
 
-LOOP_ARGS = ["trainloader", "test_inputs", "test_labels"]
+LOOP_ARGS = ["trainloader", "val_inputs", "val_labels"]
 
 def add_imports(additional_modules=[]):
     default_modules = [["torch"],

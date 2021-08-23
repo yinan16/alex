@@ -106,7 +106,7 @@ def _diff_graph_list(n1, n2, tree_full1, tree_full2):
                 for child in affected_hyperparam_subtree:
                     cost += 1 # FIXME
                     operations.append((child, ["DELETE", tree_full1[child]["label"], ""]))
-        else:
+        elif op == "UPDATE":
             name1 = operation[0][0]
             name2 = operation[0][1]
             label1 = operation[1][1]
@@ -136,6 +136,8 @@ def _diff_graph_list(n1, n2, tree_full1, tree_full2):
                             cost += 1 # FIXME
                             _operation = (child, ["INSERT", "", tree_full2[child]["label"]])
                             operations.append(_operation)
+        else:
+            operations.append(operation)
 
     return cost, operations
 
@@ -356,7 +358,6 @@ def matched_ingredients(network_config_1,
     tree2 = param_count.ParamCount(network_config_2,
                                    naive=False).annotate_tree()
     _, operations = diff(network_config_1, network_config_2, merge_blocks=["model_block", "loss_block"])
-    pprint(operations)
     if render_to is not None:
         print("Done computing diff. Rendering image")
         annotation = annotate_ops(operations)

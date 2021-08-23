@@ -15,7 +15,7 @@ DIM_ORDER = ["batch_size", "height", "width", "channel"]
 
 DEFINED = {"tf", "np", "tf_dtypes"}
 
-LOOP_ARGS = ["trainloader", "test_inputs", "test_labels", "var_list"]
+LOOP_ARGS = ["trainloader", "val_inputs", "val_labels", "var_list"]
 
 def add_imports(additional_modules=[]):
     default_modules = [["tensorflow", "tf"],

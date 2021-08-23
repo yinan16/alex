@@ -392,6 +392,7 @@ LOSSES = {"cross_entropy": {"tf": ["tf.nn.softmax_cross_entropy_with_logits",
                                "size_average": "None",
                                "reduce": "None",
                                "reduction": "'mean'"}],
+                  "alex": ["mse", {}],
                   "tf": "TODO"}}
 # TODO: bitwise, l2, mean_square
 REGULARIZERS = {"regularizer_l2": {"tf": ["coeff*sum(list(map(lambda x: tf.nn.l2_loss(t=trainable_params[x], name=name), inputs)))",
