@@ -255,16 +255,35 @@ from alex.annotators import param_count
 def diff(network_config_1,
          network_config_2,
          render_to=None,
-         dpi=800, lazy=False):
-    graph_list1 = dsl_parser.parse(network_config_1, lazy=lazy)
-    graph_list2 = dsl_parser.parse(network_config_2, lazy=lazy)
+         dpi=800, lazy=False, merge_blocks=[]):
+    if not isinstance(network_config_1, list):
+        graph_list1 = dsl_parser.parse(network_config_1, lazy=lazy)
+    else:
+        graph_list1 = network_config_1
+    if not isinstance(network_config_2, list):
+        graph_list2 = dsl_parser.parse(network_config_2, lazy=lazy)
+    else:
+        graph_list2 = network_config_2
     tree_full1 = param_count.ParamCount(graph_list1).annotate_tree()
     tree_full2 = param_count.ParamCount(graph_list2).annotate_tree()
 
     operations = []
     cost = 0
-    for block in registry.BLOCKS:
 
+    graph_list1_block = []
+    graph_list2_block = []
+    for block in merge_blocks:
+        graph_list1_block += list(filter(lambda x: x["meta"]["block"]==block, graph_list1))
+        graph_list2_block += list(filter(lambda x: x["meta"]["block"]==block, graph_list2))
+    _cost, _operations = _diff_graph_list(graph_list1_block,
+                                          graph_list2_block,
+                                          tree_full1, tree_full2)
+    cost += _cost
+    operations += _operations
+
+    for block in registry.BLOCKS:
+        if block in merge_blocks:
+            continue
         graph_list1_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list1))
         graph_list2_block = list(filter(lambda x: x["meta"]["block"]==block, graph_list2))
         _cost, _operations = _diff_graph_list(graph_list1_block,
@@ -336,7 +355,8 @@ def matched_ingredients(network_config_1,
                                    naive=False).annotate_tree()
     tree2 = param_count.ParamCount(network_config_2,
                                    naive=False).annotate_tree()
-    _, operations = ted(tree1, tree2)
+    _, operations = diff(network_config_1, network_config_2, merge_blocks=["model_block", "loss_block"])
+    pprint(operations)
     if render_to is not None:
         print("Done computing diff. Rendering image")
         annotation = annotate_ops(operations)
