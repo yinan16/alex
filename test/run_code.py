@@ -11,10 +11,11 @@ import subprocess
 def test_codegen_and_run(engine):
     command = ["alex-nn",
                "codegen",
-               "examples/configs/small1.yml",
+               "examples/configs/small1_orig.yml",
                "--engine", engine,
                "--out_dir", "cache",
                "--run",
+               "--ckpt_to", "checkpoints/test_orig.json",
                "--append", "alex/engine/example_data_%s.py" % engine,
                "--filename", "cli_codegen_%s.py" % engine]
     command = " ".join(command)

@@ -2,8 +2,8 @@ window_shape:
   - 3
   - 3
 strides:
-  - 2
-  - 2
+  - 1
+  - 1
 padding:
   VALID
 dilation:

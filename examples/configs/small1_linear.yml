@@ -13,6 +13,10 @@ model_block:
   - type: conv
     inputs:
       - data_block/input_data
+    hyperparams:
+      filters:
+        shape:
+          n_filters: 4
   - type: max_pool2d
   - type: max_pool2d
   - type: flatten
@@ -35,6 +39,7 @@ loss_block:
       dropout
   - type:
       batch_normalize
+    trainable: False
 
   - type: conv
     trainable: False

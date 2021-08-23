@@ -348,7 +348,7 @@ def matched_ingredients(network_config_1,
         axs[1].imshow(img2)
         axs[1].axis("off")
         fig.tight_layout()
-        if render_to != "":
+        if render_to != "" or render_to is None:
             fig.savefig(render_to, dpi="figure")
             print("Diff images written to: %s" % render_to)
         else:
