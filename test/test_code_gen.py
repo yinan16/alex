@@ -47,10 +47,10 @@ class TestCodeGen(unittest.TestCase):
 
         for engine in self.engines:
             code_path = os.path.join(const.CACHE_BASE_PATH,
-                                     "test_code_gen_new_mismatched_generated_%s.py" % engine)
+                                     "test_code_gen_linear_%s.py" % engine)
             code_path_orig = os.path.join(const.CACHE_BASE_PATH,
                                           "test_code_gen_small1_orig.py")
-            ckpt_name = "test_code_gen_ckpt.json"
+            ckpt_name = "test_code_gen_ckpt_trained.json"
 
             code_gen.generate_python(code_path_orig,
                                      "examples/configs/small1_orig.yml",

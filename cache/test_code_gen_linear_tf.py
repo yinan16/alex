@@ -5,30 +5,30 @@ import numpy as np
 tf_dtypes = {'float32': tf.float32, 'int8': tf.int8}
 
 
-def get_trainable_params(ckpt):
+def get_trainable_params():
     trainable_params = dict()
-    model_block_conv_4eg_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(3, 3, 3, 64))
+    model_block_conv_4eg_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(3, 3, 3, 4))
     model_block_conv_4eg_filters = tf.Variable(initial_value=model_block_conv_4eg_filters_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/conv_4eg/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['model_block/conv_4eg/filters'] = model_block_conv_4eg_filters
-    loss_block_conv_13na_filters_initializer_xavier_uniform = tf.convert_to_tensor(value=np.asarray(ckpt['loss_block/conv_13na/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    loss_block_conv_13na_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(3, 3, 3, 16))
     loss_block_conv_13na_filters = tf.Variable(initial_value=loss_block_conv_13na_filters_initializer_xavier_uniform, trainable=False, caching_device=None, name='loss_block/conv_13na/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['loss_block/conv_13na/filters'] = loss_block_conv_13na_filters
-    loss_block_batch_normalize_19tw_mean_initializer_zeros_initializer = tf.convert_to_tensor(value=np.asarray(ckpt['loss_block/batch_normalize_19tw/mean']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    loss_block_batch_normalize_19tw_mean_initializer_zeros_initializer = tf.zeros_initializer()(shape=[16, ])
     loss_block_batch_normalize_19tw_mean = tf.Variable(initial_value=loss_block_batch_normalize_19tw_mean_initializer_zeros_initializer, trainable=False, caching_device=None, name='loss_block/batch_normalize_19tw/mean', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['loss_block/batch_normalize_19tw/mean'] = loss_block_batch_normalize_19tw_mean
-    loss_block_batch_normalize_19tw_offset_initializer_zeros_initializer = tf.convert_to_tensor(value=np.asarray(ckpt['loss_block/batch_normalize_19tw/offset']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    loss_block_batch_normalize_19tw_offset = tf.Variable(initial_value=loss_block_batch_normalize_19tw_offset_initializer_zeros_initializer, trainable=True, caching_device=None, name='loss_block/batch_normalize_19tw/offset', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    loss_block_batch_normalize_19tw_offset_initializer_zeros_initializer = tf.zeros_initializer()(shape=[16, ])
+    loss_block_batch_normalize_19tw_offset = tf.Variable(initial_value=loss_block_batch_normalize_19tw_offset_initializer_zeros_initializer, trainable=False, caching_device=None, name='loss_block/batch_normalize_19tw/offset', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['loss_block/batch_normalize_19tw/offset'] = loss_block_batch_normalize_19tw_offset
-    loss_block_batch_normalize_19tw_scale_initializer_ones_initializer = tf.convert_to_tensor(value=np.asarray(ckpt['loss_block/batch_normalize_19tw/scale']), dtype=tf_dtypes['dtype'], dtype_hint=None)
-    loss_block_batch_normalize_19tw_scale = tf.Variable(initial_value=loss_block_batch_normalize_19tw_scale_initializer_ones_initializer, trainable=True, caching_device=None, name='loss_block/batch_normalize_19tw/scale', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
+    loss_block_batch_normalize_19tw_scale_initializer_ones_initializer = tf.ones_initializer()(shape=[16, ])
+    loss_block_batch_normalize_19tw_scale = tf.Variable(initial_value=loss_block_batch_normalize_19tw_scale_initializer_ones_initializer, trainable=False, caching_device=None, name='loss_block/batch_normalize_19tw/scale', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['loss_block/batch_normalize_19tw/scale'] = loss_block_batch_normalize_19tw_scale
-    loss_block_batch_normalize_19tw_variance_initializer_ones_initializer = tf.convert_to_tensor(value=np.asarray(ckpt['loss_block/batch_normalize_19tw/variance']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    loss_block_batch_normalize_19tw_variance_initializer_ones_initializer = tf.ones_initializer()(shape=[16, ])
     loss_block_batch_normalize_19tw_variance = tf.Variable(initial_value=loss_block_batch_normalize_19tw_variance_initializer_ones_initializer, trainable=False, caching_device=None, name='loss_block/batch_normalize_19tw/variance', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['loss_block/batch_normalize_19tw/variance'] = loss_block_batch_normalize_19tw_variance
-    loss_block_conv_21vm_filters_initializer_xavier_uniform = tf.convert_to_tensor(value=np.asarray(ckpt['loss_block/conv_21vm/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    loss_block_conv_21vm_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(3, 3, 16, 64))
     loss_block_conv_21vm_filters = tf.Variable(initial_value=loss_block_conv_21vm_filters_initializer_xavier_uniform, trainable=False, caching_device=None, name='loss_block/conv_21vm/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['loss_block/conv_21vm/filters'] = loss_block_conv_21vm_filters
-    loss_block_conv_23xc_filters_initializer_xavier_uniform = tf.convert_to_tensor(value=np.asarray(ckpt['loss_block/conv_23xc/filters']), dtype=tf_dtypes['dtype'], dtype_hint=None)
+    loss_block_conv_23xc_filters_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=1)(shape=(3, 3, 64, 64))
     loss_block_conv_23xc_filters = tf.Variable(initial_value=loss_block_conv_23xc_filters_initializer_xavier_uniform, trainable=False, caching_device=None, name='loss_block/conv_23xc/filters', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['loss_block/conv_23xc/filters'] = loss_block_conv_23xc_filters
     return trainable_params
@@ -36,13 +36,13 @@ def get_trainable_params(ckpt):
 
 def model(trainable_params, data_block_input_data):
     model_block_conv_4eg = tf.nn.conv2d(input=data_block_input_data, filters=trainable_params['model_block/conv_4eg/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/conv_4eg/filters')
-    model_block_max_pool2d_6gw = tf.nn.max_pool(input=model_block_conv_4eg, ksize=3, strides=2, padding='VALID', data_format='NHWC', name='model_block/max_pool2d_6gw')
-    model_block_max_pool2d_8im = tf.nn.max_pool(input=model_block_max_pool2d_6gw, ksize=3, strides=2, padding='VALID', data_format='NHWC', name='model_block/max_pool2d_8im')
-    model_block_output = tf.reshape(tensor=model_block_max_pool2d_8im, shape=(-1, tf.math.reduce_prod(tf.convert_to_tensor([7, 7, 64]))), name='model_block/output')
+    model_block_max_pool2d_6gw = tf.nn.max_pool(input=model_block_conv_4eg, ksize=3, strides=1, padding='VALID', data_format='NHWC', name='model_block/max_pool2d_6gw')
+    model_block_max_pool2d_8im = tf.nn.max_pool(input=model_block_max_pool2d_6gw, ksize=3, strides=1, padding='VALID', data_format='NHWC', name='model_block/max_pool2d_8im')
+    model_block_output = tf.reshape(tensor=model_block_max_pool2d_8im, shape=(-1, tf.math.reduce_prod(tf.convert_to_tensor([28, 28, 4]))), name='model_block/output')
     return model_block_output 
 
 
-def get_loss(trainable_params, data_block_input_data, inputs):
+def get_loss(inputs, trainable_params, data_block_input_data):
     loss_block_conv_13na = tf.nn.conv2d(input=data_block_input_data, filters=trainable_params['loss_block/conv_13na/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='loss_block/conv_13na/filters')
     loss_block_reluu = tf.nn.relu(name='loss_block/reluu', features=loss_block_conv_13na)
     loss_block_dropout_17rg = tf.nn.dropout(x=loss_block_reluu, rate=0.2, noise_shape=None, seed=None, name='loss_block/dropout_17rg')
@@ -64,12 +64,12 @@ def get_optimizer():
 from alex.alex.checkpoint import Checkpoint
 
 C = Checkpoint("examples/configs/small1_linear.yml",
-               ['checkpoints', 'test_code_gen_ckpt.json'],
+               ['checkpoints', 'test_code_gen_ckpt_trained.json'],
                None)
 
 ckpt = C.load()
 
-trainable_params = get_trainable_params(ckpt)
+trainable_params = get_trainable_params()
 
 from alex.alex import registry
 var_list = registry.get_trainable_params_list(trainable_params)
@@ -82,22 +82,22 @@ def inference(trainable_params, data_block_input_data):
     preds = tf.math.argmax(model(trainable_params, data_block_input_data), 1)
     return preds
     
-def evaluation(trainable_params, labels, data_block_input_data):
+def evaluation(labels, data_block_input_data, trainable_params):
     
     preds = inference(trainable_params, data_block_input_data)
     
     matches = tf.equal(preds, tf.math.argmax(labels, 1))
     perf = tf.reduce_mean(tf.cast(matches, tf.float32))
     
-    loss = tf.reduce_mean(get_loss(trainable_params, data_block_input_data, [labels, preds]))
+    loss = tf.reduce_mean(get_loss([labels, preds], trainable_params, data_block_input_data))
     return perf, loss
     
     
-def train(trainable_params, var_list, labels, data_block_input_data):
+def train(var_list, labels, data_block_input_data, trainable_params):
     
     with tf.GradientTape() as tape:
         preds = model(trainable_params, data_block_input_data)
-        gradients = tape.gradient(get_loss(trainable_params, data_block_input_data, [labels, preds]), var_list)
+        gradients = tape.gradient(get_loss([labels, preds], trainable_params, data_block_input_data), var_list)
         optimizer.apply_gradients(zip(gradients, var_list))
     
     
@@ -105,9 +105,9 @@ def loop(trainloader, test_inputs, test_labels, var_list):
     
     for epoch in range(90):
         for i, (inputs, labels) in enumerate(trainloader):
-            train(trainable_params, var_list, labels, inputs)
+            train(var_list, labels, inputs, trainable_params)
             if i % 500 == 499:
-                results = evaluation(trainable_params, val_labels, val_inputs)
+                results = evaluation(val_labels, val_inputs, trainable_params)
                 
                 tf.print(results)
     print('Finished Training')

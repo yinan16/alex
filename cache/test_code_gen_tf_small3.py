@@ -145,7 +145,7 @@ def get_trainable_params():
     model_block_dense_63lk_bias_initializer_zeros_initializer = tf.zeros_initializer()(shape=[1, ])
     model_block_dense_63lk_bias = tf.Variable(initial_value=model_block_dense_63lk_bias_initializer_zeros_initializer, trainable=True, caching_device=None, name='model_block/dense_63lk/bias', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['model_block/dense_63lk/bias'] = model_block_dense_63lk_bias
-    model_block_dense_63lk_weights_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=2)(shape=[3600, 10])
+    model_block_dense_63lk_weights_initializer_xavier_uniform = tf.keras.initializers.glorot_uniform(seed=2)(shape=[14400, 10])
     model_block_dense_63lk_weights = tf.Variable(initial_value=model_block_dense_63lk_weights_initializer_xavier_uniform, trainable=True, caching_device=None, name='model_block/dense_63lk/weights', variable_def=None, dtype=tf_dtypes['float32'], import_scope=None, constraint=None, synchronization=tf.VariableSynchronization.AUTO, shape=None)
     trainable_params['model_block/dense_63lk/weights'] = model_block_dense_63lk_weights
     return trainable_params
@@ -184,14 +184,14 @@ def model(trainable_params, data_block_input_data):
     model_block_dropout_53bi = tf.nn.dropout(x=model_block_relu_51zs, rate=0.2, noise_shape=None, seed=None, name='model_block/dropout_53bi')
     model_block_batch_normalize_55dy = tf.nn.batch_normalization(x=model_block_dropout_53bi, mean=trainable_params['model_block/batch_normalize_55dy/mean'], variance=trainable_params['model_block/batch_normalize_55dy/variance'], offset=trainable_params['model_block/batch_normalize_55dy/offset'], scale=trainable_params['model_block/batch_normalize_55dy/scale'], variance_epsilon=0.001, name='model_block/batch_normalize_55dy/variance')
     model_block_conv_57fo = tf.nn.conv2d(input=model_block_batch_normalize_55dy, filters=trainable_params['model_block/conv_57fo/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/conv_57fo/filters')
-    model_block_max_pool2d_59he = tf.nn.max_pool(input=model_block_conv_57fo, ksize=3, strides=2, padding='VALID', data_format='NHWC', name='model_block/max_pool2d_59he')
-    model_block_flatten_61ju = tf.reshape(tensor=model_block_max_pool2d_59he, shape=(-1, tf.math.reduce_prod(tf.convert_to_tensor([15, 15, 16]))), name='model_block/flatten_61ju')
+    model_block_max_pool2d_59he = tf.nn.max_pool(input=model_block_conv_57fo, ksize=3, strides=1, padding='VALID', data_format='NHWC', name='model_block/max_pool2d_59he')
+    model_block_flatten_61ju = tf.reshape(tensor=model_block_max_pool2d_59he, shape=(-1, tf.math.reduce_prod(tf.convert_to_tensor([30, 30, 16]))), name='model_block/flatten_61ju')
     model_block_dense_63lk = tf.add(x=tf.matmul(a=model_block_flatten_61ju, b=trainable_params['model_block/dense_63lk/weights']), y=trainable_params['model_block/dense_63lk/bias'], name='model_block/dense_63lk/weights')
     model_block_d_1 = tf.nn.softmax(logits=model_block_dense_63lk, name='model_block/d_1')
     return model_block_d_1 
 
 
-def get_loss(trainable_params, inputs):
+def get_loss(inputs, trainable_params):
     loss_block_cross_0 = tf.nn.softmax_cross_entropy_with_logits(labels=inputs[0], logits=inputs[1], axis=-1, name='loss_block/cross_0')
     loss_block_regularizer = 0.002*sum(list(map(lambda x: tf.nn.l2_loss(t=trainable_params[x], name='loss_block/regularizer'), ['model_block/test_recipe_34im/conv_6gw/filters', 'model_block/test_recipe_34im/conv_12ms/filters', 'model_block/test_recipe_34im/resnet_16_33he/conv_20ue/filters', 'model_block/test_recipe_34im/resnet_16_33he/conv_26aa/filters', 'model_block/resnet_16_49xc_0/conv_36kc/filters', 'model_block/resnet_16_49xc_0/conv_42qy/filters', 'model_block/resnet_16_49xc/conv_36kc/filters', 'model_block/resnet_16_49xc/conv_42qy/filters', 'model_block/conv_57fo/filters', 'model_block/dense_63lk/weights'])))
     loss_block_losses = tf.math.add(x=[loss_block_cross_0, loss_block_regularizer][0], y=[loss_block_cross_0, loss_block_regularizer][1], name='loss_block/losses')
@@ -224,22 +224,22 @@ def inference(trainable_params, data_block_input_data):
     preds = tf.math.argmax(model(trainable_params, data_block_input_data), 1)
     return preds
     
-def evaluation(trainable_params, labels, data_block_input_data):
+def evaluation(labels, data_block_input_data, trainable_params):
     
     preds = inference(trainable_params, data_block_input_data)
     
     matches = tf.equal(preds, tf.math.argmax(labels, 1))
     perf = tf.reduce_mean(tf.cast(matches, tf.float32))
     
-    loss = tf.reduce_mean(get_loss(trainable_params, [labels, preds]))
+    loss = tf.reduce_mean(get_loss([labels, preds], trainable_params))
     return perf, loss
     
     
-def train(trainable_params, var_list, labels, data_block_input_data):
+def train(var_list, labels, data_block_input_data, trainable_params):
     
     with tf.GradientTape() as tape:
         preds = model(trainable_params, data_block_input_data)
-        gradients = tape.gradient(get_loss(trainable_params, [labels, preds]), var_list)
+        gradients = tape.gradient(get_loss([labels, preds], trainable_params), var_list)
         optimizer.apply_gradients(zip(gradients, var_list))
     
     
@@ -247,9 +247,9 @@ def loop(trainloader, test_inputs, test_labels, var_list):
     
     for epoch in range(90):
         for i, (inputs, labels) in enumerate(trainloader):
-            train(trainable_params, var_list, labels, inputs)
+            train(var_list, labels, inputs, trainable_params)
             if i % 500 == 499:
-                results = evaluation(trainable_params, val_labels, val_inputs)
+                results = evaluation(val_labels, val_inputs, trainable_params)
                 
                 tf.print(results)
     print('Finished Training')

@@ -21,9 +21,9 @@ class TestCheckpoint(unittest.TestCase):
         pass
 
     def test_checkpoint(self):
-        ckpt = checkpoint.Checkpoint("examples/configs/small1.yml",
+        ckpt = checkpoint.Checkpoint("examples/configs/small1_linear.yml",
                                      ["checkpoints",
-                                      "test.json"],
+                                      "test_code_gen_ckpt_trained.json"],
                                      ["checkpoints", None])
         # ckpt.save()
         print("Matched components")

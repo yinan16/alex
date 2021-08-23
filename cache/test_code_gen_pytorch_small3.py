@@ -17,8 +17,8 @@ class Model(torch.nn.Module):
             self.register_parameter(var, self.trainable_params[var])
             self.params.append({'params': self.trainable_params[var]})
 
-    def forward(self, x, training):
-        x = self.model(x, self.trainable_params, training)
+    def forward(self, x, trainable_params):
+        x = self.model(x, trainable_params)
         return x
 
     @staticmethod
@@ -162,7 +162,7 @@ class Model(torch.nn.Module):
         model_block_dense_63lk_bias_initializer_zeros_initializer = torch.nn.init.zeros_(tensor=torch.empty(*[1, ]))
         model_block_dense_63lk_bias = torch.nn.parameter.Parameter(data=model_block_dense_63lk_bias_initializer_zeros_initializer, requires_grad=True)
         trainable_params['model_block/dense_63lk/bias'] = model_block_dense_63lk_bias
-        model_block_dense_63lk_weights_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[10, 3600]))
+        model_block_dense_63lk_weights_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[10, 14400]))
         model_block_dense_63lk_weights = torch.nn.parameter.Parameter(data=model_block_dense_63lk_weights_initializer_xavier_uniform, requires_grad=True)
         trainable_params['model_block/dense_63lk/weights'] = model_block_dense_63lk_weights
         return trainable_params
@@ -201,14 +201,14 @@ class Model(torch.nn.Module):
         model_block_dropout_53bi = torch.nn.functional.dropout(input=model_block_relu_51zs, p=0.2, training=training, inplace=False)
         model_block_batch_normalize_55dy = torch.nn.functional.batch_norm(input=model_block_dropout_53bi, running_mean=trainable_params['model_block/batch_normalize_55dy/mean'], running_var=trainable_params['model_block/batch_normalize_55dy/variance'], weight=trainable_params['model_block/batch_normalize_55dy/scale'], bias=trainable_params['model_block/batch_normalize_55dy/offset'], training=training, momentum=0.1, eps=0.001)
         model_block_conv_57fo = torch.nn.functional.conv2d(input=model_block_batch_normalize_55dy, weight=trainable_params['model_block/conv_57fo/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
-        model_block_max_pool2d_59he = torch.nn.functional.max_pool2d(input=model_block_conv_57fo, kernel_size=3, stride=2, padding=[0, 0])
+        model_block_max_pool2d_59he = torch.nn.functional.max_pool2d(input=model_block_conv_57fo, kernel_size=3, stride=1, padding=[0, 0])
         model_block_flatten_61ju = torch.flatten(input=model_block_max_pool2d_59he, start_dim=1, end_dim=-1)
         model_block_dense_63lk = torch.nn.functional.linear(weight=trainable_params['model_block/dense_63lk/weights'], bias=trainable_params['model_block/dense_63lk/bias'], input=model_block_flatten_61ju)
         model_block_d_1 = torch.nn.functional.softmax(input=model_block_dense_63lk, dim=None)
         return model_block_d_1 
     
     @staticmethod
-    def get_loss(trainable_params, inputs):
+    def get_loss(inputs, trainable_params):
         loss_block_cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=inputs[0], input=inputs[1])
         loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/test_recipe_34im/conv_6gw/filters', 'model_block/test_recipe_34im/conv_12ms/filters', 'model_block/test_recipe_34im/resnet_16_33he/conv_20ue/filters', 'model_block/test_recipe_34im/resnet_16_33he/conv_26aa/filters', 'model_block/resnet_16_49xc_0/conv_36kc/filters', 'model_block/resnet_16_49xc_0/conv_42qy/filters', 'model_block/resnet_16_49xc/conv_36kc/filters', 'model_block/resnet_16_49xc/conv_42qy/filters', 'model_block/conv_57fo/filters', 'model_block/dense_63lk/weights'])))
         loss_block_losses = torch.add(input=[loss_block_cross_0, loss_block_regularizer][0], other=[loss_block_cross_0, loss_block_regularizer][1])
@@ -235,34 +235,42 @@ model = Model(ckpt)
 model.to(device)
 
 trainable_params = model.trainable_params
-optimizer = model.get_optimizer(trainable_params)
+optimizer = model.get_optimizer(model.params)
 
 learning_rate = model.get_scheduler(optimizer)
 
 
-def inference(trainable_params, training, data_block_input_data):
+def inference(trainable_params, data_block_input_data):
+    
+    model.training=False
+    training = model.training
     
     preds = torch.max(model(trainable_params, training, data_block_input_data), 1)
     preds = preds[1]
     return preds
     
-def evaluation(trainable_params, training, labels, data_block_input_data):
+def evaluation(labels, data_block_input_data, trainable_params):
     
-    preds = inference(trainable_params, training, data_block_input_data)
+    preds = inference(trainable_params, data_block_input_data)
+    
+    model.training=False
+    training = model.training
     
     total = labels.size(0)
     matches = (preds == labels).sum().item()
     perf = matches / total
     
-    loss = model.get_loss(trainable_params, [labels, preds])
+    loss = model.get_loss([labels, preds], trainable_params)
     return perf, loss
     
     
-def train(trainable_params, data_block_input_data, labels):
+def train(labels, data_block_input_data, trainable_params):
     
     optimizer.zero_grad()
-    preds = model(trainable_params, True, data_block_input_data)
-    loss = model.get_loss(trainable_params, [labels, preds])
+    model.training=True
+    training = model.training
+    preds = model(trainable_params, training, data_block_input_data)
+    loss = model.get_loss([labels, preds], trainable_params)
     loss.backward()
     
     
@@ -276,11 +284,11 @@ def loop(trainloader, test_inputs, test_labels):
     
             inputs = inputs.to(device)
             labels = labels.to(device)
-            train(trainable_params, data_block_input_data, labels)
+            train(labels, inputs, trainable_params)
             optimizer.step()
     
             if i % 500 == 499:
-                results = evaluation(trainable_params, training, labels, data_block_input_data)
+                results = evaluation(val_labels, val_inputs, trainable_params)
                 print(results)
                 
         learning_rate.step()

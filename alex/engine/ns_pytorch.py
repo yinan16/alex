@@ -57,8 +57,8 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
     code.append(ns_alex.indent("self.register_parameter(var, self.%s[var])" % const.ALEX_ARG_TRAINABLE_PARAMS, levels=3))
     code.append(ns_alex.indent("self.params.append({'params': self.%s[var]})" % const.ALEX_ARG_TRAINABLE_PARAMS, levels=3))
     code.append("")
-    code.append(ns_alex.indent("def forward(self, x, training):", levels=1))
-    code.append(ns_alex.indent("x = self.model(x, self.%s, training)" % const.ALEX_ARG_TRAINABLE_PARAMS,
+    code.append(ns_alex.indent("def forward(self, x, trainable_params):", levels=1))
+    code.append(ns_alex.indent("x = self.model(x, %s)" % const.ALEX_ARG_TRAINABLE_PARAMS,
                                levels=2))
     code.append(ns_alex.indent("return x", levels=2))
     code.append("")
@@ -72,7 +72,7 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
 
 
 # Boilerplates:
-def instantiate(config, load_from, save_to, optimizer_args, **kwargs):
+def instantiate(config, load_from, save_to, **kwargs):
     return """
 from alex.alex.checkpoint import Checkpoint
 
@@ -85,11 +85,11 @@ model = Model(ckpt)
 model.to(device)
 
 trainable_params = model.trainable_params
-optimizer = model.get_optimizer(%s)
+optimizer = model.get_optimizer(model.params)
 
 learning_rate = model.get_scheduler(optimizer)
 
-""" % (config, str(load_from), str(save_to), ", ".join(optimizer_args))
+""" % (config, str(load_from), str(save_to))
 
 
 def loop(save_to, train_args, evaluation_args):
@@ -117,7 +117,9 @@ for epoch in range(90):
             %s
     learning_rate.step()
 print('Finished Training')
-""" % (", ".join(train_args), ", ".join(evaluation_args), save_str)
+""" % (", ".join(train_args).replace("data_block_input_data", "inputs"),
+       ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("labels", "val_labels"),
+       save_str)
 
 
 def train(model_args, loss_args):
@@ -125,38 +127,48 @@ def train(model_args, loss_args):
     return \
     func_name, """
 optimizer.zero_grad()
+model.training=True
+training = model.training
 preds = model(%s)
 loss = model.get_loss(%s)
 loss.backward()
-""" % (", ".join(model_args).replace("training", "True"),
+""" % (", ".join(model_args),
        ", ".join(loss_args).replace("inputs", "[labels, preds]"))
 
 
 def inference(model_args, mode):
+    code_str = """
+model.training=False
+training = model.training
+"""
     if mode == "classification":
-        code_str = """
+        code_str += """
 preds = torch.max(model(%s), 1)
 preds = preds[1]
 """ % (", ".join(model_args))
     elif mode == "regression":
-        code_str = """
+        code_str += """
 preds = model(%s)\n
-""" % (", ".join(model_args).replace("training", "False"))
+""" % (", ".join(model_args))
     code_str += "return preds"
     func_name = "inference"
     return func_name, code_str
 
 
 def evaluation(inference_args, loss_args, mode="classification"):
+    evaluation_str = """
+model.training=False
+training = model.training
+"""
     if mode == "classification":
-        evaluation_str = """
+        evaluation_str += """
 total = labels.size(0)
 matches = (preds == labels).sum().item()
 perf = matches / total
 """
         return_str = "return perf, loss"
     else:
-        evaluation_str = ""
+        evaluation_str += ""
         return_str = "return loss"
 
     func_name = "evaluation"
