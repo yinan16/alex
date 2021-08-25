@@ -35,8 +35,6 @@ loss_block:
       relu
     name: "reluu"
   - type:
-      dropout
-  - type:
       batch_normalize
     trainable: False
 
