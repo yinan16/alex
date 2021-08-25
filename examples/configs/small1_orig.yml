@@ -44,14 +44,14 @@ model_block:
   - type: flatten
   - type: dense
   - type: softmax
-    name: d_1
+    name: output
 
 loss_block:
   - type:
       cross_entropy
     inputs:
       - data_block/labels
-      - model_block/d_1
+      - model_block/output
     name: cross_0
 
   - type:

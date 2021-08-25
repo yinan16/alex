@@ -36,14 +36,14 @@ model_block:
   - type: dense
   - type: softmax
   - type: sigmoid
-    name: d_1
+    name: output
 
 loss_block:
   - type:
       cross_entropy
     inputs:
       - data_block/labels
-      - model_block/d_1
+      - model_block/output
     name: losses
 
 optimizer_block:

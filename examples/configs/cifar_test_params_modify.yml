@@ -50,14 +50,14 @@ model_block:
 
   - type: dense
   - type: dropout
-    name: d_1
+    name: output
 
 loss_block:
   - type:
       cross_entropy
     inputs:
       - labels
-      - d_1
+      - output
     name: losses
 
 
@@ -68,10 +68,3 @@ optimizer_block:
     hyperparams:
       learning_rate:
         0.1
-
-
-  # - type: inference
-  #   inputs:
-  #     - labels
-  #     - d_1
-  #   name: inference_1

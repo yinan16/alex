@@ -92,17 +92,20 @@ def loop(save_to, train_args, evaluation_args):
     func_name = "loop"
     return func_name, """
 for epoch in range(90):
-    for i, batch in enumerate(trainloader):
+    i = 0
+    for batch in trainloader:
         inputs = batch[0]
         labels = batch[1]
         train(%s)
         if i %% 500 == 499:
             results = evaluation(%s)
             %s
-            tf.print(results)
+            tf.print("Epoch", epoch, results)
+        i += 1
 print('Finished Training')
 
-""" % (", ".join(train_args).replace("data_block_input_data", "inputs").replace("data_block_labels", "labels"), ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("data_block_labels", "val_labels"), save_str)
+""" % (", ".join(train_args).replace("data_block_input_data", "inputs").replace("data_block_labels", "labels"),
+       ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("data_block_labels", "val_labels"), save_str)
 
 
 def inference(model_args, mode):
