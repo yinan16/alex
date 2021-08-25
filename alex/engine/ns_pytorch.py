@@ -14,7 +14,7 @@ DIM_ORDER = ["batch_size", "channel", "height", "width"]
 
 DEFINED = {"torch", "np", "torch_types", "device"}
 
-LOOP_ARGS = ["trainloader", "val_inputs", "val_labels"]
+# LOOP_ARGS = ["trainloader", "val_inputs", "val_labels"]
 
 def add_imports(additional_modules=[]):
     default_modules = [["torch"],
@@ -133,7 +133,7 @@ preds = model(%s)
 loss = model.get_loss(%s)
 loss.backward()
 """ % (", ".join(model_args),
-       ", ".join(loss_args).replace("inputs", "[labels, preds]"))
+       ", ".join(loss_args).replace("model_block_output", "preds"))
 
 
 def inference(model_args, mode):
@@ -145,11 +145,11 @@ training = model.training
         code_str += """
 preds = torch.max(model(%s), 1)
 preds = preds[1]
-""" % (", ".join(model_args))
+""" % (", ".join(model_args).replace("model_block_output", "preds"))
     elif mode == "regression":
         code_str += """
 preds = model(%s)\n
-""" % (", ".join(model_args))
+""" % (", ".join(model_args).replace("model_block_output", "preds"))
     code_str += "return preds"
     func_name = "inference"
     return func_name, code_str
@@ -162,8 +162,9 @@ training = model.training
 """
     if mode == "classification":
         evaluation_str += """
-total = labels.size(0)
-matches = (preds == labels).sum().item()
+gt = labels
+total = gt.size(0)
+matches = (preds == gt).sum().item()
 perf = matches / total
 """
         return_str = "return perf, loss"
@@ -179,7 +180,7 @@ loss = model.get_loss(%s)
 %s
 """ % (", ".join(inference_args),
        evaluation_str,
-       ", ".join(loss_args).replace("inputs", "[labels, preds]"),
+       ", ".join(loss_args).replace("model_block_output", "preds"),
        return_str)
 
     return func_name, code_str

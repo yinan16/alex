@@ -80,7 +80,7 @@ with tf.GradientTape() as tape:
     gradients = tape.gradient(get_loss(%s), var_list)
     optimizer.apply_gradients(zip(gradients, var_list))
 """ % (", ".join(model_args),
-       ", ".join(loss_args).replace("inputs", "[labels, preds]"))
+       ", ".join(loss_args).replace("model_block_output", "preds"))
 
 
 def loop(save_to, train_args, evaluation_args):
@@ -136,7 +136,7 @@ loss = tf.reduce_mean(get_loss(%s))
 %s
 """ % (", ".join(inference_args),
        evaluation_str,
-       ", ".join(loss_args).replace("inputs", "[labels, preds]"),
+       ", ".join(loss_args).replace("model_block_output", "preds"),
        return_str)
 
     return func_name, code_str

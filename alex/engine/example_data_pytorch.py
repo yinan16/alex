@@ -39,5 +39,3 @@ print(device)
 # print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
 val_inputs, val_labels = iter(valloader).next()
-
-loop(trainloader, val_inputs, val_labels)

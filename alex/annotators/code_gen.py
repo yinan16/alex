@@ -728,9 +728,9 @@ def generate_python(output_file,
         loop_func_name, loop_str = NAMESPACES[engine].loop(save_ckpt,
                                                            train_args,
                                                            evaluation_args)
-        loop_args = NAMESPACES[engine].LOOP_ARGS
-        loop_str = ns_alex.wrap_in_function(loop_str,
-                                            loop_func_name, loop_args, "")
+        loop_str, loop_args = assemble_func_src_code(loop_str,
+                                                     loop_func_name,
+                                                     "", exclude_args=NAMESPACES[engine].DEFINED)
         src = [instanstiate_str, inference_str, evaluation_str, train_str, loop_str]
         src_str = "\n".join(src)
         util.write_to(src_str, output_file)
@@ -859,7 +859,7 @@ class CodeBlock(param_count.ParamCount):
             traceback.print_exc()
         return node
 
-    def get_dl_code(self, fn_name, exclude_args=[], return_str=None, prefix=None):
+    def get_dl_code(self, fn_name, exclude_args=[], manual_args=[], return_str=None, prefix=None):
 
         util.concatenate_files([self.cache_def_path],
                                self.cache_code_path)
@@ -879,8 +879,7 @@ class CodeBlock(param_count.ParamCount):
             __src_code = f.readlines()
         # TODO: automatically detect args
         if len(__src_code) != 0:
-
-            src_code, args = assemble_func_src_code(__src_code, fn_name, return_str, exclude_args=exclude_args)
+            src_code, args = assemble_func_src_code(__src_code, fn_name, return_str, exclude_args=exclude_args, manual_args=manual_args)
         else:
             src_code = ""
             args = []
@@ -907,9 +906,14 @@ class ParamCodeBlock(CodeBlock):
                 **registry.AS_TENSOR}
 
     def generate_dl_code(self):
+        if self.load:
+            manual_args = ["ckpt"]
+        else:
+            manual_args = []
         return self.get_dl_code(fn_name="get_trainable_params",
                                 return_str="trainable_params",
                                 exclude_args=NAMESPACES[self.engine].DEFINED,
+                                manual_args=manual_args,
                                 prefix="trainable_params = dict()\n")
 
 
@@ -1108,7 +1112,7 @@ def cache_boiler_plate(engine):
     return imports + configs
 
 
-def assemble_func_src_code(code_body, fn_name, return_str, exclude_args=[]):
+def assemble_func_src_code(code_body, fn_name, return_str, exclude_args=[], manual_args=[]):
     src_code = ns_alex.wrap_in_function(code_body,
                                         fn_name,
                                         args=[],
@@ -1116,6 +1120,8 @@ def assemble_func_src_code(code_body, fn_name, return_str, exclude_args=[]):
     local_symbols, defined_symbols = get_symbols_from_func_def_literal(src_code)
     args = set(local_symbols).difference(set(defined_symbols))
     args = list(args.difference(exclude_args))
+    args += manual_args
+    args = list(set(args))
     src_code = ns_alex.wrap_in_function(code_body, fn_name, args, return_str)
     return src_code, args
 
@@ -1148,7 +1154,12 @@ def get_symbols_from_func_def_literal(code_str):
                     if isinstance(var, ast.Name):
                         defined_symbols.append(var.id)
                     else:
-                        defined_symbols.append(var.value.id)
+                        try: # FIXME
+                            defined_symbols.append(var.value.id)
+                        except:
+                            _local_symbols, _defined_symbols = get_symbols_from_func_def_literal(var)
+                            local_symbols += _local_symbols
+                            defined_symbols += _defined_symbols
             else:
                 defined_symbols.append(targets.value.id)
 
@@ -1162,6 +1173,11 @@ def get_symbols_from_func_def_literal(code_str):
         else:
             if isinstance(line, (ast.With, ast.For, ast.If)):
                 obj = line.body
+                if isinstance(line, ast.For):
+                    if isinstance(line.target, ast.Tuple):
+                        defined_symbols.append(line.target.elts[1].id)
+                    else:
+                        defined_symbols.append(line.target.id)
             elif isinstance(line, ast.Lambda):
                 obj = line.body
             elif isinstance(line, (ast.Tuple, ast.List, ast.Call)):
