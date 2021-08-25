@@ -16,7 +16,7 @@ TENSOR_SHAPE = {"input_shape": {"tf": ["inputs.get_shape().as_list()", []]}}
 
 AS_TENSOR = {"as_tensor": {"tf": ["tf.convert_to_tensor",
                                   {"value": "np.asarray(inputs)",
-                                   "dtype": "tf_dtypes['dtype']",
+                                   "dtype": "tf_dtypes[dtype]",
                                    "dtype_hint": "None"}],
                            "pytorch": ["torch.as_tensor",
                                        {"data": "np.asarray(inputs)",

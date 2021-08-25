@@ -106,9 +106,8 @@ def loop(save_to, train_args, evaluation_args):
     return \
     func_name, """
 for epoch in range(90):
-
-    for i, data in enumerate(trainloader, 0):
-
+    i = 0
+    for data in trainloader:
         inputs, labels = data
 
         inputs = inputs.to(device)
@@ -120,10 +119,11 @@ for epoch in range(90):
             results = evaluation(%s)
             print("Epoch:", i, results)
             %s
+        i += 1
     learning_rate.step()
 print('Finished Training')
-""" % (", ".join(train_args).replace("data_block_input_data", "inputs"),
-       ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("labels", "val_labels"),
+""" % (", ".join(train_args).replace("data_block_input_data", "inputs").replace("data_block_labels", "labels"),
+       ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("data_block_labels", "val_labels"),
        save_str)
 
 

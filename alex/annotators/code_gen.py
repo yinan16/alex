@@ -1194,10 +1194,7 @@ def get_symbols_from_func_def_literal(code_str):
             if isinstance(line, (ast.With, ast.For, ast.If)):
                 obj = line.body
                 if isinstance(line, ast.For):
-                    if isinstance(line.target, ast.Tuple):
-                        defined_symbols.append(line.target.elts[1].id)
-                    else:
-                        defined_symbols.append(line.target.id)
+                    defined_symbols.append(line.target.id)
             elif isinstance(line, ast.Lambda):
                 obj = line.body
             elif isinstance(line, (ast.Tuple, ast.List, ast.Call)):
