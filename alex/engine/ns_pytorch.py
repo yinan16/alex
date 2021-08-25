@@ -45,25 +45,20 @@ def add_code_block(code, block):
         code.append(ns_alex.indent(block.replace("\n", "\n\t"), levels=1))
 
 
-def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_code, scheduler_code="", load_from_ckpt=False):
+def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_code, scheduler_code="", load_from_ckpt=False, trainable_params_args=[], model_args=[]):
     code = []
     code.append("class Model(torch.nn.Module):")
     code.append("")
     code.append(ns_alex.indent("def __init__(self, ckpt=None):", levels=1))
     code.append(ns_alex.indent("super(Model, self).__init__()", levels=2))
-    if load_from_ckpt:
-        ckpt_str = "ckpt"
-    else:
-        ckpt_str = ""
-    code.append(ns_alex.indent("self.%s = self.get_trainable_params(%s)" % (const.ALEX_ARG_TRAINABLE_PARAMS, ckpt_str), levels=2))
+    code.append(ns_alex.indent("self.%s = self.get_trainable_params(%s)" % (const.ALEX_ARG_TRAINABLE_PARAMS, ", ".join(trainable_params_args)), levels=2))
     code.append(ns_alex.indent("self.params = []", levels=2))
     code.append(ns_alex.indent("for var in self.%s:" % const.ALEX_ARG_TRAINABLE_PARAMS, levels=2))
     code.append(ns_alex.indent("self.register_parameter(var, self.%s[var])" % const.ALEX_ARG_TRAINABLE_PARAMS, levels=3))
     code.append(ns_alex.indent("self.params.append({'params': self.%s[var]})" % const.ALEX_ARG_TRAINABLE_PARAMS, levels=3))
     code.append("")
-    code.append(ns_alex.indent("def forward(self, x, trainable_params):", levels=1))
-    code.append(ns_alex.indent("x = self.model(x, %s)" % const.ALEX_ARG_TRAINABLE_PARAMS,
-                               levels=2))
+    code.append(ns_alex.indent("def forward(self, %s):" % (", ".join(model_args)), levels=1))
+    code.append(ns_alex.indent("x = self.model(%s)" % (", ".join(model_args)), levels=2))
     code.append(ns_alex.indent("return x", levels=2))
     code.append("")
     add_code_block(code, trainable_params_code)
@@ -117,7 +112,7 @@ for epoch in range(90):
 
         if i %% 500 == 499:
             results = evaluation(%s)
-            print("Epoch:", i, results)
+            print("Epoch:", epoch, results)
             %s
         i += 1
     learning_rate.step()

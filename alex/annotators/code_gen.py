@@ -696,7 +696,9 @@ def generate_python(output_file,
                                             loss_str,
                                             optimizer_str,
                                             scheduler_str,
-                                            load_from_ckpt=load_from_ckpt)
+                                            load_from_ckpt=load_from_ckpt,
+                                            model_args=model_args,
+                                            trainable_params_args=params_args)
     util.write_to(boiler_str, output_file)
     util.write_to(code, output_file)
     if not def_only:
