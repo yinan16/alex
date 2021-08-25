@@ -174,7 +174,6 @@ def cache_fn(node: dict,
                              arg_str)
     else:
         code_str = arg_str
-
     node["code"] = {"fn": fn,
                     "args": args,
                     "return_symbol": return_symbol,
@@ -229,17 +228,16 @@ class Ingredient(param_count.Ingredient):
         for child in children:
             if child["value"] in args:
                 continue
-            _arg = child["code"]["args"]
-            for _key in _arg:
-                if _arg[_key]["tag"] == IDENTIFIER:
-                    args = {**args, **{_key: _arg[_key]}}
+            # _arg = child["code"]["args"]
+            # for _key in _arg:
+            #     if _arg[_key]["tag"] == IDENTIFIER:
+            #         args = {**args, **{_key: _arg[_key]}}
             if child["code"]["tag"] != VALUE:
                 if child["value"] in registry.ALL_PARAMS:
                     _name = "%s/%s" % (core.get_parent(child["name"],
                                                        annotated,
                                                        "name"),
                                        child["value"])
-
                     args = {**args,
                             **{child["value"]: {"key": child["value"],
                                                 "value": "trainable_params['%s']" % _name,
