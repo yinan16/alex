@@ -731,6 +731,15 @@ def generate_python(output_file,
         loop_str, loop_args = assemble_func_src_code(loop_str,
                                                      loop_func_name,
                                                      "", exclude_args=NAMESPACES[engine].DEFINED)
+        # TODO: change this
+        data_src = os.path.join(const.ENGINE_PATH, "data_%s.py" % engine)
+        data_write_src = os.path.join(const.ENGINE_PATH, "example_data_%s.py" % engine)
+        util.clear_file(data_write_src)
+        with open(data_write_src, "a") as f:
+            with open(data_src, "r") as fr:
+                lines = fr.readlines()
+            f.write("".join(lines) + "\n" + loop_str.split("\n")[0].replace("def ", "").replace(":", ""))
+
         src = [instanstiate_str, inference_str, evaluation_str, train_str, loop_str]
         src_str = "\n".join(src)
         util.write_to(src_str, output_file)
