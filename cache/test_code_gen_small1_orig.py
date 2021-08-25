@@ -54,7 +54,7 @@ class Model(torch.nn.Module):
         return trainable_params
     
     @staticmethod
-    def model(training, data_block_input_data, trainable_params):
+    def model(trainable_params, training, data_block_input_data):
         model_block_conv_6gw = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/conv_6gw/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
         model_block_reluu = torch.nn.functional.relu(input=model_block_conv_6gw, inplace=False)
         model_block_dropout_10kc = torch.nn.functional.dropout(input=model_block_reluu, p=0.2, training=training, inplace=False)
@@ -67,7 +67,7 @@ class Model(torch.nn.Module):
         return model_block_d_1 
     
     @staticmethod
-    def get_loss(model_block_d_1, data_block_labels, trainable_params):
+    def get_loss(trainable_params, model_block_d_1, data_block_labels):
         loss_block_cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=[data_block_labels, model_block_d_1][0], input=[data_block_labels, model_block_d_1][1])
         loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/conv_6gw/filters', 'model_block/conv_14oi/filters', 'model_block/conv_16qy/filters', 'model_block/dense_20ue/weights'])))
         loss_block_losses = torch.add(input=[loss_block_cross_0, loss_block_regularizer][0], other=[loss_block_cross_0, loss_block_regularizer][1])
@@ -100,37 +100,37 @@ learning_rate = model.get_scheduler(optimizer)
 
 probes = dict()
 
-def inference(data_block_input_data, trainable_params):
+def inference(trainable_params, data_block_input_data):
     
     model.training=False
     training = model.training
     
-    preds = model(training, data_block_input_data, trainable_params)
+    preds = model(trainable_params, training, data_block_input_data)
     
     return preds
     
-def evaluation(model_block_d_1, data_block_labels, data_block_input_data, trainable_params):
+def evaluation(trainable_params, data_block_input_data, model_block_d_1, data_block_labels):
     
-    preds = inference(data_block_input_data, trainable_params)
+    preds = inference(trainable_params, data_block_input_data)
     
     model.training=False
     training = model.training
     
-    loss = model.get_loss(model_block_d_1, data_block_labels, trainable_params)
+    loss = model.get_loss(trainable_params, model_block_d_1, data_block_labels)
     return loss
     
     
-def train(model_block_d_1, data_block_labels, data_block_input_data, trainable_params):
+def train(trainable_params, data_block_input_data, model_block_d_1, data_block_labels):
     
     optimizer.zero_grad()
     model.training=True
     training = model.training
-    preds = model(training, data_block_input_data, trainable_params)
-    loss = model.get_loss(model_block_d_1, data_block_labels, trainable_params)
+    preds = model(trainable_params, training, data_block_input_data)
+    loss = model.get_loss(trainable_params, model_block_d_1, data_block_labels)
     loss.backward()
     
     
-def loop(model, model_block_d_1, trainable_params, data_block_labels, data_block_val_labels, val_inputs):
+def loop(i, model, trainable_params, data_block_labels, model_block_d_1, data_block_val_labels, val_inputs):
     
     for epoch in range(90):
     
@@ -140,12 +140,12 @@ def loop(model, model_block_d_1, trainable_params, data_block_labels, data_block
     
             inputs = inputs.to(device)
             labels = labels.to(device)
-            train(model_block_d_1, data_block_labels, inputs, trainable_params)
+            train(trainable_params, inputs, model_block_d_1, data_block_labels)
             optimizer.step()
     
             if i % 500 == 499:
-                results = evaluation(model_block_d_1, data_block_val_labels, val_inputs, trainable_params)
-                print(results)
+                results = evaluation(trainable_params, val_inputs, model_block_d_1, data_block_val_labels)
+                print("Epoch:", i, results)
                 C.save(model.trainable_params)
         learning_rate.step()
     print('Finished Training')
@@ -169,7 +169,7 @@ trainloader = torch.utils.data.DataLoader(trainset, batch_size=100,
 
 valset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
-valloader = torch.utils.data.DataLoader(valset, batch_size=10000,
+valloader = torch.utils.data.DataLoader(valset, batch_size=1000,
                                          shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat',
@@ -182,5 +182,8 @@ print(device)
 
 val_inputs, val_labels = iter(valloader).next()
 
-loop(model, model_block_d_1, trainable_params, data_block_labels, data_block_val_labels, val_inputs)
+val_inputs = val_inputs.to(device)
+val_labels = val_labels.to(device)
+
+loop(i, model, trainable_params, data_block_labels, model_block_d_1, data_block_val_labels, val_inputs)
 

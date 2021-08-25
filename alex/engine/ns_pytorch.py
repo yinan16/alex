@@ -118,7 +118,7 @@ for epoch in range(90):
 
         if i %% 500 == 499:
             results = evaluation(%s)
-            print(results)
+            print("Epoch:", i, results)
             %s
     learning_rate.step()
 print('Finished Training')

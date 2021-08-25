@@ -15,7 +15,7 @@ model_block:
     hyperparams:
       filters:
         shape:
-          n_filters: 4
+          n_filters: 64
   - type: max_pool2d
   - type: max_pool2d
   - type: flatten
