@@ -91,7 +91,9 @@ def loop(save_to, train_args, evaluation_args):
     func_name = "loop"
     return func_name, """
 for epoch in range(90):
-    for i, (inputs, labels) in enumerate(trainloader):
+    for i, batch in enumerate(trainloader):
+        inputs = batch[0]
+        labels = batch[1]
         train(%s)
         if i %% 500 == 499:
             results = evaluation(%s)
