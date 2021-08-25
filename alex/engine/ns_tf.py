@@ -65,6 +65,7 @@ var_list = registry.get_trainable_params_list(trainable_params)
 
 optimizer = get_optimizer(%s)
 
+probes = dict()
 """ % (config,
        str(load_from),
        str(save_to),
@@ -101,7 +102,7 @@ for epoch in range(90):
             tf.print(results)
 print('Finished Training')
 
-""" % (", ".join(train_args).replace("data_block_input_data", "inputs"), ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("labels", "val_labels"), save_str)
+""" % (", ".join(train_args).replace("data_block_input_data", "inputs").replace("data_block_labels", "labels"), ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("data_block_labels", "val_labels"), save_str)
 
 
 def inference(model_args, mode):

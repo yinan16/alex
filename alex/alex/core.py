@@ -212,6 +212,9 @@ def alex_graph_to_json(graph,
             json_obj[root_name].update(_json_obj)
     else: # if is an ingredient or hyperparameters
         if isinstance(graph, dict) and "hyperparams" in graph:
+            # FIXME: for temporary backward compatibility; remove
+            if "probe" not in graph["meta"]:
+                graph["meta"]["probe"] = False
             if len(graph["hyperparams"]) != 0: # if is an ingredient with hyperparameter
 
                 if not naive:
@@ -233,6 +236,7 @@ def alex_graph_to_json(graph,
                              "meta": {"hyperparams": graph["hyperparams"],
                                       "trainable": graph["meta"]["trainable"],
                                       "visible": graph["meta"]["visible"],
+                                      "probe": graph["meta"]["probe"],
                                       "position": _position,
                                       "label_path": label_path,
                                       "block": graph["meta"]["block"]}}
@@ -266,6 +270,7 @@ def alex_graph_to_json(graph,
                              "meta": {"hyperparams": {},
                                       "trainable": graph["meta"]["trainable"],
                                       "visible": graph["meta"]["visible"],
+                                      "probe": graph["meta"]["probe"],
                                       "position": _position,
                                       "label_path": label_path,
                                       "block": graph["meta"]["block"]}}

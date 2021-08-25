@@ -78,6 +78,7 @@ def alex_reader(user_defined):
               const.INPUTS: _read_inputs,
               const.HYPERPARAMS: _read_hyperparams,
               "visible": lambda x: {**{"visible": True}, **x} if "visible" not in x else clone(x),
+              "probe": lambda x: {**{"probe": False}, **x} if "probe" not in x else clone(x),
               "trainable": lambda x: {**{"trainable": None}, **x} if "trainable" not in x else clone(x),
               "dtype": lambda x: {**{"dtype": default["dtype"]}, **x} if "dtype" not in x else clone(x)}
     return reader
@@ -208,6 +209,7 @@ def _get_node(component):
             graph[const.META][m] = component[m]
     graph[const.META][const.NAME] = None
     graph[const.META]["visible"] = component["visible"]
+    graph[const.META]["probe"] = component["probe"]
     graph[const.META]["trainable"] = component["trainable"]
     graph[const.META]["block"] = component["block"]
     graph[const.META]["dtype"] = component["dtype"]

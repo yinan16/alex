@@ -45,13 +45,17 @@ def add_code_block(code, block):
         code.append(ns_alex.indent(block.replace("\n", "\n\t"), levels=1))
 
 
-def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_code, scheduler_code=""):
+def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_code, scheduler_code="", load_from_ckpt=False):
     code = []
     code.append("class Model(torch.nn.Module):")
     code.append("")
     code.append(ns_alex.indent("def __init__(self, ckpt=None):", levels=1))
     code.append(ns_alex.indent("super(Model, self).__init__()", levels=2))
-    code.append(ns_alex.indent("self.%s = self.get_trainable_params(ckpt)" % (const.ALEX_ARG_TRAINABLE_PARAMS), levels=2))
+    if load_from_ckpt:
+        ckpt_str = "ckpt"
+    else:
+        ckpt_str = ""
+    code.append(ns_alex.indent("self.%s = self.get_trainable_params(%s)" % (const.ALEX_ARG_TRAINABLE_PARAMS, ckpt_str), levels=2))
     code.append(ns_alex.indent("self.params = []", levels=2))
     code.append(ns_alex.indent("for var in self.%s:" % const.ALEX_ARG_TRAINABLE_PARAMS, levels=2))
     code.append(ns_alex.indent("self.register_parameter(var, self.%s[var])" % const.ALEX_ARG_TRAINABLE_PARAMS, levels=3))
@@ -89,6 +93,7 @@ optimizer = model.get_optimizer(model.params)
 
 learning_rate = model.get_scheduler(optimizer)
 
+probes = dict()
 """ % (config, str(load_from), str(save_to))
 
 
