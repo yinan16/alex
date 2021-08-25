@@ -667,13 +667,14 @@ def generate_python(output_file,
                                            ckpt,
                                            load_from_ckpt=load_from_ckpt,
                                            dirname=dirname)()
-    loss_str, loss_args = LossCodeBlock(output_file,
-                                        config_path,
-                                        engine,
-                                        ckpt,
-                                        load_from_ckpt=load_from_ckpt,
-                                        dirname=dirname)()
-
+    loss = LossCodeBlock(output_file,
+                         config_path,
+                         engine,
+                         ckpt,
+                         load_from_ckpt=load_from_ckpt,
+                         dirname=dirname)
+    loss_str, loss_args = loss()
+    loss_mode = loss.loss_mode
     optimizer_str, optimizer_args = OptimizerCodeBlock(output_file,
                                                        config_path,
                                                        engine,
@@ -694,12 +695,11 @@ def generate_python(output_file,
                                             model_str,
                                             loss_str,
                                             optimizer_str,
-                                            scheduler_str)
+                                            scheduler_str,
+                                            load_from_ckpt=load_from_ckpt)
     util.write_to(boiler_str, output_file)
     util.write_to(code, output_file)
     if not def_only:
-        # FIXME: workaround
-        mode = "classification"
         instanstiate_str = NAMESPACES[engine].instantiate(config=config_path,
                                                           load_from=load_ckpt,
                                                           save_to=save_ckpt,
@@ -707,14 +707,14 @@ def generate_python(output_file,
                                                           optimizer_args=optimizer_args)
 
         inference_func_name, inference_str = NAMESPACES[engine].inference(model_args,
-                                                                          mode)
+                                                                          loss_mode)
         inference_str, inference_args = assemble_func_src_code(inference_str,
                                                                inference_func_name,
                                                                "",
                                                                exclude_args=NAMESPACES[engine].DEFINED)
         evaluation_func_name, evaluation_str = NAMESPACES[engine].evaluation(inference_args,
                                                                              loss_args,
-                                                                             mode)
+                                                                             loss_mode)
         evaluation_str, evaluation_args = assemble_func_src_code(evaluation_str,
                                                                  evaluation_func_name,
                                                                  "",
@@ -855,7 +855,16 @@ class CodeBlock(param_count.ParamCount):
                 else:
                     code_str = "%s = %s\n" % (node["code"]["return_symbol"],
                                               node["code"]["str"])
+                if node["value"] in registry.CLASSIFICATION_LOSSES:
+                    self.loss_mode = "classification"
+                else:
+                    self.loss_mode = "regression"
 
+                if self.block_name=="model_block" \
+                   and "probe" in node["meta"] \
+                   and node["meta"]["probe"]:
+                    code_str += "probes['%s'] = %s\n" % (node["name"],
+                                                         node["code"]["return_symbol"])
                 if node["code"]["inline"]:
                     self.inline_index_python.append(_name_strs_to_names(node["code"]["return_symbol"]))
                     self.alex_inline.append(code_str)
@@ -1160,7 +1169,9 @@ def get_symbols_from_func_def_literal(code_str):
             targets = line.targets
             if isinstance(targets, list):
                 for var in targets:
-                    if isinstance(var, ast.Name):
+                    if isinstance(var, ast.Subscript): # mutating an object
+                        local_symbols.append(var.value.id)
+                    elif isinstance(var, ast.Name):
                         defined_symbols.append(var.id)
                     else:
                         try: # FIXME
