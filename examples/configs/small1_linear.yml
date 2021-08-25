@@ -9,7 +9,6 @@ data_block:
     name: input_data
 
 model_block:
-
   - type: conv
     inputs:
       - data_block/input_data
@@ -52,6 +51,7 @@ loss_block:
       padding: VALID
   - type: flatten
     name: feature
+
   - type:
       mse
     inputs:

@@ -17,12 +17,12 @@ class Model(torch.nn.Module):
             self.register_parameter(var, self.trainable_params[var])
             self.params.append({'params': self.trainable_params[var]})
 
-    def forward(self, x, training):
-        x = self.model(x, self.trainable_params, training)
+    def forward(self, x, trainable_params):
+        x = self.model(x, trainable_params)
         return x
 
     @staticmethod
-    def get_trainable_params(ckpt):
+    def get_trainable_params():
         trainable_params = dict()
         model_block_conv_6gw_filters_initializer_xavier_uniform = torch.nn.init.xavier_uniform_(tensor=torch.empty(*[16, 3, 3, 3]))
         model_block_conv_6gw_filters = torch.nn.parameter.Parameter(data=model_block_conv_6gw_filters_initializer_xavier_uniform, requires_grad=True)
@@ -54,7 +54,7 @@ class Model(torch.nn.Module):
         return trainable_params
     
     @staticmethod
-    def model(data_block_input_data, trainable_params, training):
+    def model(data_block_input_data, training, trainable_params):
         model_block_conv_6gw = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/conv_6gw/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
         model_block_reluu = torch.nn.functional.relu(input=model_block_conv_6gw, inplace=False)
         model_block_dropout_10kc = torch.nn.functional.dropout(input=model_block_reluu, p=0.2, training=training, inplace=False)
@@ -67,7 +67,7 @@ class Model(torch.nn.Module):
         return model_block_d_1 
     
     @staticmethod
-    def get_loss(trainable_params, inputs):
+    def get_loss(inputs, trainable_params):
         loss_block_cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=inputs[0], input=inputs[1])
         loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/conv_6gw/filters', 'model_block/conv_14oi/filters', 'model_block/conv_16qy/filters', 'model_block/dense_20ue/weights'])))
         loss_block_losses = torch.add(input=[loss_block_cross_0, loss_block_regularizer][0], other=[loss_block_cross_0, loss_block_regularizer][1])
@@ -85,9 +85,7 @@ class Model(torch.nn.Module):
     
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small1.yml",
-               None,
-               None)
+C = Checkpoint("examples/configs/small1.yml", None, None)
 
 ckpt = C.load()
 
@@ -95,44 +93,64 @@ model = Model(ckpt)
 
 model.to(device)
 
+trainable_params = model.trainable_params
 optimizer = model.get_optimizer(model.params)
 
 learning_rate = model.get_scheduler(optimizer)
 
 
-def validation(inputs, labels):
-    with torch.no_grad():
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-
-        outputs = model(inputs, False)
-        _, predicted = torch.max(outputs.data, 1)
-        total = labels.size(0)
-        correct = (predicted == labels).sum().item()
-        loss = model.get_loss(model.trainable_params, [labels, outputs])
-    return correct / total, loss
-
-
+def inference(data_block_input_data, trainable_params):
+    
+    model.training=False
+    training = model.training
+    
+    preds = torch.max(model(data_block_input_data, training, trainable_params), 1)
+    preds = preds[1]
+    return preds
+    
+def evaluation(data_block_input_data, labels, trainable_params):
+    
+    preds = inference(data_block_input_data, trainable_params)
+    
+    model.training=False
+    training = model.training
+    
+    total = labels.size(0)
+    matches = (preds == labels).sum().item()
+    perf = matches / total
+    
+    loss = model.get_loss([labels, preds], trainable_params)
+    return perf, loss
+    
+    
+def train(data_block_input_data, labels, trainable_params):
+    
+    optimizer.zero_grad()
+    model.training=True
+    training = model.training
+    preds = model(data_block_input_data, training, trainable_params)
+    loss = model.get_loss([labels, preds], trainable_params)
+    loss.backward()
+    
+    
 def loop(trainloader, val_inputs, val_labels):
+    
     for epoch in range(90):
-
+    
         for i, data in enumerate(trainloader, 0):
-
+    
             inputs, labels = data
-
+    
             inputs = inputs.to(device)
             labels = labels.to(device)
-            optimizer.zero_grad()
-
-            output = model(inputs, True)
-            loss = model.get_loss(model.trainable_params, [labels, output])
-            loss.backward()
+            train(inputs, labels, trainable_params)
             optimizer.step()
-
+    
             if i % 500 == 499:
-                accuracy, loss_val = validation(val_inputs, val_labels)
-                print('[%d, %d, 500] accuracy: %.3f, loss: %.3f' %
-                      (epoch, i, accuracy, loss_val))
+                results = evaluation(val_inputs, val_labels, trainable_params)
+                print(results)
                 
         learning_rate.step()
     print('Finished Training')
+    
+    

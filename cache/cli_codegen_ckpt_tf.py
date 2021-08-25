@@ -37,7 +37,7 @@ def get_trainable_params(ckpt):
     return trainable_params
 
 
-def model(data_block_input_data, trainable_params, training):
+def model(data_block_input_data, trainable_params):
     model_block_conv_6gw = tf.nn.conv2d(input=data_block_input_data, filters=trainable_params['model_block/conv_6gw/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/conv_6gw/filters')
     model_block_reluu = tf.nn.relu(name='model_block/reluu', features=model_block_conv_6gw)
     model_block_dropout_10kc = tf.nn.dropout(x=model_block_reluu, rate=0.2, noise_shape=None, seed=None, name='model_block/dropout_10kc')
@@ -50,14 +50,14 @@ def model(data_block_input_data, trainable_params, training):
     return model_block_d_1 
 
 
-def get_loss(trainable_params, inputs):
+def get_loss(inputs, trainable_params):
     loss_block_cross_0 = tf.nn.softmax_cross_entropy_with_logits(labels=inputs[0], logits=inputs[1], axis=-1, name='loss_block/cross_0')
     loss_block_regularizer = 0.002*sum(list(map(lambda x: tf.nn.l2_loss(t=trainable_params[x], name='loss_block/regularizer'), ['model_block/conv_6gw/filters', 'model_block/conv_14oi/filters', 'model_block/conv_16qy/filters', 'model_block/dense_20ue/weights'])))
     loss_block_losses = tf.math.add(x=[loss_block_cross_0, loss_block_regularizer][0], y=[loss_block_cross_0, loss_block_regularizer][1], name='loss_block/losses')
     return loss_block_losses 
 
 
-def get_optimizer(trainable_params):
+def get_optimizer():
     optimizer_block_solver_decay_exponential_decay = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate=0.0001, decay_steps=100000, decay_rate=0.96, staircase=True)
     optimizer_block_solver = tf.optimizers.Adam(learning_rate=optimizer_block_solver_decay_exponential_decay, beta_1=0.9, beta_2=0.999, epsilon=1e-08, name='optimizer_block/solver')
     return optimizer_block_solver 
@@ -70,38 +70,48 @@ C = Checkpoint("examples/configs/small1.yml",
 
 ckpt = C.load()
 
-trainable_variables = get_trainable_params(ckpt)
+trainable_params = get_trainable_params(ckpt)
 
 from alex.alex import registry
-var_list = []
-for tv in trainable_variables:
-    if tv.split('/')[-1] in registry.ALL_TRAINABLE_PARAMS:
-        var_list.append(trainable_variables[tv])
+var_list = registry.get_trainable_params_list(trainable_params)
 
-optimizer = get_optimizer(trainable_variables)
+optimizer = get_optimizer()
 
 
-def validation(inputs, labels):
-    preds = model(inputs, trainable_variables, training=False)
-    matches  = tf.equal(tf.math.argmax(preds,1), tf.math.argmax(labels,1))
-    accuracy = tf.reduce_mean(tf.cast(matches,tf.float32))
-    loss = tf.reduce_mean(get_loss(trainable_variables, [preds, labels]))
-    return accuracy, loss
-
-
-def train(x, gt, trainable_variables, var_list, optimizer):
+def inference(data_block_input_data, trainable_params):
+    
+    preds = tf.math.argmax(model(data_block_input_data, trainable_params), 1)
+    return preds
+    
+def evaluation(data_block_input_data, trainable_params, labels):
+    
+    preds = inference(data_block_input_data, trainable_params)
+    
+    matches = tf.equal(preds, tf.math.argmax(labels, 1))
+    perf = tf.reduce_mean(tf.cast(matches, tf.float32))
+    
+    loss = tf.reduce_mean(get_loss([labels, preds], trainable_params))
+    return perf, loss
+    
+    
+def train(var_list, data_block_input_data, trainable_params, labels):
+    
     with tf.GradientTape() as tape:
-        prediction = model(x, trainable_variables, training=True)
-        gradients = tape.gradient(get_loss(trainable_variables, [gt, prediction]), var_list)
+        preds = model(data_block_input_data, trainable_params)
+        gradients = tape.gradient(get_loss([labels, preds], trainable_params), var_list)
         optimizer.apply_gradients(zip(gradients, var_list))
-
-def loop(trainloader, val_inputs, val_labels):
+    
+    
+def loop(trainloader, val_inputs, val_labels, var_list):
+    
     for epoch in range(90):
         for i, (inputs, labels) in enumerate(trainloader):
-            train(inputs, labels, trainable_variables, var_list, optimizer)
+            train(var_list, inputs, trainable_params, labels)
             if i % 500 == 499:
-                accuracy, loss = validation(val_inputs, val_labels)
+                results = evaluation(val_inputs, trainable_params, val_labels)
                 
-                tf.print("[", epoch, i, "500]", "accuracy: ", accuracy, ", loss: ", loss)
+                tf.print(results)
     print('Finished Training')
-
+    
+    
+    
