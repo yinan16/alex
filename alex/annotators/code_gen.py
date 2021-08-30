@@ -648,6 +648,7 @@ def generate_python(output_file,
         load_from_ckpt = True
 
     ckpt = checkpoint.Checkpoint(config_path,
+                                 engine,
                                  load_ckpt,
                                  save_ckpt)
     util.clear_file(output_file)

@@ -63,6 +63,7 @@ class TestCodeGen(unittest.TestCase):
                                    code_path_orig)
 
             # ckpt = checkpoint.Checkpoint("examples/configs/small1_orig.yml",
+            #                              engine,
             #                              ["checkpoints",
             #                               None],
             #                              ["checkpoints", ckpt_name])
