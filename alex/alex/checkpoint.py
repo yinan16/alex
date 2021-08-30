@@ -15,7 +15,7 @@ from datetime import datetime
 from alex.alex import const, util, dsl_parser, compare
 
 
-def get_checkpoint(graph_list, states, trainable_params):
+def get_checkpoint(graph_list, states, trainable_params, engine):
     network = dict()
     network["state"] = states
     network["components"] = []
@@ -35,15 +35,18 @@ def get_checkpoint(graph_list, states, trainable_params):
                 for _param in names_trainable_params:
                     # TODO: need to be framework dependent
                     # in both tensorflow and pytorch it happens to be .tolist()
-                    component["value"][_key][_param] = trainable_params[_param].tolist()
+                    _params = trainable_params[_param]
+                    if engine == "tf" and component["meta"]["type"] == "conv":
+                        _params = _params.numpy().transpose([2, 0, 1, 3])
+                    component["value"][_key][_param] = _params.tolist()
             else:
                 component["value"][_key] = deepcopy(component_block["value"][_key])
         network["components"].append(component)
     return network
 
 
-def dump(graph_list, states, trainable_params, path):
-    _network = get_checkpoint(graph_list, states, trainable_params)
+def dump(graph_list, engine, states, trainable_params, path):
+    _network = get_checkpoint(graph_list, states, trainable_params, engine)
     _json_cache = "/".join(path.split("/")[0:-1] + ["."+path.split("/")[-1]])
     with open(_json_cache, "w") as write_file:
         json.dump(_network, write_file, indent=4)
@@ -57,6 +60,7 @@ def load_json(checkpoint_dir, json_file=None):
 
 
 def load(graph_list,
+         engine,
          checkpoint_dir,
          ckpt_name=None,
          matched={}):
@@ -76,6 +80,8 @@ def load(graph_list,
                 for _param in _params:
                     _param_name = _param.split("/")[-1]
                     param_name = "%s/%s" % (name_in_new_config, _param_name)
+                    if engine == "tf":
+                        _params[_param] = _params[_param].numpy().transpose([1, 2, 0, 3])
                     trainable_params[param_name] = _params[_param]
                     graph_list[i]["value"]["var"][param_name] = _params[_param]
 
@@ -92,9 +98,9 @@ def init_states(train_info={"meta": {"epoch": 0}},
             "test": test_info}
 
 
-def save(graph_list, states, trainable_params, path):
+def save(graph_list, engine, states, trainable_params, path):
     os.makedirs(path.split("/")[0], exist_ok=True)
-    dump(graph_list, states, trainable_params, path)
+    dump(graph_list, engine, states, trainable_params, path)
 
 
 def get_checkpoint_path(ckpt_dir, ckpt_name=None, checkpoint_ext=".json"):
@@ -129,9 +135,10 @@ class Checkpoint():
 
     def __init__(self,
                  config,
+                 engine,
                  load=None, # [dir, path]
                  save=None): # [dir, path]
-
+        self.engine = engine
         self.components_list = dsl_parser.parse(config, lazy=False)
         if load is None or (isinstance(load, list) and load[1] is None):
             self.load_path = None
@@ -168,11 +175,12 @@ class Checkpoint():
             stats = None
         else:
             self.components_list, trainable_params, stats = load(self.components_list,
+                                                                 self.engine,
                                                                  self.load_dir,
                                                                  ckpt_name=self.load_name,
                                                                  matched=self.matched)
         return trainable_params
 
     def save(self, trainable_params=dict(), stats={}):
-        save(self.components_list, stats, trainable_params, self.save_path)
+        save(self.components_list, self.engine, stats, trainable_params, self.save_path)
         print("Saving to path", self.save_path)

@@ -22,6 +22,7 @@ class TestCheckpoint(unittest.TestCase):
 
     def test_checkpoint(self):
         ckpt = checkpoint.Checkpoint("examples/configs/small1_linear.yml",
+                                     None,
                                      ["checkpoints",
                                       "test_code_gen_ckpt_trained.json"],
                                      ["checkpoints", None])
