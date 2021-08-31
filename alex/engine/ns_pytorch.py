@@ -75,7 +75,7 @@ def instantiate(config, engine, load_from, save_to, **kwargs):
     return """
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("%s", %s, %s, %s)
+C = Checkpoint("%s", '%s', %s, %s)
 
 ckpt = C.load()
 
@@ -180,7 +180,7 @@ loss = model.get_loss(%s)
 %s
 """ % (", ".join(inference_args),
        evaluation_str,
-       ", ".join(loss_args).replace("model_block_output", "preds"),
+       ", ".join(loss_args).replace("model_block_output", "preds").replace("data_block_labels", "labels"),
        return_str)
 
     return func_name, code_str

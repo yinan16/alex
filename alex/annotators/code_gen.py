@@ -1163,8 +1163,10 @@ def get_symbols_from_func_def_literal(code_str):
     else:
         parsed = code_str
     for i, line in enumerate(parsed):
-        if isinstance(line, (int, float, bool, str, ast.Return, ast.UnaryOp, ast.Constant)):
-            pass
+        if isinstance(line, (int, float, bool, str, ast.Return, ast.UnaryOp, ast.Constant,
+                             ast.Str, ast.Num, # deprecated in 3.8
+        )):
+            continue
         elif isinstance(line, ast.Name):
             local_symbols.append(line.id)
         elif isinstance(line, ast.Assign):
@@ -1194,6 +1196,8 @@ def get_symbols_from_func_def_literal(code_str):
                 local_symbols += _local_symbols
                 defined_symbols += _defined_symbols
         else:
+            if line is None:
+                continue
             if isinstance(line, (ast.With, ast.For, ast.If)):
                 obj = line.body
                 if isinstance(line, ast.For):

@@ -46,5 +46,5 @@ setuptools.setup(
               "alex.engine",
               "alex.alex"],
     package_data={'alex.components': ['*.yml']},
-    python_requires=">=3.8",
+    python_requires=">=3.6",
 )

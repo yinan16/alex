@@ -53,7 +53,7 @@ def instantiate(config, engine, load_from, save_to, params_args, optimizer_args)
 from alex.alex.checkpoint import Checkpoint
 
 C = Checkpoint("%s",
-               %s,
+               '%s',
                %s,
                %s)
 
@@ -144,7 +144,7 @@ loss = tf.reduce_mean(get_loss(%s))
 %s
 """ % (", ".join(inference_args),
        evaluation_str,
-       ", ".join(loss_args).replace("model_block_output", "preds"),
+       ", ".join(loss_args).replace("model_block_output", "preds").replace("data_block_labels", "labels"),
        return_str)
 
     return func_name, code_str
