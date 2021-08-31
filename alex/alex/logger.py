@@ -28,6 +28,7 @@ class Logger(logging.StreamHandler):
         logging.getLogger("matplotlib").setLevel(logging.ERROR)
         logging.getLogger("pydot").setLevel(logging.ERROR)
         logging.getLogger("PIL").setLevel(logging.ERROR)
+        logging.getLogger("tensorflow").setLevel(logging.ERROR)
         logger.addHandler(self)
         return logger
 

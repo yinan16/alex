@@ -12,7 +12,7 @@ from pprint import pprint
 import numpy as np
 from pathlib import Path
 from datetime import datetime
-from alex.alex import const, util, dsl_parser, compare
+from alex.alex import const, util, dsl_parser, compare, logger
 
 
 def get_checkpoint(graph_list, states, trainable_params, engine):
@@ -36,8 +36,11 @@ def get_checkpoint(graph_list, states, trainable_params, engine):
                     # TODO: need to be framework dependent
                     # in both tensorflow and pytorch it happens to be .tolist()
                     _params = trainable_params[_param]
-                    if engine == "tf" and component["meta"]["type"] == "conv":
-                        _params = _params.numpy().transpose([2, 0, 1, 3])
+                    if engine == "tf":
+                        if component["meta"]["type"] == "conv" and _param == "filters":
+                            _params = _params.numpy().transpose([3, 2, 0, 1])
+                        elif component["meta"]["type"] == "dense" and _param == "filters":
+                            _params = _params.numpy().transpose([1, 0]).tolist()
                     component["value"][_key][_param] = _params.tolist()
             else:
                 component["value"][_key] = deepcopy(component_block["value"][_key])
@@ -81,7 +84,10 @@ def load(graph_list,
                     _param_name = _param.split("/")[-1]
                     param_name = "%s/%s" % (name_in_new_config, _param_name)
                     if engine == "tf":
-                        _params[_param] = _params[_param].numpy().transpose([1, 2, 0, 3])
+                        if component["meta"]["type"] == "conv" and _param=="filters":
+                            _params[_param] = np.asarray(_params[_param]).transpose([2, 3, 1, 0]).tolist()
+                        elif component["meta"]["type"] == "dense" and _param=="weights":
+                            _params[_param] = np.asarray(_params[_param]).transpose().tolist()
                     trainable_params[param_name] = _params[_param]
                     graph_list[i]["value"]["var"][param_name] = _params[_param]
 
@@ -125,7 +131,7 @@ def get_load_path(ckpt_dir, ckpt_name=None, ext=".json"):
             json_file = os.path.join(ckpt_dir,
                                      ckpt_name)
     if json_file is None or not Path(json_file).is_file():
-        print("Checkpoint %s does not exist" % json_file)
+        logger.warning("Checkpoint %s does not exist" % json_file)
         return None
     else:
         return json_file
@@ -183,4 +189,4 @@ class Checkpoint():
 
     def save(self, trainable_params=dict(), stats={}):
         save(self.components_list, self.engine, stats, trainable_params, self.save_path)
-        print("Saving to path", self.save_path)
+        logger.info("Saving to path", self.save_path)

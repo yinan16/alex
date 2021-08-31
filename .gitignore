@@ -8,3 +8,7 @@ build/*
 .alex.cache/*
 
 .alex.cache/*
+
+
+**/*.cfg
+**/data/*

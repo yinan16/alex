@@ -48,11 +48,12 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
     return code
 
 
-def instantiate(config, load_from, save_to, params_args, optimizer_args):
+def instantiate(config, engine, load_from, save_to, params_args, optimizer_args):
     return """
 from alex.alex.checkpoint import Checkpoint
 
 C = Checkpoint("%s",
+               %s,
                %s,
                %s)
 
@@ -67,6 +68,7 @@ optimizer = get_optimizer(%s)
 
 probes = dict()
 """ % (config,
+       engine,
        str(load_from),
        str(save_to),
        ", ".join(params_args),

@@ -71,11 +71,11 @@ def wrap_in_class(trainable_params_code, component_code, loss_code, optimizer_co
 
 
 # Boilerplates:
-def instantiate(config, load_from, save_to, **kwargs):
+def instantiate(config, engine, load_from, save_to, **kwargs):
     return """
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("%s", %s, %s)
+C = Checkpoint("%s", %s, %s, %s)
 
 ckpt = C.load()
 
@@ -89,7 +89,7 @@ optimizer = model.get_optimizer(model.params)
 learning_rate = model.get_scheduler(optimizer)
 
 probes = dict()
-""" % (config, str(load_from), str(save_to))
+""" % (config, engine, str(load_from), str(save_to))
 
 
 def loop(save_to, train_args, evaluation_args):
