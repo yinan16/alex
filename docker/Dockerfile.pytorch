@@ -1,5 +1,5 @@
 FROM nvcr.io/nvidia/pytorch:21.06-py3
 
-RUN apt update && apt install -y graphviz
+RUN apt update && apt install -y graphviz python3-venv
 
-RUN python3 -m pip install --upgrade matplotlib alex-nn==0.1.9.dev
+RUN python3 -m pip install --upgrade pip build

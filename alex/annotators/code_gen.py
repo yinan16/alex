@@ -702,6 +702,7 @@ def generate_python(output_file,
     util.write_to(code, output_file)
     if not def_only:
         instanstiate_str = NAMESPACES[engine].instantiate(config=config_path,
+                                                          engine=engine,
                                                           load_from=load_ckpt,
                                                           save_to=save_ckpt,
                                                           params_args=params_args,
@@ -783,6 +784,7 @@ class CodeBlock(param_count.ParamCount):
 
         self.passes = [[self.cache_shape_and_block],
                        [self._cache_alex_function_calls]]
+        self.loss_mode = None # FIXME
 
     def __call__(self):
         return self.generate_dl_code()
@@ -858,9 +860,8 @@ class CodeBlock(param_count.ParamCount):
                                               node["code"]["str"])
                 if node["value"] in registry.CLASSIFICATION_LOSSES:
                     self.loss_mode = "classification"
-                else:
+                elif node["value"] in registry.REGRESSION_LOSSES:
                     self.loss_mode = "regression"
-
                 if self.block_name=="model_block" \
                    and "probe" in node["meta"] \
                    and node["meta"]["probe"]:
@@ -1003,6 +1004,7 @@ class ModelCodeBlock(CodeBlock):
 
     def generate_dl_code(self):
         return self.get_dl_code(fn_name="model",
+                                return_str="model_block_output",
                                 exclude_args=NAMESPACES[self.engine].DEFINED)
 
 
@@ -1161,7 +1163,7 @@ def get_symbols_from_func_def_literal(code_str):
     else:
         parsed = code_str
     for i, line in enumerate(parsed):
-        if isinstance(line, (int, float, bool, str, ast.UnaryOp, ast.Constant)):
+        if isinstance(line, (int, float, bool, str, ast.Return, ast.UnaryOp, ast.Constant)):
             pass
         elif isinstance(line, ast.Name):
             local_symbols.append(line.id)
