@@ -157,7 +157,7 @@ def get_trainable_params():
     return trainable_params
 
 
-def model(data_block_input_data, trainable_params):
+def model(trainable_params, data_block_input_data):
     model_block_conv_6gw = tf.nn.conv2d(input=data_block_input_data, filters=trainable_params['model_block/conv_6gw/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/conv_6gw')
     model_block_resnet_16_21vm_0_conv_8im = tf.nn.conv2d(input=model_block_conv_6gw, filters=trainable_params['model_block/resnet_16_21vm_0/conv_8im/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/resnet_16_21vm_0/conv_8im')
     model_block_resnet_16_21vm_0_batch_normalize_10kc = tf.nn.batch_normalization(x=model_block_resnet_16_21vm_0_conv_8im, mean=trainable_params['model_block/resnet_16_21vm_0/batch_normalize_10kc/mean'], variance=trainable_params['model_block/resnet_16_21vm_0/batch_normalize_10kc/variance'], offset=trainable_params['model_block/resnet_16_21vm_0/batch_normalize_10kc/offset'], scale=trainable_params['model_block/resnet_16_21vm_0/batch_normalize_10kc/scale'], variance_epsilon=0.001, name='model_block/resnet_16_21vm_0/batch_normalize_10kc')
@@ -196,7 +196,7 @@ def model(data_block_input_data, trainable_params):
     model_block_flatten_65na = tf.reshape(tensor=model_block_max_pool2d_63lk, shape=(-1, tf.math.reduce_prod(tf.convert_to_tensor([30, 30, 16]))), name='model_block/flatten_65na')
     model_block_dense_67pq = tf.add(x=tf.matmul(a=model_block_flatten_65na, b=trainable_params['model_block/dense_67pq/weights']), y=trainable_params['model_block/dense_67pq/bias'], name='model_block/dense_67pq')
     model_block_output = tf.nn.softmax(logits=model_block_dense_67pq, name='model_block/output')
-    return model_block_output 
+    return model_block_output
 
 
 def get_loss(data_block_labels, trainable_params, model_block_output):
@@ -214,6 +214,7 @@ def get_optimizer():
 from alex.alex.checkpoint import Checkpoint
 
 C = Checkpoint("examples/configs/small3.yml",
+               tf,
                None,
                None)
 
@@ -228,38 +229,40 @@ optimizer = get_optimizer()
 
 probes = dict()
 
-def inference(data_block_input_data, trainable_params):
+def inference(trainable_params, data_block_input_data):
     
-    preds = model(data_block_input_data, trainable_params)
-    
+    preds = tf.math.argmax(model(trainable_params, data_block_input_data), 1)
     return preds
     
-def evaluation(data_block_labels, data_block_input_data, trainable_params):
+def evaluation(data_block_labels, trainable_params, labels, data_block_input_data):
     
-    preds = inference(data_block_input_data, trainable_params)
+    preds = inference(trainable_params, data_block_input_data)
+    
+    matches = tf.equal(preds, tf.math.argmax(labels, 1))
+    perf = tf.reduce_mean(tf.cast(matches, tf.float32))
     
     loss = tf.reduce_mean(get_loss(data_block_labels, trainable_params, preds))
-    return loss
+    return perf, loss
     
     
-def train(var_list, data_block_labels, data_block_input_data, trainable_params):
+def train(var_list, trainable_params, data_block_labels, data_block_input_data):
     
     with tf.GradientTape() as tape:
-        preds = model(data_block_input_data, trainable_params)
+        preds = model(trainable_params, data_block_input_data)
         gradients = tape.gradient(get_loss(data_block_labels, trainable_params, preds), var_list)
         optimizer.apply_gradients(zip(gradients, var_list))
     
     
-def loop(val_inputs, var_list, val_labels, trainable_params):
+def loop(var_list, trainable_params, val_labels, val_inputs):
     
     for epoch in range(90):
         i = 0
         for batch in trainloader:
             inputs = batch[0]
             labels = batch[1]
-            train(var_list, labels, inputs, trainable_params)
+            train(var_list, trainable_params, labels, inputs)
             if i % 500 == 499:
-                results = evaluation(val_labels, val_inputs, trainable_params)
+                results = evaluation(val_labels, trainable_params, labels, val_inputs)
                 
                 tf.print("Epoch", epoch, results)
             i += 1
@@ -298,5 +301,5 @@ valloader = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(1000)
 for val_inputs, val_labels in valloader:
     break
 
-loop(val_inputs, var_list, val_labels, trainable_params)
+loop(var_list, trainable_params, val_labels, val_inputs)
 

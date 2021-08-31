@@ -31,4 +31,4 @@ val_inputs, val_labels = iter(valloader).next()
 val_inputs = val_inputs.to(device)
 val_labels = val_labels.to(device)
 
-loop(val_inputs, trainable_params)
+loop(trainable_params, val_inputs)

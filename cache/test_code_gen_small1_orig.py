@@ -17,8 +17,8 @@ class Model(torch.nn.Module):
             self.register_parameter(var, self.trainable_params[var])
             self.params.append({'params': self.trainable_params[var]})
 
-    def forward(self, training, data_block_input_data, trainable_params):
-        x = self.model(training, data_block_input_data, trainable_params)
+    def forward(self, trainable_params, data_block_input_data, training):
+        x = self.model(trainable_params, data_block_input_data, training)
         return x
 
     @staticmethod
@@ -54,7 +54,7 @@ class Model(torch.nn.Module):
         return trainable_params
     
     @staticmethod
-    def model(training, data_block_input_data, trainable_params):
+    def model(trainable_params, data_block_input_data, training):
         model_block_conv_6gw = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/conv_6gw/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
         model_block_reluu = torch.nn.functional.relu(input=model_block_conv_6gw, inplace=False)
         model_block_dropout_10kc = torch.nn.functional.dropout(input=model_block_reluu, p=0.2, training=training, inplace=False)
@@ -64,7 +64,7 @@ class Model(torch.nn.Module):
         model_block_flatten_18so = torch.flatten(input=model_block_conv_16qy, start_dim=1, end_dim=-1)
         model_block_dense_20ue = torch.nn.functional.linear(weight=trainable_params['model_block/dense_20ue/weights'], bias=trainable_params['model_block/dense_20ue/bias'], input=model_block_flatten_18so)
         model_block_output = torch.nn.functional.softmax(input=model_block_dense_20ue, dim=None)
-        return model_block_output 
+        return model_block_output
     
     @staticmethod
     def get_loss(data_block_labels, trainable_params, model_block_output):
@@ -85,7 +85,7 @@ class Model(torch.nn.Module):
     
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small1_orig.yml", None, ['checkpoints', 'test_code_gen_ckpt_trained.json'])
+C = Checkpoint("examples/configs/small1_orig.yml", pytorch, None, ['checkpoints', 'test_code_gen_ckpt_trained.json'])
 
 ckpt = C.load()
 
@@ -100,37 +100,42 @@ learning_rate = model.get_scheduler(optimizer)
 
 probes = dict()
 
-def inference(data_block_input_data, trainable_params):
+def inference(trainable_params, data_block_input_data):
     
     model.training=False
     training = model.training
     
-    preds = model(training, data_block_input_data, trainable_params)
-    
+    preds = torch.max(model(trainable_params, data_block_input_data, training), 1)
+    preds = preds[1]
     return preds
     
-def evaluation(data_block_labels, data_block_input_data, trainable_params):
+def evaluation(data_block_labels, trainable_params, labels, data_block_input_data):
     
-    preds = inference(data_block_input_data, trainable_params)
+    preds = inference(trainable_params, data_block_input_data)
     
     model.training=False
     training = model.training
     
+    gt = labels
+    total = gt.size(0)
+    matches = (preds == gt).sum().item()
+    perf = matches / total
+    
     loss = model.get_loss(data_block_labels, trainable_params, preds)
-    return loss
+    return perf, loss
     
     
-def train(data_block_labels, data_block_input_data, trainable_params):
+def train(data_block_labels, trainable_params, data_block_input_data):
     
     optimizer.zero_grad()
     model.training=True
     training = model.training
-    preds = model(training, data_block_input_data, trainable_params)
+    preds = model(trainable_params, data_block_input_data, training)
     loss = model.get_loss(data_block_labels, trainable_params, preds)
     loss.backward()
     
     
-def loop(val_inputs, model, val_labels, trainable_params):
+def loop(model, trainable_params, val_labels, val_inputs):
     
     for epoch in range(90):
         i = 0
@@ -139,11 +144,11 @@ def loop(val_inputs, model, val_labels, trainable_params):
     
             inputs = inputs.to(device)
             labels = labels.to(device)
-            train(labels, inputs, trainable_params)
+            train(labels, trainable_params, inputs)
             optimizer.step()
     
             if i % 500 == 499:
-                results = evaluation(val_labels, val_inputs, trainable_params)
+                results = evaluation(val_labels, trainable_params, labels, val_inputs)
                 print("Epoch:", epoch, results)
                 C.save(model.trainable_params)
             i += 1
@@ -185,5 +190,5 @@ val_inputs, val_labels = iter(valloader).next()
 val_inputs = val_inputs.to(device)
 val_labels = val_labels.to(device)
 
-loop(val_inputs, model, val_labels, trainable_params)
+loop(model, trainable_params, val_labels, val_inputs)
 

@@ -17,8 +17,8 @@ class Model(torch.nn.Module):
             self.register_parameter(var, self.trainable_params[var])
             self.params.append({'params': self.trainable_params[var]})
 
-    def forward(self, x, trainable_params):
-        x = self.model(x, trainable_params)
+    def forward(self, training, trainable_params, data_block_input_data, probes):
+        x = self.model(training, trainable_params, data_block_input_data, probes)
         return x
 
     @staticmethod
@@ -54,7 +54,7 @@ class Model(torch.nn.Module):
         return trainable_params
     
     @staticmethod
-    def model(training, data_block_input_data, trainable_params, probes):
+    def model(training, trainable_params, data_block_input_data, probes):
         model_block_conv_6gw = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/conv_6gw/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
         model_block_reluu = torch.nn.functional.relu(input=model_block_conv_6gw, inplace=False)
         model_block_dropout_10kc = torch.nn.functional.dropout(input=model_block_reluu, p=0.2, training=training, inplace=False)
@@ -65,10 +65,10 @@ class Model(torch.nn.Module):
         probes['model_block/flatten_18so'] = model_block_flatten_18so
         model_block_dense_20ue = torch.nn.functional.linear(weight=trainable_params['model_block/dense_20ue/weights'], bias=trainable_params['model_block/dense_20ue/bias'], input=model_block_flatten_18so)
         model_block_output = torch.nn.functional.softmax(input=model_block_dense_20ue, dim=None)
-        return model_block_output 
+        return model_block_output
     
     @staticmethod
-    def get_loss(model_block_output, trainable_params, data_block_labels):
+    def get_loss(model_block_output, data_block_labels, trainable_params):
         loss_block_cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=[data_block_labels, model_block_output][0], input=[data_block_labels, model_block_output][1])
         loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/conv_6gw/filters', 'model_block/conv_14oi/filters', 'model_block/conv_16qy/filters', 'model_block/dense_20ue/weights'])))
         loss_block_losses = torch.add(input=[loss_block_cross_0, loss_block_regularizer][0], other=[loss_block_cross_0, loss_block_regularizer][1])
@@ -86,7 +86,7 @@ class Model(torch.nn.Module):
     
 from alex.alex.checkpoint import Checkpoint
 
-C = Checkpoint("examples/configs/small1.yml", None, None)
+C = Checkpoint("examples/configs/small1.yml", pytorch, None, None)
 
 ckpt = C.load()
 
@@ -101,53 +101,58 @@ learning_rate = model.get_scheduler(optimizer)
 
 probes = dict()
 
-def inference(data_block_input_data, trainable_params, probes):
+def inference(trainable_params, data_block_input_data, probes):
     
     model.training=False
     training = model.training
     
-    preds = model(training, data_block_input_data, trainable_params, probes)
-    
+    preds = torch.max(model(training, trainable_params, data_block_input_data, probes), 1)
+    preds = preds[1]
     return preds
     
-def evaluation(data_block_input_data, trainable_params, probes, data_block_labels):
+def evaluation(labels, data_block_labels, trainable_params, data_block_input_data, probes):
     
-    preds = inference(data_block_input_data, trainable_params, probes)
+    preds = inference(trainable_params, data_block_input_data, probes)
     
     model.training=False
     training = model.training
     
-    loss = model.get_loss(preds, trainable_params, data_block_labels)
-    return loss
+    gt = labels
+    total = gt.size(0)
+    matches = (preds == gt).sum().item()
+    perf = matches / total
+    
+    loss = model.get_loss(preds, data_block_labels, trainable_params)
+    return perf, loss
     
     
-def train(data_block_input_data, trainable_params, probes, data_block_labels):
+def train(trainable_params, data_block_input_data, data_block_labels, probes):
     
     optimizer.zero_grad()
     model.training=True
     training = model.training
-    preds = model(training, data_block_input_data, trainable_params, probes)
-    loss = model.get_loss(preds, trainable_params, data_block_labels)
+    preds = model(training, trainable_params, data_block_input_data, probes)
+    loss = model.get_loss(preds, data_block_labels, trainable_params)
     loss.backward()
     
     
-def loop(trainable_params, probes, val_inputs, data_block_val_labels, data_block_labels):
+def loop(trainable_params, probes, val_inputs, val_labels):
     
     for epoch in range(90):
-    
-        for i, data in enumerate(trainloader, 0):
-    
+        i = 0
+        for data in trainloader:
             inputs, labels = data
     
             inputs = inputs.to(device)
             labels = labels.to(device)
-            train(inputs, trainable_params, probes, data_block_labels)
+            train(trainable_params, inputs, labels, probes)
             optimizer.step()
     
             if i % 500 == 499:
-                results = evaluation(val_inputs, trainable_params, probes, data_block_val_labels)
-                print(results)
+                results = evaluation(labels, val_labels, trainable_params, val_inputs, probes)
+                print("Epoch:", epoch, results)
                 
+            i += 1
         learning_rate.step()
     print('Finished Training')
     

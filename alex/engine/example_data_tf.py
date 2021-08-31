@@ -28,4 +28,4 @@ valloader = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(1000)
 for val_inputs, val_labels in valloader:
     break
 
-loop(val_inputs, var_list, trainable_params)
+loop(var_list, trainable_params, val_inputs)
