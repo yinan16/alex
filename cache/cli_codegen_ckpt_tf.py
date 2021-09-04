@@ -37,7 +37,7 @@ def get_trainable_params(ckpt):
     return trainable_params
 
 
-def model(probes, data_block_input_data, trainable_params):
+def model(probes, trainable_params, data_block_input_data):
     model_block_conv_6gw = tf.nn.conv2d(input=data_block_input_data, filters=trainable_params['model_block/conv_6gw/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/conv_6gw')
     model_block_reluu = tf.nn.relu(name='model_block/reluu', features=model_block_conv_6gw)
     model_block_dropout_10kc = tf.nn.dropout(x=model_block_reluu, rate=0.2, noise_shape=None, seed=None, name='model_block/dropout_10kc')
@@ -51,7 +51,7 @@ def model(probes, data_block_input_data, trainable_params):
     return model_block_output
 
 
-def get_loss(trainable_params, model_block_output, data_block_labels):
+def get_loss(data_block_labels, model_block_output, trainable_params):
     loss_block_cross_0 = tf.nn.softmax_cross_entropy_with_logits(labels=[data_block_labels, model_block_output][0], logits=[data_block_labels, model_block_output][1], axis=-1, name='loss_block/cross_0')
     loss_block_regularizer = 0.002*sum(list(map(lambda x: tf.nn.l2_loss(t=trainable_params[x], name='loss_block/regularizer'), ['model_block/conv_6gw/filters', 'model_block/conv_14oi/filters', 'model_block/conv_16qy/filters', 'model_block/dense_20ue/weights'])))
     loss_block_losses = tf.math.add(x=[loss_block_cross_0, loss_block_regularizer][0], y=[loss_block_cross_0, loss_block_regularizer][1], name='loss_block/losses')
@@ -66,7 +66,7 @@ def get_optimizer():
 from alex.alex.checkpoint import Checkpoint
 
 C = Checkpoint("examples/configs/small1.yml",
-               tf,
+               'tf',
                ['checkpoints', 'test.json'],
                None)
 
@@ -81,40 +81,40 @@ optimizer = get_optimizer()
 
 probes = dict()
 
-def inference(probes, data_block_input_data, trainable_params):
+def inference(probes, trainable_params, data_block_input_data):
     
-    preds = tf.math.argmax(model(probes, data_block_input_data, trainable_params), 1)
+    preds = tf.math.argmax(model(probes, trainable_params, data_block_input_data), 1)
     return preds
     
-def evaluation(probes, data_block_input_data, data_block_labels, labels, trainable_params):
+def evaluation(probes, trainable_params, data_block_input_data, labels):
     
-    preds = inference(probes, data_block_input_data, trainable_params)
+    preds = inference(probes, trainable_params, data_block_input_data)
     
     matches = tf.equal(preds, tf.math.argmax(labels, 1))
     perf = tf.reduce_mean(tf.cast(matches, tf.float32))
     
-    loss = tf.reduce_mean(get_loss(trainable_params, preds, data_block_labels))
+    loss = tf.reduce_mean(get_loss(labels, preds, trainable_params))
     return perf, loss
     
     
-def train(probes, data_block_input_data, data_block_labels, trainable_params, var_list):
+def train(probes, data_block_labels, var_list, trainable_params, data_block_input_data):
     
     with tf.GradientTape() as tape:
-        preds = model(probes, data_block_input_data, trainable_params)
-        gradients = tape.gradient(get_loss(trainable_params, preds, data_block_labels), var_list)
+        preds = model(probes, trainable_params, data_block_input_data)
+        gradients = tape.gradient(get_loss(data_block_labels, preds, trainable_params), var_list)
         optimizer.apply_gradients(zip(gradients, var_list))
     
     
-def loop(probes, trainable_params, val_labels, var_list, val_inputs):
+def loop(probes, var_list, trainable_params, val_inputs):
     
     for epoch in range(90):
         i = 0
         for batch in trainloader:
             inputs = batch[0]
             labels = batch[1]
-            train(probes, inputs, labels, trainable_params, var_list)
+            train(probes, labels, var_list, trainable_params, inputs)
             if i % 500 == 499:
-                results = evaluation(probes, val_inputs, val_labels, labels, trainable_params)
+                results = evaluation(probes, trainable_params, val_inputs, labels)
                 
                 tf.print("Epoch", epoch, results)
             i += 1

@@ -20,6 +20,11 @@ model_block:
   - type: max_pool2d
   - type: flatten
     name: output
+  - type: dense
+  - type: softmax
+    name: probes
+    probe: True
+
 
 loss_block:
   - type: conv

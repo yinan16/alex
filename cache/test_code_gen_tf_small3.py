@@ -157,7 +157,7 @@ def get_trainable_params():
     return trainable_params
 
 
-def model(trainable_params, data_block_input_data):
+def model(data_block_input_data, trainable_params):
     model_block_conv_6gw = tf.nn.conv2d(input=data_block_input_data, filters=trainable_params['model_block/conv_6gw/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/conv_6gw')
     model_block_resnet_16_21vm_0_conv_8im = tf.nn.conv2d(input=model_block_conv_6gw, filters=trainable_params['model_block/resnet_16_21vm_0/conv_8im/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/resnet_16_21vm_0/conv_8im')
     model_block_resnet_16_21vm_0_batch_normalize_10kc = tf.nn.batch_normalization(x=model_block_resnet_16_21vm_0_conv_8im, mean=trainable_params['model_block/resnet_16_21vm_0/batch_normalize_10kc/mean'], variance=trainable_params['model_block/resnet_16_21vm_0/batch_normalize_10kc/variance'], offset=trainable_params['model_block/resnet_16_21vm_0/batch_normalize_10kc/offset'], scale=trainable_params['model_block/resnet_16_21vm_0/batch_normalize_10kc/scale'], variance_epsilon=0.001, name='model_block/resnet_16_21vm_0/batch_normalize_10kc')
@@ -199,7 +199,7 @@ def model(trainable_params, data_block_input_data):
     return model_block_output
 
 
-def get_loss(data_block_labels, trainable_params, model_block_output):
+def get_loss(trainable_params, model_block_output, data_block_labels):
     loss_block_cross_0 = tf.nn.softmax_cross_entropy_with_logits(labels=[data_block_labels, model_block_output][0], logits=[data_block_labels, model_block_output][1], axis=-1, name='loss_block/cross_0')
     loss_block_regularizer = 0.002*sum(list(map(lambda x: tf.nn.l2_loss(t=trainable_params[x], name='loss_block/regularizer'), ['model_block/conv_6gw/filters', 'model_block/resnet_16_21vm_0/conv_8im/filters', 'model_block/resnet_16_21vm_0/conv_14oi/filters', 'model_block/resnet_16_21vm/conv_8im/filters', 'model_block/resnet_16_21vm/conv_14oi/filters', 'model_block/test_recipe_51zs/conv_23xc/filters', 'model_block/test_recipe_51zs/conv_29dy/filters', 'model_block/test_recipe_51zs/resnet_16_50yk/conv_37lk/filters', 'model_block/test_recipe_51zs/resnet_16_50yk/conv_43rg/filters', 'model_block/conv_53bi/filters', 'model_block/conv_61ju/filters', 'model_block/dense_67pq/weights'])))
     loss_block_losses = tf.math.add(x=[loss_block_cross_0, loss_block_regularizer][0], y=[loss_block_cross_0, loss_block_regularizer][1], name='loss_block/losses')
@@ -214,7 +214,7 @@ def get_optimizer():
 from alex.alex.checkpoint import Checkpoint
 
 C = Checkpoint("examples/configs/small3.yml",
-               tf,
+               'tf',
                None,
                None)
 
@@ -229,40 +229,40 @@ optimizer = get_optimizer()
 
 probes = dict()
 
-def inference(trainable_params, data_block_input_data):
+def inference(data_block_input_data, trainable_params):
     
-    preds = tf.math.argmax(model(trainable_params, data_block_input_data), 1)
+    preds = tf.math.argmax(model(data_block_input_data, trainable_params), 1)
     return preds
     
-def evaluation(data_block_labels, trainable_params, labels, data_block_input_data):
+def evaluation(data_block_input_data, trainable_params, labels):
     
-    preds = inference(trainable_params, data_block_input_data)
+    preds = inference(data_block_input_data, trainable_params)
     
     matches = tf.equal(preds, tf.math.argmax(labels, 1))
     perf = tf.reduce_mean(tf.cast(matches, tf.float32))
     
-    loss = tf.reduce_mean(get_loss(data_block_labels, trainable_params, preds))
+    loss = tf.reduce_mean(get_loss(trainable_params, preds, labels))
     return perf, loss
     
     
-def train(var_list, trainable_params, data_block_labels, data_block_input_data):
+def train(data_block_input_data, trainable_params, var_list, data_block_labels):
     
     with tf.GradientTape() as tape:
-        preds = model(trainable_params, data_block_input_data)
-        gradients = tape.gradient(get_loss(data_block_labels, trainable_params, preds), var_list)
+        preds = model(data_block_input_data, trainable_params)
+        gradients = tape.gradient(get_loss(trainable_params, preds, data_block_labels), var_list)
         optimizer.apply_gradients(zip(gradients, var_list))
     
     
-def loop(var_list, trainable_params, val_labels, val_inputs):
+def loop(val_inputs, trainable_params, var_list):
     
     for epoch in range(90):
         i = 0
         for batch in trainloader:
             inputs = batch[0]
             labels = batch[1]
-            train(var_list, trainable_params, labels, inputs)
+            train(inputs, trainable_params, var_list, labels)
             if i % 500 == 499:
-                results = evaluation(val_labels, trainable_params, labels, val_inputs)
+                results = evaluation(val_inputs, trainable_params, labels)
                 
                 tf.print("Epoch", epoch, results)
             i += 1
@@ -301,5 +301,5 @@ valloader = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(1000)
 for val_inputs, val_labels in valloader:
     break
 
-loop(var_list, trainable_params, val_labels, val_inputs)
+loop(val_inputs, trainable_params, var_list)
 
