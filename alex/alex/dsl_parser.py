@@ -901,7 +901,14 @@ def parse(yml_file, return_dict=False, lazy=True):
     prev_component = None
     try:
         # Read the yml file
-        user_defined = util.read_yaml(yml_file)
+        if isinstance(yml_file, str):
+            user_defined = util.read_yaml(yml_file)
+        elif isinstance(yml_file, dict):
+            user_defined = deepcopy(yml_file)
+        else:
+            msg = "First argument has to be a path or a dict type"
+            logger.error(msg)
+            raise TypeError(msg)
         reader = alex_reader(user_defined)
         # Step 1: transform yml into a (recursive) dict
         # Each node in the dict has the following keys:
@@ -938,9 +945,10 @@ def parse(yml_file, return_dict=False, lazy=True):
         # if config_to_type(yml_file) not in const.RECIPE_TYPES:
         graph = annotate(graph, lazy=lazy) # json schema
         # Step 5: load graph and states from checkpoint; check if the structure matches the one defined in the DSL
-    except Exception:
-        message = "Error during parsing configuration %s" % yml_file
-        logger.error(message)
+    except Exception as err:
+        msg = "Error during parsing configuration %s" % yml_file
+        msg += "\n %s" % str(err)
+        logger.error(msg)
         raise Exception
     if return_dict:
         graph = list_to_dict(graph)

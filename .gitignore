@@ -1,3 +1,12 @@
+.python_history
+.keras/
+.bash_history
+.cache/
+
+
+scripts/publish.sh
+scripts/test_upload.sh
+
 
 dist/*
 alex_nn.egg-info/*
@@ -12,3 +21,8 @@ build/*
 
 **/*.cfg
 **/data/*
+
+./alex-viz/*
+
+alex/bin/*
+alex/lib/*

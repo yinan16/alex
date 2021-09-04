@@ -16,7 +16,7 @@ from alex.alex.logger import logger
 class Annotator(ABC):
 
     def __init__(self, config_path, exclude_types=[], naive=True, lazy=False):
-        if isinstance(config_path, str):
+        if isinstance(config_path, (str, dict)):
             self.config_path = config_path
             self.components_list = dsl_parser.parse(self.config_path, lazy=lazy)
         elif isinstance(config_path, list):
