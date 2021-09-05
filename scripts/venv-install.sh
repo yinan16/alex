@@ -6,13 +6,15 @@
 # Description:
 # ----------------------------------------------------------------------
 python3 -m pip install --upgrade pip
-pip install virtualenv
+python3 -m pip install --user virtualenv
+python3 -m venv env
 
-virtualenv alex
 
-source alex/bin/activate
-
+source env/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade build
 
 ./scripts/local-install.sh
+
+python3 -m unittest
+deactivate
