@@ -51,7 +51,7 @@ class Hyperparam(node_interface.Hyperparam):
 
     def get_trainable_params_count(self, node, annotated):
         if self.trainable:
-            return np.prod(np.asarray(self.get_shape(node, annotated)))
+            return int(np.prod(np.asarray(self.get_shape(node, annotated))))
         else:
             return 0
 
