@@ -878,9 +878,12 @@ def annotate(components, lazy=True):
                 validator.validate_connection(component, components)
 
             inputs = component["meta"]["inputs"]
-        except Exception:
-            logger.error("Component %s annotation failed" % (name))
-            raise Exception
+        except Exception as err:
+            msg = "Component %s annotation failed. \n" % (name)
+            msg += str(err)
+            logger.error(msg)
+            logger.error(str(err))
+            raise Exception(msg)
         components[name] = component
     return list(components.values())
 
@@ -949,7 +952,7 @@ def parse(yml_file, return_dict=False, lazy=True):
         msg = "Error during parsing configuration %s" % yml_file
         msg += "\n %s" % str(err)
         logger.error(msg)
-        raise Exception
+        raise Exception(str(err))
     if return_dict:
         graph = list_to_dict(graph)
     return graph
