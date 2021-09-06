@@ -39,10 +39,11 @@ def get_checkpoint(graph_list, states, trainable_params, engine):
                     _params = trainable_params[_param]
                     _param_name = _param.split("/")[-1]
                     if engine == "tf":
+                        _params = _params.numpy()
                         if component["meta"]["type"] == "conv" and _param_name == "filters":
-                            _params = _params.numpy().transpose([3, 2, 0, 1])
-                        elif component["meta"]["type"] == "dense" and _param_name == "filters":
-                            _params = _params.numpy().transpose([1, 0]).tolist()
+                            _params = _params.transpose([3, 2, 0, 1])
+                        elif component["meta"]["type"] == "dense" and _param_name == "weights":
+                            _params = _params.transpose([1, 0])
                     component["value"][_key][_param] = _params.tolist()
             else:
                 component["value"][_key] = deepcopy(component_block["value"][_key])
@@ -87,9 +88,9 @@ def load(graph_list,
                     param_name = "%s/%s" % (name_in_new_config, _param_name)
                     if engine == "tf":
                         if component["meta"]["type"] == "conv" and _param_name=="filters":
-                            _params[_param] = np.asarray(_params[_param]).transpose([2, 3, 1, 0]).tolist()
+                            _params[_param] = np.asarray(_params[_param]).transpose([2, 3, 1, 0])
                         elif component["meta"]["type"] == "dense" and _param_name=="weights":
-                            _params[_param] = np.asarray(_params[_param]).transpose().tolist()
+                            _params[_param] = np.asarray(_params[_param]).transpose()
                     trainable_params[param_name] = _params[_param]
                     graph_list[i]["value"]["var"][param_name] = _params[_param]
 
