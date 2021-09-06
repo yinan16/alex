@@ -1141,9 +1141,9 @@ def assemble_func_src_code(code_body, fn_name, return_str, exclude_args=[], manu
                                         return_val_str=return_str)
     local_symbols, defined_symbols = get_symbols_from_func_def_literal(src_code)
     args = set(local_symbols).difference(set(defined_symbols))
-    args = sorted(list(args.difference(exclude_args)))
+    args = list(args.difference(exclude_args))
     args += manual_args
-    args = list(set(args))
+    args = sorted(list(set(args)))
     src_code = ns_alex.wrap_in_function(code_body, fn_name, args, return_str)
     return src_code, args
 

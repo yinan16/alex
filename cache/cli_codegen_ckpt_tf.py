@@ -37,7 +37,7 @@ def get_trainable_params(ckpt):
     return trainable_params
 
 
-def model(probes, trainable_params, data_block_input_data):
+def model(data_block_input_data, probes, trainable_params):
     model_block_conv_6gw = tf.nn.conv2d(input=data_block_input_data, filters=trainable_params['model_block/conv_6gw/filters'], strides=1, padding='SAME', data_format='NHWC', dilations=1, name='model_block/conv_6gw')
     model_block_reluu = tf.nn.relu(name='model_block/reluu', features=model_block_conv_6gw)
     model_block_dropout_10kc = tf.nn.dropout(x=model_block_reluu, rate=0.2, noise_shape=None, seed=None, name='model_block/dropout_10kc')
@@ -62,63 +62,3 @@ def get_optimizer():
     optimizer_block_solver_decay_exponential_decay = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate=0.0001, decay_steps=100000, decay_rate=0.96, staircase=True)
     optimizer_block_solver = tf.optimizers.Adam(learning_rate=optimizer_block_solver_decay_exponential_decay, beta_1=0.9, beta_2=0.999, epsilon=1e-08, name='optimizer_block/solver')
     return optimizer_block_solver 
-
-from alex.alex.checkpoint import Checkpoint
-
-C = Checkpoint("examples/configs/small1.yml",
-               'tf',
-               ['checkpoints', 'test.json'],
-               None)
-
-ckpt = C.load()
-
-trainable_params = get_trainable_params(ckpt)
-
-from alex.alex import registry
-var_list = registry.get_trainable_params_list(trainable_params)
-
-optimizer = get_optimizer()
-
-probes = dict()
-
-def inference(probes, trainable_params, data_block_input_data):
-    
-    preds = tf.math.argmax(model(probes, trainable_params, data_block_input_data), 1)
-    return preds
-    
-def evaluation(probes, trainable_params, data_block_input_data, labels):
-    
-    preds = inference(probes, trainable_params, data_block_input_data)
-    
-    matches = tf.equal(preds, tf.math.argmax(labels, 1))
-    perf = tf.reduce_mean(tf.cast(matches, tf.float32))
-    
-    loss = tf.reduce_mean(get_loss(labels, preds, trainable_params))
-    return perf, loss
-    
-    
-def train(probes, data_block_labels, var_list, trainable_params, data_block_input_data):
-    
-    with tf.GradientTape() as tape:
-        preds = model(probes, trainable_params, data_block_input_data)
-        gradients = tape.gradient(get_loss(data_block_labels, preds, trainable_params), var_list)
-        optimizer.apply_gradients(zip(gradients, var_list))
-    
-    
-def loop(probes, var_list, trainable_params, val_inputs):
-    
-    for epoch in range(90):
-        i = 0
-        for batch in trainloader:
-            inputs = batch[0]
-            labels = batch[1]
-            train(probes, labels, var_list, trainable_params, inputs)
-            if i % 500 == 499:
-                results = evaluation(probes, trainable_params, val_inputs, labels)
-                
-                tf.print("Epoch", epoch, results)
-            i += 1
-    print('Finished Training')
-    
-    
-    

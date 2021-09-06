@@ -216,7 +216,7 @@ class Model(torch.nn.Module):
         return model_block_output
     
     @staticmethod
-    def get_loss(trainable_params, model_block_output, data_block_labels):
+    def get_loss(data_block_labels, model_block_output, trainable_params):
         loss_block_cross_0 = torch.nn.functional.cross_entropy(weight=None, ignore_index=-100, reduction='mean', target=[data_block_labels, model_block_output][0], input=[data_block_labels, model_block_output][1])
         loss_block_regularizer = 0.002*sum(list(map(lambda x: torch.norm(input=trainable_params[x]), ['model_block/conv_6gw/filters', 'model_block/resnet_16_21vm_0/conv_8im/filters', 'model_block/resnet_16_21vm_0/conv_14oi/filters', 'model_block/resnet_16_21vm/conv_8im/filters', 'model_block/resnet_16_21vm/conv_14oi/filters', 'model_block/test_recipe_51zs/conv_23xc/filters', 'model_block/test_recipe_51zs/conv_29dy/filters', 'model_block/test_recipe_51zs/resnet_16_50yk/conv_37lk/filters', 'model_block/test_recipe_51zs/resnet_16_50yk/conv_43rg/filters', 'model_block/conv_53bi/filters', 'model_block/conv_61ju/filters', 'model_block/dense_67pq/weights'])))
         loss_block_losses = torch.add(input=[loss_block_cross_0, loss_block_regularizer][0], other=[loss_block_cross_0, loss_block_regularizer][1])
@@ -254,37 +254,39 @@ def inference(data_block_input_data, trainable_params):
     model.training=False
     training = model.training
     
-    preds = torch.max(model(data_block_input_data, trainable_params, training), 1)
-    preds = preds[1]
-    return preds
+    preds = model(data_block_input_data, trainable_params, training)
+    classes = torch.max(preds, 1)[1]
+    return preds, classes
     
-def evaluation(data_block_input_data, trainable_params, labels):
+def evaluation(inputs, labels, trainable_params):
+    results = inference(inputs, trainable_params)
     
-    preds = inference(data_block_input_data, trainable_params)
     
     model.training=False
     training = model.training
     
     gt = labels
     total = gt.size(0)
-    matches = (preds == gt).sum().item()
+    preds = results[0]
+    classes = results[1]
+    matches = (classes == gt).sum().item()
     perf = matches / total
     
-    loss = model.get_loss(trainable_params, preds, labels)
+    loss = model.get_loss(labels, preds, trainable_params)
     return perf, loss
     
     
-def train(data_block_input_data, trainable_params, data_block_labels):
+def train(data_block_input_data, data_block_labels, trainable_params):
     
     optimizer.zero_grad()
     model.training=True
     training = model.training
     preds = model(data_block_input_data, trainable_params, training)
-    loss = model.get_loss(trainable_params, preds, data_block_labels)
+    loss = model.get_loss(data_block_labels, preds, trainable_params)
     loss.backward()
     
     
-def loop(val_inputs, trainable_params):
+def loop(trainable_params, val_inputs, val_labels):
     
     for epoch in range(90):
         i = 0
@@ -293,11 +295,11 @@ def loop(val_inputs, trainable_params):
     
             inputs = inputs.to(device)
             labels = labels.to(device)
-            train(inputs, trainable_params, labels)
+            train(inputs, labels, trainable_params)
             optimizer.step()
     
             if i % 500 == 499:
-                results = evaluation(val_inputs, trainable_params, labels)
+                results = evaluation(val_inputs, val_labels, trainable_params)
                 print("Epoch:", epoch, results)
                 
             i += 1
@@ -329,15 +331,10 @@ valloader = torch.utils.data.DataLoader(valset, batch_size=1000,
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-dataiter = iter(trainloader)
-images, labels = dataiter.next()
-inputs = images.to(device)
-print(device)
-
 val_inputs, val_labels = iter(valloader).next()
 
 val_inputs = val_inputs.to(device)
 val_labels = val_labels.to(device)
 
-loop(val_inputs, trainable_params)
+loop(trainable_params, val_inputs, val_labels)
 

@@ -21,14 +21,9 @@ valloader = torch.utils.data.DataLoader(valset, batch_size=1000,
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-dataiter = iter(trainloader)
-images, labels = dataiter.next()
-inputs = images.to(device)
-print(device)
-
 val_inputs, val_labels = iter(valloader).next()
 
 val_inputs = val_inputs.to(device)
 val_labels = val_labels.to(device)
 
-loop(probes, val_inputs, trainable_params)
+loop(probes, trainable_params, val_inputs)

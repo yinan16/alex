@@ -17,8 +17,8 @@ class Model(torch.nn.Module):
             self.register_parameter(var, self.trainable_params[var])
             self.params.append({'params': self.trainable_params[var]})
 
-    def forward(self, probes, data_block_input_data, training, trainable_params):
-        x = self.model(probes, data_block_input_data, training, trainable_params)
+    def forward(self, data_block_input_data, probes, trainable_params, training):
+        x = self.model(data_block_input_data, probes, trainable_params, training)
         return x
 
     @staticmethod
@@ -54,7 +54,7 @@ class Model(torch.nn.Module):
         return trainable_params
     
     @staticmethod
-    def model(probes, data_block_input_data, training, trainable_params):
+    def model(data_block_input_data, probes, trainable_params, training):
         model_block_conv_6gw = torch.nn.functional.conv2d(input=data_block_input_data, weight=trainable_params['model_block/conv_6gw/filters'], bias=None, stride=1, padding=[1, 1], dilation=1, groups=1)
         model_block_reluu = torch.nn.functional.relu(input=model_block_conv_6gw, inplace=False)
         model_block_dropout_10kc = torch.nn.functional.dropout(input=model_block_reluu, p=0.2, training=training, inplace=False)
@@ -83,77 +83,4 @@ class Model(torch.nn.Module):
     def get_scheduler(optimizer):
         optimizer_block_solver_decay_exponential_decay = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.96, last_epoch=-1, verbose=False)
         return optimizer_block_solver_decay_exponential_decay 
-    
-from alex.alex.checkpoint import Checkpoint
-
-C = Checkpoint("examples/configs/small1.yml", 'pytorch', None, None)
-
-ckpt = C.load()
-
-model = Model(ckpt)
-
-model.to(device)
-
-trainable_params = model.trainable_params
-optimizer = model.get_optimizer(model.params)
-
-learning_rate = model.get_scheduler(optimizer)
-
-probes = dict()
-
-def inference(probes, data_block_input_data, trainable_params):
-    
-    model.training=False
-    training = model.training
-    
-    preds = torch.max(model(probes, data_block_input_data, training, trainable_params), 1)
-    preds = preds[1]
-    return preds
-    
-def evaluation(probes, data_block_input_data, labels, trainable_params):
-    
-    preds = inference(probes, data_block_input_data, trainable_params)
-    
-    model.training=False
-    training = model.training
-    
-    gt = labels
-    total = gt.size(0)
-    matches = (preds == gt).sum().item()
-    perf = matches / total
-    
-    loss = model.get_loss(labels, preds, trainable_params)
-    return perf, loss
-    
-    
-def train(probes, data_block_labels, trainable_params, data_block_input_data):
-    
-    optimizer.zero_grad()
-    model.training=True
-    training = model.training
-    preds = model(probes, data_block_input_data, training, trainable_params)
-    loss = model.get_loss(data_block_labels, preds, trainable_params)
-    loss.backward()
-    
-    
-def loop(probes, trainable_params, val_inputs):
-    
-    for epoch in range(90):
-        i = 0
-        for data in trainloader:
-            inputs, labels = data
-    
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-            train(probes, labels, trainable_params, inputs)
-            optimizer.step()
-    
-            if i % 500 == 499:
-                results = evaluation(probes, val_inputs, labels, trainable_params)
-                print("Epoch:", epoch, results)
-                
-            i += 1
-        learning_rate.step()
-    print('Finished Training')
-    
     
