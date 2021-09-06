@@ -6,4 +6,4 @@
 # Description:
 # ----------------------------------------------------------------------
 
-docker build -t pytorch -f ./docker/Dockerfile.pytorch ./docker/
+docker build -t pytorch -f ./docker/Dockerfile.pytorch ./

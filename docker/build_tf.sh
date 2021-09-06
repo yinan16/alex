@@ -6,4 +6,4 @@
 # Description:
 # ----------------------------------------------------------------------
 
-docker build -f ./docker/Dockerfile.tf -t tf ./docker/
+docker build -f ./docker/Dockerfile.tf -t tf ./
