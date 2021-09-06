@@ -82,7 +82,7 @@ def inspect(component):
 
 
 def codegen(engine, config, out_dir, filename,
-            ckpt_from=None, ckpt_to=None, run_code=False, append=None,
+            ckpt_from=None, ckpt_to=None, run_code=False,
             docker_image=None):
     if not docker_image:
         docker_image = engine
@@ -91,7 +91,10 @@ def codegen(engine, config, out_dir, filename,
         sys.exit()
     else:
         config = config[0]
-
+    if run_code:
+        def_only = False
+    else:
+        def_only = True
     try:
         if ckpt_from is not None:
             load_dir = "/".join(ckpt_from.split("/")[:-1])
@@ -109,23 +112,18 @@ def codegen(engine, config, out_dir, filename,
                                  dirname=out_dir,
                                  load_ckpt=ckpt_from,
                                  save_ckpt=ckpt_to,
-                                 def_only=False)
+                                 def_only=def_only)
         logger.info("Generated code is written to file %s" % filepath)
     except Exception as err:
         logger.error(err)
-    if append:
+    if run_code:
+        append = os.path.join(const.ENGINE_PATH, "example_data_%s.py" % engine)
         util.concatenate_files([filepath,
                                 append],
                                filepath)
-    if run_code:
-        try:
-            if ckpt_from is not None:
-                mount_load_dir = "-v $PWD/%s:/ws/" % load_dir
-            else:
-                mount_load_dir = ""
-            command = "docker run --shm-size=5g --gpus all -v $PWD:/ws/ %s -w /ws/ --rm %s python %s" % (mount_load_dir,
-                                                                                                         engine, filepath)
 
+        try:
+            command = "docker run --shm-size=5g --gpus all -v $PWD:/ws/ -w /ws/ --rm %s python %s" % (engine, filepath)
             subprocess.run(command, shell=True, check=True)
         except Exception as err:
             logger.info(command)
@@ -231,8 +229,6 @@ if __name__=="__main__":
                                 help="Save to checkpoint")
 
     codegen_parser.add_argument("--run", dest="run_code", action="store_true", default=False)
-
-    codegen_parser.add_argument("--append", type=str, metavar="Append file to generated code")
 
     codegen_parser.add_argument("--docker_image", type=str, metavar="The tag of the docker image. Set to engine (e.g. pytorch, tf, etc) if tag is not set")
 
