@@ -12,7 +12,8 @@ from pprint import pprint
 import numpy as np
 from pathlib import Path
 from datetime import datetime
-from alex.alex import const, util, dsl_parser, compare, logger
+from alex.alex import const, util, dsl_parser, compare
+from alex.alex.logger import logger
 
 
 def get_checkpoint(graph_list, states, trainable_params, engine):
@@ -190,4 +191,4 @@ class Checkpoint():
 
     def save(self, trainable_params=dict(), stats={}):
         save(self.components_list, self.engine, stats, trainable_params, self.save_path)
-        logger.info("Saving to path", self.save_path)
+        logger.info("Saving to path %s" % self.save_path)
