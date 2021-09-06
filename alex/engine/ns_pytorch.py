@@ -118,7 +118,7 @@ for epoch in range(90):
     learning_rate.step()
 print('Finished Training')
 """ % (", ".join(train_args).replace("data_block_input_data", "inputs").replace("data_block_labels", "labels"),
-       ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("data_block_labels", "val_labels"),
+       ", ".join(evaluation_args).replace("inputs", "val_inputs").replace("labels", "val_labels"),
        save_str)
 
 
@@ -143,14 +143,16 @@ training = model.training
 """
     if mode == "classification":
         code_str += """
-preds = torch.max(model(%s), 1)
-preds = preds[1]
-""" % (", ".join(model_args).replace("model_block_output", "preds"))
+preds = model(%s)
+classes = torch.max(preds, 1)[1]
+""" % (", ".join(model_args))
+        return_str = "return preds, classes"
     elif mode == "regression":
         code_str += """
 preds = model(%s)\n
-""" % (", ".join(model_args).replace("model_block_output", "preds"))
-    code_str += "return preds"
+""" % (", ".join(model_args))
+        return_str = "return preds"
+    code_str += return_str
     func_name = "inference"
     return func_name, code_str
 
@@ -164,23 +166,25 @@ training = model.training
         evaluation_str += """
 gt = labels
 total = gt.size(0)
-matches = (preds == gt).sum().item()
+preds = results[0]
+classes = results[1]
+matches = (classes == gt).sum().item()
 perf = matches / total
 """
+        inference_str = "results = inference(%s)\n" % (", ".join(inference_args).replace("data_block_labels", "labels").replace("data_block_input_data", "inputs"))
         return_str = "return perf, loss"
     else:
         evaluation_str += ""
+        inference_str = "preds = inference(%s)\n" % (", ".join(inference_args).replace("data_block_labels", "labels").replace("data_block_input_data", "inputs"))
         return_str = "return loss"
 
     func_name = "evaluation"
-    code_str = """
-preds = inference(%s)
+    code_str = inference_str + """
 %s
 loss = model.get_loss(%s)
 %s
-""" % (", ".join(inference_args),
-       evaluation_str,
-       ", ".join(loss_args).replace("model_block_output", "preds").replace("data_block_labels", "labels"),
+""" % (evaluation_str,
+       ", ".join(loss_args).replace("model_block_output", "preds").replace("data_block_labels", "labels").replace("data_block_input_data", "inputs"),
        return_str)
 
     return func_name, code_str

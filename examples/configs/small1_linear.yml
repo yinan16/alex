@@ -7,6 +7,13 @@ data_block:
         width: 32
         channels: 3
     name: input_data
+  - type: label
+    dtype: int64
+    hyperparams:
+      shape:
+        batch_size: null
+        dim: 10
+    name: labels
 
 model_block:
   - type: conv
@@ -16,6 +23,8 @@ model_block:
       filters:
         shape:
           n_filters: 64
+  - type: relu
+  - type: batch_normalize
   - type: max_pool2d
   - type: max_pool2d
   - type: flatten

@@ -88,7 +88,7 @@ with tf.GradientTape() as tape:
 
 def loop(save_to, train_args, evaluation_args):
     if save_to:
-        save_str = "C.save(model.trainable_params)"
+        save_str = "C.save(trainable_params)"
     else:
         save_str = ""
     func_name = "loop"
@@ -107,19 +107,22 @@ for epoch in range(90):
 print('Finished Training')
 
 """ % (", ".join(train_args).replace("data_block_input_data", "inputs").replace("data_block_labels", "labels"),
-       ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("data_block_labels", "val_labels"), save_str)
+       ", ".join(evaluation_args).replace("data_block_input_data", "val_inputs").replace("labels", "val_labels"), save_str)
 
 
 def inference(model_args, mode):
     if mode == "classification":
         code_str = """
-preds = tf.math.argmax(model(%s), 1)
+preds = model(%s)
+classes = tf.math.argmax(preds, 1)
 """ % (", ".join(model_args))
+        return_str = "return preds, classes"
     elif mode == "regression":
+        return_str = "return preds"
         code_str = """
 preds = model(%s)\n
 """ % (", ".join(model_args))
-    code_str += "return preds"
+    code_str += return_str
     func_name = "inference"
 
     return func_name, code_str
@@ -127,22 +130,30 @@ preds = model(%s)\n
 
 def evaluation(inference_args, loss_args, mode="classification"):
     if mode == "classification":
+        inference_str = """
+results = inference(%s)
+preds = results[0]
+classes = results[1]
+""" % ", ".join(inference_args)
         evaluation_str = """
-matches = tf.equal(preds, tf.math.argmax(labels, 1))
+matches = tf.equal(classes, tf.math.argmax(labels, 1))
 perf = tf.reduce_mean(tf.cast(matches, tf.float32))
 """
         return_str = "return perf, loss"
     else:
+        inference_str = """
+preds = inference(%s)
+""" % ", ".join(inference_args)
         evaluation_str = ""
         return_str = "return loss"
 
     func_name = "evaluation"
     code_str = """
-preds = inference(%s)
+%s
 %s
 loss = tf.reduce_mean(get_loss(%s))
 %s
-""" % (", ".join(inference_args),
+""" % (inference_str,
        evaluation_str,
        ", ".join(loss_args).replace("model_block_output", "preds").replace("data_block_labels", "labels"),
        return_str)

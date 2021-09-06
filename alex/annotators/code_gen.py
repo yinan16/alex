@@ -732,7 +732,8 @@ def generate_python(output_file,
                                                            evaluation_args)
         loop_str, loop_args = assemble_func_src_code(loop_str,
                                                      loop_func_name,
-                                                     "", exclude_args=NAMESPACES[engine].DEFINED)
+                                                     "",
+                                                     exclude_args=NAMESPACES[engine].DEFINED)
         # TODO: change this
         data_src = os.path.join(const.ENGINE_PATH, "data_%s.py" % engine)
         data_write_src = os.path.join(const.ENGINE_PATH, "example_data_%s.py" % engine)
